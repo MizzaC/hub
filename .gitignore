@@ -396,3 +396,33 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Fichiers de base de données
+*.sqlite3
+
+# Fichiers de sauvegarde
+*.db
+
+# Fichiers de test Django
+__pycache__
+*.pyc
+*.pyo
+*.pyd
+*.db
+*.sqlite3
+
+# Répertoire des fichiers statiques collectés (généré par "collectstatic")
+staticfiles/
+
+# Répertoire de fichiers médias collectés (généré par "collectmedia" ou similaire)
+mediafiles/
+
+# Répertoire des fichiers générés par les migrations de base de données
+/migrations/
+
+# Fichier de configuration locale (souvent "settings_local.py")
+settings_local.py
+
+# Répertoires de fichiers de cache
+__pycache__/
+cache/
