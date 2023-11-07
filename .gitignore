@@ -27,7 +27,7 @@ Temporary Items
 
 # Fichier de tests 
 **/tests/*
-**/!tests/.gitkeep
+**/!tests/__init__.py
 
 # Build results
 [Dd]ebug/
