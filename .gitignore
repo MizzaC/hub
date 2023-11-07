@@ -444,3 +444,6 @@ settings_local.py
 # Répertoires de fichiers de cache
 __pycache__/
 cache/
+
+#Variables environment
+.env
