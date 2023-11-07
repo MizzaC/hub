@@ -26,8 +26,8 @@ Temporary Items
 .apdisk
 
 # Fichier de tests 
-tests/*
-!tests/.gitkeep
+*/tests/*
+*/!tests/.gitkeep
 
 # Build results
 [Dd]ebug/
