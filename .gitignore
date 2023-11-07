@@ -25,6 +25,10 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Fichier de tests 
+**/tests/*
+**/!tests/.gitkeep
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
@@ -435,3 +439,6 @@ settings_local.py
 # Répertoires de fichiers de cache
 __pycache__/
 cache/
+
+#Variables environment
+.env
