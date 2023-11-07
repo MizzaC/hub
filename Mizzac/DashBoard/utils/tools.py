@@ -8,7 +8,7 @@ class Logger:
     """
     
     # Define the log directory
-    log_dir = "fundboard/data/logs/"
+    log_dir = "data/logs/"
 
     def __init__(self):
         """
