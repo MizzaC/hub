@@ -1,11 +1,11 @@
 # Mizzac project
 When you install for the first time this project:
 
-    Install all packages needed for the project:
-        ```pip install -r requirements.txt```
+Install all packages needed for the project:
+    ```pip install -r requirements.txt``` 
 
-    Update your database for a first Django utilization:
-        ```python manage.py makemigrations
+Update your database for a first Django utilization:
+    ```python manage.py makemigrations
         python manage.py migrate```
 
 
