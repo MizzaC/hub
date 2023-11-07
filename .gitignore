@@ -25,6 +25,10 @@ Network Trash Folder
 Temporary Items
 .apdisk
 
+# Fichier de tests 
+**/tests/*
+**/!tests/.gitkeep
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
