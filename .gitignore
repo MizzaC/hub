@@ -16,6 +16,15 @@
 # Mono auto generated files
 mono_crash.*
 
+# Fichiers générés par macOS
+.DS_Store
+.AppleDouble
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
 # Build results
 [Dd]ebug/
 [Dd]ebugPublic/
