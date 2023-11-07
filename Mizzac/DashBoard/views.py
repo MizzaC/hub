@@ -5,5 +5,5 @@ from .forms import CustomUserCreationForm
 
 class SignUpView(generic.CreateView):
     form_class = CustomUserCreationForm
-    success_url = reverse_lazy('login')  # Assurez-vous que l'URL 'login' est définie dans urls.py
-    template_name = 'dashboard/signup.html'  # Le chemin du template d'inscription
+    #success_url = reverse_lazy('login')  # Assurez-vous que l'URL 'login' est définie dans urls.py
+    template_name = 'signup.html'  # Le chemin du template d'inscription
