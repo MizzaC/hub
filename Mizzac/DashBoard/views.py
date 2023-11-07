@@ -1,9 +1,18 @@
-from django.shortcuts import render
+# Mizzac/Dashboard/views.py
+
 from django.urls import reverse_lazy
-from django.views import generic
+from django.views.generic import TemplateView, CreateView
+from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm
 
-class SignUpView(generic.CreateView):
+# Homepage view (The HUB)
+class HubView(LoginRequiredMixin, TemplateView):
+    template_name = 'dashboard/hub.html'
+    login_url = reverse_lazy('dashboard:login')  # If user not connected
+    # further features or requirements
+
+# SignUp view
+class SignUpView(CreateView):
     form_class = CustomUserCreationForm
-    success_url = reverse_lazy('login')  # Assurez-vous que l'URL 'login' est définie dans urls.py
-    template_name = 'dashboard/signup.html'  # Le chemin du template d'inscription
+    template_name = 'dashboard/signup.html'
+    success_url = reverse_lazy('dashboard:login')  # Redirect after successfull connexion
