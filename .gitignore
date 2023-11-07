@@ -13,15 +13,6 @@
 # User-specific files (MonoDevelop/Xamarin Studio)
 *.userprefs
 
-# Fichiers générés par macOS
-.DS_Store
-.AppleDouble
-.AppleDB
-.AppleDesktop
-Network Trash Folder
-Temporary Items
-.apdisk
-
 # Mono auto generated files
 mono_crash.*
 
@@ -33,6 +24,10 @@ mono_crash.*
 Network Trash Folder
 Temporary Items
 .apdisk
+
+# Fichier de tests 
+**/tests/*
+**/!tests/.gitkeep
 
 # Build results
 [Dd]ebug/
