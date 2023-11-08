@@ -6,18 +6,17 @@ class Logger:
     """
     Logger class for creating modular logs with the Python logging module.
     """
-    
-    # Define the log directory
-    log_dir = "data/logs/"
 
     def __init__(self):
         """
         Initialize the Logger instance, setting up the default log directory.
         """
         
-        # Create the log directory if it does not exist
-        if not os.path.exists(self.log_dir):
-            os.makedirs(self.log_dir)
+       # Le chemin relatif vers le répertoire de logs de l'application DashBoard
+        self.log_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'data', 'logs')
+
+        # Créez le répertoire s'il n'existe pas
+        os.makedirs(self.log_dir, exist_ok=True)
 
     def log(self, level, message, log_file="server.log", filename=None):
         """
@@ -55,6 +54,7 @@ class Logger:
             handler = RotatingFileHandler(
                 log_path,
                 maxBytes=5242880,  # 5MB
+                # maxBytes=1024,  # Pour les tests
                 backupCount=5
             )
 
