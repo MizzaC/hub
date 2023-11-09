@@ -1,0 +1,16 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Connexion</title>
+</head>
+<body>
+    <h2>Connectez-vous</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">Connexion</button>
+    </form>
+    <a href="{% url 'dashboard:signup' %}">Inscription</a>
+</body>
+</html>
