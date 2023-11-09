@@ -8,6 +8,8 @@
 >
 > if windows issue in VSC just restart
 > 
+
+As root :
  ```
  npm install -g @vue/cli
  ```
