@@ -73,4 +73,4 @@ class Logger:
             filename = os.path.basename(logging.Logger.manager.loggerDict[log_file].findCaller()[0])
 
         # Log the message
-        logger.log(level, f'[{filename}] - {message}')
+        logger.log(level, f'{message}')
