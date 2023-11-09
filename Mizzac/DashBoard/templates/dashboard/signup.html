@@ -1,0 +1,16 @@
+<!-- Exemple très basique d'un template d'inscription -->
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Inscription</title>
+</head>
+<body>
+    <h2>Inscrivez-vous</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit">S'inscrire</button>
+    </form>
+    <a href="{% url 'login' %}">Déjà inscrit ?</a>
+</body>
+</html>
