@@ -71,3 +71,9 @@ in src/main.js
 import './assets/css/main.css';
 
 ```
+
+To start :
+
+```
+npm run serve
+```
