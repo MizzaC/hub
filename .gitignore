@@ -441,3 +441,102 @@ cache/
 
 #Variables environment
 .env
+
+# Node.js
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environments
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.backup
+
+# Editor directories and files
+.vscode/*
+.idea/*
+
+# Python
+*.pyc
+__pycache__/
+*.pyo
+*.pyd
+
+# Django 
+/media/
+/static/
+*.db
+
+# Vue.js
+/dist/
+/build/
+/target/
+
+# Si vous avez un fichier pour les variables d'environnement à la racine du projet
+/.env
+
+# Exclure spécifiquement la base de données SQLite à la racine du projet si présente
+/db.sqlite3
+
+# Node.js - Dependency directories
+node_modules/
+
+# Vue.js - Production build files
+/dist/
+/build/
+
+# Environment variables - Local .env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env*.backup
+
+# Editor directories and files
+.vscode/
+.idea/
+
+# Python - Bytecode files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Django - Media and static files collected by 'collectstatic'
+/media/
+/static/
+
+# Django - Local SQLite database file
+*.db
+*.sqlite3
+
+# Unit test / coverage reports
+/coverage/
+*.log
+*.csv
+*.dat
+*.out
+*.pid
+*.tmp
+*.log.*
+
+# OS generated files - macOS
+.DS_Store
+
+# Thumbnails
+._*
+
+# Files that might appear on external disks
+.Spotlight-V100
+.Trashes
+
+# Directories potentially created on remote AFP share
+.AppleDB
+.AppleDesktop
+Network Trash Folder
+Temporary Items
+.apdisk
+
