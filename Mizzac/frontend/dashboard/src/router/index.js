@@ -1,11 +1,17 @@
 import { createRouter, createWebHistory } from "vue-router";
 import HomeView from "../views/HomeView.vue";
+import Dashboard from "../views/Dashboard.vue";
 
 const routes = [
   {
     path: "/",
     name: "home",
     component: HomeView,
+  },
+  {
+    path: "/dashboard", // Ajoutez une nouvelle route pour le Dashboard
+    name: "dashboard",
+    component: Dashboard,
   },
   {
     path: "/about",
@@ -24,3 +30,5 @@ const router = createRouter({
 });
 
 export default router;
+
+
