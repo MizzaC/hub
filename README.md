@@ -10,6 +10,10 @@ Update your database for a first Django utilization:
     python manage.py makemigrations
     python manage.py migrate
 
+(Optional)
+
+    python manage.py createsuperuser --username <username> --email <mail>
+
 To start the server locally
 
     python manage.py runserver

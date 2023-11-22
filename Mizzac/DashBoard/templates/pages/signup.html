@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+
+{% block signup %}
+<div class="container mt-5">
+    <div class="row">
+        <div class="col-md-6 offset-md-3">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="card-title">Inscription</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {{ form.as_p }}
+                        <button type="submit" class="btn btn-primary">S'inscrire</button>
+                    </form>
+                </div>
+                <div class="card-footer text-center">
+                    <a href="{% url 'dashboard:login' %}" class="btn btn-link">Déjà inscrit ?</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+{% endblock signup%}

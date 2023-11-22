@@ -26,7 +26,12 @@ Temporary Items
 .apdisk
 
 # Fichier de tests 
-**/tests/test*
+
+
+
+**/tests/*
+**/!tests/__init__.py
+
 
 # Build results
 [Dd]ebug/
