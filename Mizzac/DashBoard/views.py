@@ -9,12 +9,12 @@ from .forms import CustomUserCreationForm
 
 # Homepage view (The HUB)
 class HubView(LoginRequiredMixin, TemplateView):
-    template_name = 'block/dashboard.html'
+    template_name = 'pages/dashboard.html'
     login_url = reverse_lazy('dashboard:login')  # If user not connected
     # further features or requirements
 
 # SignUp view
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
-    template_name = 'block/signup.html'
+    template_name = 'pages/signup.html'
     success_url = reverse_lazy('dashboard:login')  # Redirect after successfull connexion

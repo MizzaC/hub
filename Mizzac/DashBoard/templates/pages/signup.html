@@ -1,0 +1,13 @@
+{% extends 'base.html' %}
+
+{% block signup %}
+
+<form method="post">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button type="submit" class="btn btn-primary">S'inscrire</button>
+</form>
+
+<a href="{% url 'dashboard:login' %}" class="btn btn-link">Déjà inscrit ?</a>
+
+{% endblock signup%}

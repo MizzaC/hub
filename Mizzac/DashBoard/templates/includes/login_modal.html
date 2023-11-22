@@ -1,0 +1,26 @@
+
+
+<!-- Modale Login -->
+<div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="loginModalLabel">Connectez-vous</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post">
+                    {% csrf_token %}
+                    {{ form.as_p }}
+                    <button type="submit" class="btn btn-primary">Connexion</button>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <a href="{% url 'dashboard:signup' %}" class="btn btn-link">Inscription</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
