@@ -2,14 +2,45 @@
 <html lang="fr">
 <head>
     <meta charset="UTF-8">
-    <title>Dashboard HUB</title>
+    <title>Mizzac Dashboard</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        h1 {
+            color: #333;
+        }
+
+        a {
+            display: inline-block;
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            transition: background-color 0.3s;
+        }
+
+        a:hover {
+            background-color: #0056b3;
+        }
+    </style>
 </head>
 <body>
-    <h1>Bienvenue sur THE HUB</h1>
-    <!-- Ajoutez ici le contenu spécifique de votre HUB -->
+    <div>
+        <h1>Bienvenue sur Dashboard</h1>
+        <!-- Ajoutez ici le contenu spécifique de votre HUB -->
 
-    <a href="{% url 'dashboard:logout' %}">Se déconnecter</a>
+        <a href="{% url 'dashboard:logout' %}">Se déconnecter</a>
+    </div>
 </body>
 </html>
-
-
