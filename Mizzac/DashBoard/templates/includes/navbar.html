@@ -28,7 +28,7 @@
                       </li>
                   {% else %}
                       <li class="nav-item">
-                          <a class="nav-link" href="#" data-bs-toggle="modal" data-bs-target="#loginModal">Connexion</a>
+                          <a class="nav-link" href="{% url 'dashboard:login' %}">Connexion</a>
                       </li>
                   {% endif %}
               </ul>
