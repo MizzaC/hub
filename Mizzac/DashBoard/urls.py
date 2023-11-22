@@ -1,8 +1,8 @@
 # Mizzac/Dashboard/urls.py
+
 from django.urls import path
 from .views import SignUpView, HubView
 from django.contrib.auth import views as auth_views
-
 
 
 app_name = 'dashboard'
