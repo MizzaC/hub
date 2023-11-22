@@ -2,11 +2,18 @@
 
 {% block dashboard %}
 
-<div>
-    <h1>Bienvenue sur Dashboard</h1>
-    <!-- Ajoutez ici le contenu spécifique de votre HUB -->
-
-    <a href="{% url 'dashboard:logout' %}">Se déconnecter</a>
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="jumbotron">
+                <h1 class="display-4">Bienvenue sur Dashboard</h1>
+                <p class="lead">Bonjour {{ user.username }}.</p>
+                <hr class="my-4">
+                <!-- Ajoutez ici le contenu spécifique de votre HUB -->
+            </div>
+        </div>
+    </div>
+    <!-- Autres sections ou contenu peuvent être ajoutés ici -->
 </div>
 
-{% endblock dashboard%}
+{% endblock dashboard %}
