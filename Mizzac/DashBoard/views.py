@@ -6,7 +6,6 @@ from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm
 
 
-
 # Homepage view (The HUB)
 class HubView(LoginRequiredMixin, TemplateView):
     template_name = 'pages/dashboard.html'
