@@ -1,0 +1,12 @@
+{% extends 'base.html' %}
+
+{% block dashboard %}
+
+<div>
+    <h1>Bienvenue sur Dashboard</h1>
+    <!-- Ajoutez ici le contenu spécifique de votre HUB -->
+
+    <a href="{% url 'dashboard:logout' %}">Se déconnecter</a>
+</div>
+
+{% endblock dashboard%}
