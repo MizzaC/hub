@@ -1,7 +1,6 @@
-import { createApp } from "vue";
-import App from "./App.vue";
-import router from "./router";
-import store from "./store";
-import "./assets/css/main.css";
+import Vue from "vue";
+import dashboard from "./views/Dashboard.vue";
 
-createApp(App).use(store).use(router).mount("#app");
+new Vue({
+  render: (h) => h(dashboard),
+}).$mount("#dashboard");

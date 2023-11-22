@@ -4,6 +4,11 @@ from django.urls import reverse_lazy
 from django.views.generic import TemplateView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
 from .forms import CustomUserCreationForm
+from django.shortcuts import render
+
+def home(request):
+    return render(request, 'dashboard.html')
+
 
 # Homepage view (The HUB)
 class HubView(LoginRequiredMixin, TemplateView):

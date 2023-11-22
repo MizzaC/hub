@@ -1,14 +1,16 @@
 # Mizzac/Dashboard/urls.py
 
 from django.urls import path
-from .views import SignUpView, HubView
+from .views import SignUpView, HubView, home
 from django.contrib.auth import views as auth_views
+
+
 
 app_name = 'dashboard'
 
 urlpatterns = [
     # DashBoard Homepage (The HUB)
-    path('', HubView.as_view(), name='hub'),
+    path('', home, name='dashboard'),
 
     # Login URL
     path('login/', auth_views.LoginView.as_view(template_name='dashboard/login.html'), name='login'),
