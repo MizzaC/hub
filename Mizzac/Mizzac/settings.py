@@ -63,7 +63,7 @@ ROOT_URLCONF = 'Mizzac.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
+        'DIRS': [BASE_DIR / 'dashboard/templates/common'],
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [

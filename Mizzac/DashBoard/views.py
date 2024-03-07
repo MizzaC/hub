@@ -11,12 +11,6 @@ class HubView(LoginRequiredMixin, TemplateView):
     template_name = 'pages/dashboard.html'
     login_url = reverse_lazy('dashboard:login')  # If user not connected
     # further features or requirements
-    
-# DrunkBoard view
-class DrunkBoardView(LoginRequiredMixin, TemplateView):
-    template_name = 'pages/drunkboard.html'
-    login_url = reverse_lazy('dashboard:login')  # If user not connected
-    # further features or requirements
 
 # SignUp view
 class SignUpView(CreateView):
