@@ -22,4 +22,5 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     path('dashboard/', include('DashBoard.urls', namespace='dashboard')),
     path('drunkboard/', include('DrunkBoard.urls', namespace='drunkboard')),
+    path('fundboard/', include('FundBoard.urls', namespace='fundboard')),
 ]
