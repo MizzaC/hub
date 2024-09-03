@@ -26,12 +26,14 @@ class ProfilJoueur(models.Model):
         return self.utilisateur.username if self.utilisateur else self.nom_invite
     
 class SkyJoSave(models.Model):
+    id = models.AutoField(primary_key=True)
     date_time = models.DateTimeField(auto_now_add=True)
     users = models.JSONField(default=dict, blank=False)
     scores = models.JSONField(default=dict, blank=False)
     ranking = models.JSONField(default=list, blank=True)
 
 class NavalBattleSave(models.Model):
+    id = models.AutoField(primary_key=True)
     date_time = models.DateTimeField(auto_now_add=True)
     users = models.JSONField(default=dict, blank=False)
     game_grid = models.JSONField(default=list, blank=False)
