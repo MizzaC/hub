@@ -46,8 +46,19 @@ class TicTacToeSave(models.Model):
     date_time = models.DateTimeField(auto_now_add=True)
     users = models.JSONField(default=dict, blank=False)
     game_grid = models.JSONField(default=list, blank=False)
-    users_actions = models.JSONField(default=list, blank=False) # format : 1A2 first number identify player and second part identify the location of shot
+    users_actions = models.JSONField(default=list, blank=False) # format : 1A2 first number identify player and second part identify the location of symbol
     ranking = models.JSONField(default=list, blank=True)
+    
+    
+class ChessSave(models.Model):
+    id = models.AutoField(primary_key=True)
+    date_time = models.DateTimeField(auto_now_add=True)
+    users = models.JSONField(default=dict, blank=False)
+    game_grid = models.JSONField(default=list, blank=False)
+    users_actions = models.JSONField(default=list, blank=False) # format : 1A2 first number identify player and second part identify the location of move
+    ranking = models.JSONField(default=list, blank=True)
+    
+    
 # class Partie(models.Model):
 #     jeu = models.ForeignKey(Jeu, on_delete=models.CASCADE, related_name="parties")
 #     date_debut = models.DateTimeField(auto_now_add=True)
