@@ -1,29 +1,29 @@
 from django.db import models
 from django.contrib.auth.models import User
 
-class TypeDeJeu(models.Model):
-    nom = models.CharField(max_length=100)
+class TypeOfGame(models.Model):
+    name = models.CharField(max_length=100)
 
     def __str__(self):
-        return self.nom
+        return self.name
 
-class Jeu(models.Model):
-    nom = models.CharField(max_length=100, primary_key=True)
+class Game(models.Model):
+    name = models.CharField(max_length=100, primary_key=True)
     description = models.JSONField(default=list, blank=True)
-    regles = models.JSONField(default=list, blank=True)
-    variantes = models.JSONField(default=list, blank=True)
-    astuces = models.JSONField(default=list, blank=True)
-    type_de_jeu = models.ForeignKey(TypeDeJeu, on_delete=models.CASCADE, related_name="jeux")
+    rules = models.JSONField(default=list, blank=True)
+    versions = models.JSONField(default=list, blank=True)
+    tips = models.JSONField(default=list, blank=True)
+    type_of_game = models.ForeignKey(TypeOfGame, on_delete=models.CASCADE, related_name="games")
 
     def __str__(self):
-        return self.nom
+        return self.name
 
-class ProfilJoueur(models.Model):
-    utilisateur = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
-    nom_invite = models.CharField(max_length=100, blank=True, null=True)
+class UserProfile(models.Model):
+    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    guest_name = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):
-        return self.utilisateur.username if self.utilisateur else self.nom_invite
+        return self.user.username if self.user else self.guest_name
     
 class GamesStats(models.Model):
     id = models.AutoField(primary_key=True)
