@@ -25,6 +25,12 @@ class ProfilJoueur(models.Model):
     def __str__(self):
         return self.utilisateur.username if self.utilisateur else self.nom_invite
     
+class GamesStats(models.Model):
+    id = models.AutoField(primary_key=True)
+    game = #faire une foreign key qui est en lien avec la primary key nom du jeu pour la table Jeu
+    game_version = models.CharField(max_length=100, blank=False) #Put Original if it's not a specific version
+    game_stats = models.JSONField(default=dict, blank=False)
+    
 class SkyJoSave(models.Model):
     id = models.AutoField(primary_key=True)
     date_time = models.DateTimeField(auto_now_add=True)
