@@ -1,0 +1,57 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <div class="col-lg-12">
+            <div class="jumbotron">
+                <p class="lead">Bonjour {{ user.username }}.</p>
+                <h1 class="display-4">Bienvenue sur GameBoard</h1>
+                <hr class="my-4">
+            </div>
+        </div>
+    </div>
+    
+    <!-- Barre de recherche et filtres -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <input type="text" id="search" class="form-control" placeholder="Rechercher un jeu...">
+        </div>
+        <div class="col-md-3">
+            <select id="category-filter" class="form-control">
+                <option value="">Toutes les catégories</option>
+                <!-- Remplir dynamiquement avec les catégories -->
+                {% for category in categories %}
+                <option value="{{ category.id }}">{{ category.nom }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-md-3">
+            <select id="sort-filter" class="form-control">
+                <option value="name">Nom</option>
+                <option value="release_date">Date de sortie</option>
+                <!-- Ajouter d'autres critères de tri -->
+            </select>
+        </div>
+    </div>
+
+    <!-- Vignettes des jeux -->
+    <div class="row" id="game-list">
+        {% for game in games %}
+        <div class="col-md-4 mb-4">
+            <div class="card">
+                <!-- Assuming each game has a thumbnail field or similar image field -->
+                <img src="{{ game.couverture.url }}" alt="{{ game.nom }}" 
+                    style="width: 100%; height: 200px; object-fit: cover; object-position: center;">
+                <div class="card-body">
+                    <h5 class="card-title">{{ game.name }}</h5>
+                    <p class="card-text">{{ game.description|truncatewords:20 }}</p>
+                    <a href="{% url 'gameboard:game_detail' game.slug %}" class="btn btn-primary">Voir plus</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
