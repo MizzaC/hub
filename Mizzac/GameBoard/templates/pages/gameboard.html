@@ -12,7 +12,7 @@
         </div>
     </div>
     
-    <!-- Barre de recherche et filtres -->
+    <!-- Search bar and filter -->
     <div class="row mb-4">
         <div class="col-md-6">
             <input type="text" id="search" class="form-control" placeholder="Rechercher un jeu...">
@@ -20,7 +20,7 @@
         <div class="col-md-3">
             <select id="category-filter" class="form-control">
                 <option value="">Toutes les catégories</option>
-                <!-- Remplir dynamiquement avec les catégories -->
+                <!-- Dynamic -->
                 {% for category in categories %}
                 <option value="{{ category.id }}">{{ category.name }}</option>
                 {% endfor %}
@@ -30,12 +30,12 @@
             <select id="sort-filter" class="form-control">
                 <option value="name">Nom</option>
                 <option value="release_date">Date de sortie</option>
-                <!-- Ajouter d'autres critères de tri -->
+                <!-- Add filter criterias -->
             </select>
         </div>
     </div>
 
-    <!-- Vignettes des jeux -->
+    <!-- Games list -->
     <div class="row" id="game-list">
         {% for game in games %}
         <div class="col-md-4 mb-4">

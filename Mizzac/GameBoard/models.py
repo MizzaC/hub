@@ -7,7 +7,7 @@ def get_upload_path(instance, filename):
     # Use the name of the game to make the directory name
     return f'GameBoard/Games/{instance.name}/{filename}'
 
-class Categorie(models.Model):
+class Category(models.Model):
     name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
@@ -19,7 +19,7 @@ class Game(models.Model):
     rules = models.JSONField(default=list, blank=True)
     versions = models.JSONField(default=list, blank=True)
     tips = models.JSONField(default=list, blank=True)
-    categories = models.ManyToManyField('Categorie', related_name='Game')
+    categories = models.ManyToManyField('Category', related_name='Game')
     cover = models.ImageField(upload_to=get_upload_path, default='GameBoard/Games/default.png')
     slug = models.SlugField(unique=True, blank=True)  # Champ slug ajouté
 
