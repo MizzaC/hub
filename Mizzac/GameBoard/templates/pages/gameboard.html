@@ -41,11 +41,11 @@
         <div class="col-md-4 mb-4">
             <div class="card">
                 <!-- Assuming each game has a thumbnail field or similar image field -->
-                <img src="{{ game.couverture.url }}" alt="{{ game.nom }}" 
+                <img src="{{ game.cover.url }}" alt="{{ game.name }}" 
                     style="width: 100%; height: 200px; object-fit: cover; object-position: center;">
                 <div class="card-body">
                     <h5 class="card-title">{{ game.name }}</h5>
-                    <p class="card-text">{{ game.description|truncatewords:20 }}</p>
+                    <p class="card-text">{{ game.description.description|truncatewords:20 }}</p>
                     <a href="{% url 'gameboard:game_detail' game.slug %}" class="btn btn-primary">Voir plus</a>
                 </div>
             </div>
