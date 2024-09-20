@@ -1,8 +1,14 @@
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.text import slugify
 
-class TypeOfGame(models.Model):
-    name = models.CharField(max_length=100)
+
+def get_upload_path(instance, filename):
+    # Use the name of the game to make the directory name
+    return f'GameBoard/Games/{instance.name}/{filename}'
+
+class Categorie(models.Model):
+    name = models.CharField(max_length=255, unique=True)
 
     def __str__(self):
         return self.name
@@ -13,7 +19,14 @@ class Game(models.Model):
     rules = models.JSONField(default=list, blank=True)
     versions = models.JSONField(default=list, blank=True)
     tips = models.JSONField(default=list, blank=True)
-    type_of_game = models.ForeignKey(TypeOfGame, on_delete=models.CASCADE, related_name="games")
+    categories = models.ManyToManyField('Categorie', related_name='Game')
+    cover = models.ImageField(upload_to=get_upload_path, default='GameBoard/Games/default.png')
+    slug = models.SlugField(unique=True, blank=True)  # Champ slug ajouté
+
+    def save(self, *args, **kwargs):
+        if not self.slug:
+            self.slug = slugify(self.name)  # Génère un slug basé sur le nom
+        super(Game, self).save(*args, **kwargs)
 
     def __str__(self):
         return self.name
