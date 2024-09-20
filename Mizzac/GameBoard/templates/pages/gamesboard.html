@@ -22,7 +22,7 @@
                 <option value="">Toutes les catégories</option>
                 <!-- Remplir dynamiquement avec les catégories -->
                 {% for category in categories %}
-                <option value="{{ category.id }}">{{ category.nom }}</option>
+                <option value="{{ category.id }}">{{ category.name }}</option>
                 {% endfor %}
             </select>
         </div>
