@@ -8,11 +8,13 @@
     <meta charset="UTF-8">
     <title>Mizzac</title>
 </head>
-<body>
+<body class="d-flex flex-column min-vh-100">
     {% include 'common/navbar.html' %}
     
-    {% block content %}
-    {% endblock %}
+    <main class="flex-grow-1">
+        {% block content %}
+        {% endblock %}
+    </main>
 
     {% include 'common/footer.html' %}
 
