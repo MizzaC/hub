@@ -22,3 +22,4 @@ class GameDetailView(LoginRequiredMixin, DetailView):
     context_object_name = 'game'
     slug_field = 'slug'
     slug_url_kwarg = 'slug'
+

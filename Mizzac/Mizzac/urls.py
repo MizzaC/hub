@@ -29,3 +29,4 @@ urlpatterns = [
     path('fundboard/', include('FundBoard.urls', namespace='fundboard')),
     path('gameboard/', include('GameBoard.urls', namespace='gameboard')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
