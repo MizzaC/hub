@@ -15,5 +15,5 @@ class HubView(LoginRequiredMixin, TemplateView):
 # SignUp view
 class SignUpView(CreateView):
     form_class = CustomUserCreationForm
-    template_name = 'pages/signup.html'
+    template_name = 'common/signup.html'
     success_url = reverse_lazy('dashboard:login')  # Redirect after successfull connexion
