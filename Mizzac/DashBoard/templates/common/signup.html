@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block signup %}
+{% block content %}
 <div class="container mt-5">
     <div class="row">
         <div class="col-md-6 offset-md-3">
@@ -11,7 +11,19 @@
                 <div class="card-body">
                     <form method="post">
                         {% csrf_token %}
-                        {{ form.as_p }}
+                        {% for field in form %}
+                            <div class="form-group">
+                                {{ field.label_tag }}
+                                {{ field }}
+                                {% if field.errors %}
+                                    <div class="alert alert-danger mt-2">
+                                        {% for error in field.errors %}
+                                            <p class="mb-0">{{ error }}</p>
+                                        {% endfor %}
+                                    </div>
+                                {% endif %}
+                            </div>
+                        {% endfor %}
                         <button type="submit" class="btn btn-primary">S'inscrire</button>
                     </form>
                 </div>
@@ -22,8 +34,4 @@
         </div>
     </div>
 </div>
-
-
-
-
-{% endblock signup%}
+{% endblock %}

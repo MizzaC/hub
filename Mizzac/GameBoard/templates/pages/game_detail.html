@@ -1,0 +1,93 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Titre du jeu -->
+    <h1>{{ game.name }}</h1>
+
+    <!-- Image de couverture -->
+    <div class="mb-4">
+        <img src="{{ game.cover.url }}" alt="{{ game.name }}" style="width:100%; max-width:600px;">
+    </div>
+
+    <!-- Description du jeu -->
+    <section class="mb-5">
+        <h2>Description</h2>
+        <p>{{ game.description.description }}</p>
+    </section>
+
+    <!-- Règles du jeu -->
+    <section class="mb-5">
+        <h2>Règles</h2>
+        <h3>Objectif</h3>
+        <p>{{ game.rules.objective }}</p>
+
+        <h3>Matériel</h3>
+        <ul>
+            {% for item in game.rules.materials %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Mise en Place</h3>
+        <ul>
+            {% for item in game.rules.setup %}
+            <li>{{ item }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Déroulement d'un Tour</h3>
+        <ul>
+            {% for step in game.rules.turn %}
+            <li>{{ step }}</li>
+            {% endfor %}
+        </ul>
+
+        <h3>Fin de la Manche</h3>
+        <p>{{ game.rules.end_of_round }}</p>
+
+        <h3>Fin de la Partie</h3>
+        <p>{{ game.rules.end_of_game }}</p>
+    </section>
+
+    <!-- Variantes du jeu -->
+    <section class="mb-5">
+        <h2>Variantes</h2>
+        {% for version in game.versions %}
+        <h3>{{ version.name }}</h3>
+        <p>{{ version.description }}</p>
+
+        <h4>Règles Spéciales</h4>
+        <ul>
+            {% for rule in version.special_rules %}
+            <li>{{ rule }}</li>
+            {% endfor %}
+        </ul>
+        {% endfor %}
+    </section>
+
+    <!-- Astuces -->
+    <section class="mb-5">
+        <h2>Astuces</h2>
+        <ul>
+            {% for tip in game.tips %}
+            <li>
+                <strong>{{ tip.title }}:</strong> {{ tip.description }}
+            </li>
+            {% endfor %}
+        </ul>
+    </section>
+
+    <!-- Catégories du jeu -->
+    <section class="mb-5">
+        <h2>Catégories</h2>
+        <p>
+            {% for category in game.categories.all %}
+                {{ category.name }}{% if not forloop.last %}, {% endif %}
+            {% endfor %}
+        </p>
+    </section>
+</div>
+
+
+{% endblock %}
