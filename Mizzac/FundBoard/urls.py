@@ -1,4 +1,4 @@
-# Mizzac/Dashboard/urls.py
+# Mizzac/Fundboard/urls.py
 
 from django.urls import path
 from .views import FundBoardView

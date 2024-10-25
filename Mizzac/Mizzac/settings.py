@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'FundBoard',
     'DrunkBoard',
     'DashBoard',
+    'ToolBoard',
 ]
 
 MIDDLEWARE = [
