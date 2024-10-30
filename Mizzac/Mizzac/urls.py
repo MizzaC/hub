@@ -28,5 +28,6 @@ urlpatterns = [
     path('drunkboard/', include('DrunkBoard.urls', namespace='drunkboard')),
     path('fundboard/', include('FundBoard.urls', namespace='fundboard')),
     path('gameboard/', include('GameBoard.urls', namespace='gameboard')),
+    path('toolboard/', include('ToolBoard.urls', namespace='toolboard')),
 ]+ static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
 

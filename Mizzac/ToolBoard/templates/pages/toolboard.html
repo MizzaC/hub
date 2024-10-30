@@ -1,0 +1,40 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="display-4">Bienvenue sur ToolBoard</h1>
+    <p class="lead">Bonjour {{ user.username }}.</p>
+    <hr class="my-4">
+
+    <!-- Formulaire de recherche et de filtrage -->
+    <form method="get" class="form-inline mb-4">
+        <input type="text" name="search" class="form-control mr-2" placeholder="Rechercher..." value="{{ request.GET.search }}">
+        <select name="category" class="form-control mr-2">
+            <option value="">Toutes les catégories</option>
+            {% for category in categories %}
+                <option value="{{ category.name }}" {% if request.GET.category == category.name %}selected{% endif %}>{{ category.name }}</option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Filtrer</button>
+    </form>
+
+    <!-- Grille des outils -->
+    <div class="row">
+        {% for tool in tools %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <h5 class="card-title">{{ tool.name }}</h5>
+                        <p class="card-text">{{ tool.description|truncatewords:20 }}</p>
+                        <a href="{% url 'toolboard:tool_detail' tool.slug %}" class="btn btn-primary">Voir l'outil</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>Aucun outil trouvé.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}
