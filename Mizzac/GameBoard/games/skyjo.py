@@ -41,9 +41,3 @@ class SkyJo:
 
     def other_useful_function(self):
         # Other useful functions related to SkyJo
-        passclass SkyJoSave(models.Model):
-    id = models.AutoField(primary_key=True)
-    date_time = models.DateTimeField(auto_now_add=True)
-    users = models.JSONField(default=dict, blank=False)
-    scores = models.JSONField(default=dict, blank=False)
-    ranking = models.JSONField(default=list, blank=True)
