@@ -1,11 +1,24 @@
 import pandas as pd
+from django.utils import timezone
+from GameBoard.models import SkyJoSave
 
 class SkyJo:
     def __init__(self, db_name):
         self.db_name = db_name
 
     def insert_data(self, data):
-        # Code to insert data into the database
+        
+        # Create a new SkyJoSave instance
+        new_game = SkyJoSave(
+            date_time=timezone.now(),
+            users=data.get('users', {}),
+            scores=data.get('scores', {}),
+            ranking=data.get('ranking', [])
+        )
+
+        # Save the instance to the database
+        new_game.save()
+        
         pass
 
     def update_data(self, data):
@@ -28,4 +41,9 @@ class SkyJo:
 
     def other_useful_function(self):
         # Other useful functions related to SkyJo
-        pass
+        passclass SkyJoSave(models.Model):
+    id = models.AutoField(primary_key=True)
+    date_time = models.DateTimeField(auto_now_add=True)
+    users = models.JSONField(default=dict, blank=False)
+    scores = models.JSONField(default=dict, blank=False)
+    ranking = models.JSONField(default=list, blank=True)
