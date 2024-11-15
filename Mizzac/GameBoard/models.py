@@ -21,11 +21,11 @@ class Game(models.Model):
     tips = models.JSONField(default=list, blank=True)
     categories = models.ManyToManyField('Category', related_name='Game')
     cover = models.ImageField(upload_to=get_upload_path, default='GameBoard/Games/default.png')
-    slug = models.SlugField(unique=True, blank=True)  # Champ slug ajouté
+    game_slug = models.SlugField(unique=True, blank=True)  # Champ slug ajouté
 
     def save(self, *args, **kwargs):
-        if not self.slug:
-            self.slug = slugify(self.name)  # Génère un slug basé sur le nom
+        if not self.game_slug:
+            self.game_slug = slugify(self.name)  # Génère un slug basé sur le nom
         super(Game, self).save(*args, **kwargs)
 
     def __str__(self):
@@ -51,6 +51,12 @@ class SkyJoSave(models.Model):
     users = models.JSONField(default=dict, blank=False)
     scores = models.JSONField(default=dict, blank=False)
     ranking = models.JSONField(default=list, blank=True)
+    save_slug = models.SlugField(unique=True, blank=True)
+    
+    def save(self, *args, **kwargs):
+        if not self.save_slug:
+            self.save_slug = slugify(self.id)
+        super(SkyJoSave, self).save(*args, **kwargs)
 
 class NavalBattleSave(models.Model):
     id = models.AutoField(primary_key=True)
@@ -78,36 +84,3 @@ class ChessSave(models.Model):
     users_actions = models.JSONField(default=list, blank=False) # format : 1A2 first number identify player and second part identify the location of move
     ranking = models.JSONField(default=list, blank=True)
     
-    
-# class Partie(models.Model):
-#     jeu = models.ForeignKey(Jeu, on_delete=models.CASCADE, related_name="parties")
-#     date_debut = models.DateTimeField(auto_now_add=True)
-#     date_fin = models.DateTimeField(blank=True, null=True)
-#     joueurs = models.ManyToManyField(ProfilJoueur, through='Participation')
-
-#     def __str__(self):
-#         return f"{self.jeu.nom} - {self.date_debut}"
-
-# class Participation(models.Model):
-#     joueur = models.ForeignKey(ProfilJoueur, on_delete=models.CASCADE)
-#     partie = models.ForeignKey(Partie, on_delete=models.CASCADE)
-#     score = models.IntegerField(default=0)
-
-#     def __str__(self):
-#         return f"{self.joueur} - {self.partie} - Score: {self.score}"
-
-# class HistoriquePartie(models.Model):
-#     partie = models.OneToOneField(Partie, on_delete=models.CASCADE, related_name="historique")
-#     date_archive = models.DateTimeField(auto_now_add=True)
-
-#     def __str__(self):
-#         return f"Historique de {self.partie}"
-
-# class Statistique(models.Model):
-#     joueur = models.ForeignKey(ProfilJoueur, on_delete=models.CASCADE, related_name="statistiques")
-#     jeu = models.ForeignKey(Jeu, on_delete=models.CASCADE, related_name="statistiques")
-#     nombre_victoires = models.IntegerField(default=0)
-#     pourcentage_reussite = models.FloatField(default=0.0)
-
-#     def __str__(self):
-#         return f"Stats de {self.joueur} pour {self.jeu.nom}"
