@@ -3,7 +3,11 @@
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import CompteBancaire, Transaction, Abonnement, Revenu
+from .models import CompteBancaire, Transaction, Abonnement, Revenu, Asset, InvestmentAccount, SuiviAsset, ListeSuivi
+from .forms import AbonnementForm
+from django.db.models import Sum
+from django.core.exceptions import ValidationError
+from django.contrib import messages
 
 # FundBoard Dashboard View
 class FundBoardView(LoginRequiredMixin, TemplateView):
@@ -35,16 +39,57 @@ class SubscriptionsView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Abonnement.objects.filter(user=self.request.user).order_by('date_prochaine_echeance')
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Calcul des dépenses par fréquence
+        frequency_data = Abonnement.objects.filter(user=self.request.user).values('frequence').annotate(total=Sum('montant'))
+        labels = [item['frequence'].title() for item in frequency_data]
+        data = [item['total'] for item in frequency_data]
+        context['labels'] = labels
+        context['data'] = data
+        return context
+
+# Add Subscription View
 class AddSubscriptionView(LoginRequiredMixin, CreateView):
     model = Abonnement
-    fields = ['nom', 'montant', 'frequence', 'date_prochaine_echeance']
+    form_class = AbonnementForm
     template_name = 'fundboard/add_subscription.html'
     success_url = reverse_lazy('fundboard:subscriptions')
     login_url = reverse_lazy('fundboard:login')
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        messages.success(self.request, 'Abonnement ajouté avec succès!')
         return super().form_valid(form)
+
+# Edit Subscription View
+class EditSubscriptionView(LoginRequiredMixin, UpdateView):
+    model = Abonnement
+    form_class = AbonnementForm
+    template_name = 'fundboard/edit_subscription.html'
+    success_url = reverse_lazy('fundboard:subscriptions')
+    login_url = reverse_lazy('fundboard:login')
+
+    def get_queryset(self):
+        return Abonnement.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, 'Abonnement mis à jour avec succès!')
+        return super().form_valid(form)
+
+# Delete Subscription View
+class DeleteSubscriptionView(LoginRequiredMixin, DeleteView):
+    model = Abonnement
+    template_name = 'fundboard/delete_subscription.html'
+    success_url = reverse_lazy('fundboard:subscriptions')
+    login_url = reverse_lazy('fundboard:login')
+
+    def get_queryset(self):
+        return Abonnement.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Abonnement supprimé avec succès!')
+        return super().delete(request, *args, **kwargs)
 
 # Revenues View
 class RevenuesView(LoginRequiredMixin, ListView):
@@ -75,6 +120,7 @@ class AddAccountView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
+        messages.success(self.request, 'Compte bancaire ajouté avec succès!')
         return super().form_valid(form)
 
 class EditAccountView(LoginRequiredMixin, UpdateView):
@@ -87,6 +133,10 @@ class EditAccountView(LoginRequiredMixin, UpdateView):
     def get_queryset(self):
         return CompteBancaire.objects.filter(user=self.request.user)
 
+    def form_valid(self, form):
+        messages.success(self.request, 'Compte bancaire mis à jour avec succès!')
+        return super().form_valid(form)
+
 class DeleteAccountView(LoginRequiredMixin, DeleteView):
     model = CompteBancaire
     template_name = 'fundboard/delete_account.html'
@@ -95,3 +145,8 @@ class DeleteAccountView(LoginRequiredMixin, DeleteView):
 
     def get_queryset(self):
         return CompteBancaire.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, 'Compte bancaire supprimé avec succès!')
+        return super().delete(request, *args, **kwargs)
+

@@ -6,12 +6,14 @@ from .views import (
     PortfolioView,
     TransactionsView,
     SubscriptionsView,
+    AddSubscriptionView,
+    EditSubscriptionView,
+    DeleteSubscriptionView,
     RevenuesView,
     AccountsView,
     AddAccountView,
     EditAccountView,
     DeleteAccountView,
-    AddSubscriptionView
 )
 from django.contrib.auth import views as auth_views
 
@@ -30,6 +32,8 @@ urlpatterns = [
     # Abonnements
     path('subscriptions/', SubscriptionsView.as_view(), name='subscriptions'),
     path('subscriptions/add/', AddSubscriptionView.as_view(), name='add_subscription'),
+    path('subscriptions/edit/<int:pk>/', EditSubscriptionView.as_view(), name='edit_subscription'),
+    path('subscriptions/delete/<int:pk>/', DeleteSubscriptionView.as_view(), name='delete_subscription'),
 
     # Revenus
     path('revenues/', RevenuesView.as_view(), name='revenues'),
@@ -39,9 +43,4 @@ urlpatterns = [
     path('accounts/add/', AddAccountView.as_view(), name='add_account'),
     path('accounts/edit/<int:pk>/', EditAccountView.as_view(), name='edit_account'),
     path('accounts/delete/<int:pk>/', DeleteAccountView.as_view(), name='delete_account'),
-
-    # Authentification
-    path('login/', auth_views.LoginView.as_view(template_name='registration/login.html'), name='login'),
-    path('logout/', auth_views.LogoutView.as_view(), name='logout'),
-    path('signup/', auth_views.LoginView.as_view(template_name='registration/signup.html'), name='signup'),
 ]

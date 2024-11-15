@@ -1,7 +1,7 @@
 {% extends 'common/base.html' %}
+{% load static %}
 
 {% block content %}
-
 <div class="container mt-4">
     <h2>Abonnements</h2>
     <hr>
@@ -15,7 +15,7 @@
             <thead>
                 <tr>
                     <th>Nom</th>
-                    <th>Montant</th>
+                    <th>Montant (€)</th>
                     <th>Fréquence</th>
                     <th>Prochaine Échéance</th>
                     <th>Actions</th>
@@ -26,12 +26,18 @@
                     <tr>
                         <td>{{ abonnement.nom }}</td>
                         <td>{{ abonnement.montant }}</td>
-                        <td>{{ abonnement.get_frequence_display }}</td>
+                        <td>
+                            {% if abonnement.frequence == 'PERSONALIZED' and abonnement.frequence_personnalisee %}
+                                Personnalisé ({{ abonnement.frequence_personnalisee }} jours)
+                            {% else %}
+                                {{ abonnement.get_frequence_display }}
+                            {% endif %}
+                        </td>
                         <td>{{ abonnement.date_prochaine_echeance|date:"d/m/Y" }}</td>
                         <td>
                             <!-- Actions possibles (éditer, supprimer) -->
-                            <a href="#" class="btn btn-sm btn-secondary">Éditer</a>
-                            <a href="#" class="btn btn-sm btn-danger">Supprimer</a>
+                            <a href="{% url 'fundboard:edit_subscription' abonnement.id %}" class="btn btn-sm btn-secondary">Éditer</a>
+                            <a href="{% url 'fundboard:delete_subscription' abonnement.id %}" class="btn btn-sm btn-danger">Supprimer</a>
                         </td>
                     </tr>
                 {% endfor %}
@@ -40,6 +46,58 @@
     {% else %}
         <p>Aucun abonnement enregistré.</p>
     {% endif %}
+    
+    <!-- Graphique de Répartition des Dépenses par Fréquence -->
+    <div class="card mt-5">
+        <div class="card-header">
+            Répartition des Dépenses par Fréquence
+        </div>
+        <div class="card-body">
+            <canvas id="subscriptionsChart"></canvas>
+        </div>
+    </div>
 </div>
 
+<!-- Intégration de Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+{{ labels|json_script:"labels-data" }}
+{{ data|json_script:"data-values" }}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        var ctx = document.getElementById('subscriptionsChart').getContext('2d');
+
+        // Génération des labels
+        var labels = JSON.parse(document.getElementById('labels-data').textContent);
+        var data = JSON.parse(document.getElementById('data-values').textContent);
+
+        var subscriptionsChart = new Chart(ctx, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    data: data,
+                    backgroundColor: [
+                        '#FF6384',
+                        '#36A2EB',
+                        '#FFCE56',
+                        '#4BC0C0',
+                        '#9966FF'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Répartition des Dépenses par Fréquence'
+                    }
+                }
+            }
+        });
+    });
+</script>
 {% endblock %}
