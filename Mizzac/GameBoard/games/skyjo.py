@@ -21,8 +21,6 @@ class SkyJo:
 
         # Save the instance to the database
         new_game.save()
-        
-        pass
 
     def update_data(self, data):
         # Code to update data in the database
@@ -82,6 +80,8 @@ class SkyJo:
         
         self.insert_data(data_dict)
         
+        Logger().log(level=20, message=f"Data import from CSV file: {file_path}", log_file="GameBoard.log")
+        
     
     def import_data_from_json(self, file_path):
         """
@@ -118,6 +118,8 @@ class SkyJo:
             }
             
             self.insert_data(data_dict)
+            
+            Logger().log(level=20, message=f"Data import from JSON file: {file_path}", log_file="GameBoard.log")
     
     def export_data_from_json(self, file_path = "GameBoard/data/SkyJo_Save.json"):
         
