@@ -529,7 +529,7 @@ __pycache__/
 *.log.*
 
 # OS generated files - macOS
-.DS_Store
+*.DS_Store
 
 # Thumbnails
 ._*
@@ -544,4 +544,14 @@ __pycache__/
 Network Trash Folder
 Temporary Items
 .apdisk
+Mizzac/GameBoard/management/commands/*
+Mizzac/FundBoard/management/commands/*
+Mizzac/DrunkBoard/management/commands/*
+Mizzac/ToolBoard/management/commands/*
+Mizzac/DashBoardBoard/management/commands/*
 
+Mizzac/GameBoard/data/*
+Mizzac/FundBoard/data/*
+Mizzac/DrunkBoard/data/*
+Mizzac/ToolBoard/data/*
+Mizzac/DashBoard/data/*
