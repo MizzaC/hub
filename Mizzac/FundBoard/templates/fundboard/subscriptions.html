@@ -1,0 +1,45 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Abonnements</h2>
+    <hr>
+    
+    <!-- Bouton pour ajouter un abonnement -->
+    <a href="{% url 'fundboard:add_subscription' %}" class="btn btn-primary mb-3">Ajouter un Abonnement</a>
+    
+    <!-- Tableau des abonnements -->
+    {% if subscriptions %}
+        <table class="table table-hover">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Montant</th>
+                    <th>Fréquence</th>
+                    <th>Prochaine Échéance</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for abonnement in subscriptions %}
+                    <tr>
+                        <td>{{ abonnement.nom }}</td>
+                        <td>{{ abonnement.montant }}</td>
+                        <td>{{ abonnement.get_frequence_display }}</td>
+                        <td>{{ abonnement.date_prochaine_echeance|date:"d/m/Y" }}</td>
+                        <td>
+                            <!-- Actions possibles (éditer, supprimer) -->
+                            <a href="#" class="btn btn-sm btn-secondary">Éditer</a>
+                            <a href="#" class="btn btn-sm btn-danger">Supprimer</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucun abonnement enregistré.</p>
+    {% endif %}
+</div>
+
+{% endblock %}

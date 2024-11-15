@@ -1,0 +1,18 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Supprimer le Compte Bancaire</h2>
+    <hr>
+    
+    <p>Êtes-vous sûr de vouloir supprimer le compte <strong>{{ object.nom }}</strong> ? Cette action est irréversible.</p>
+    
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Confirmer la Suppression</button>
+        <a href="{% url 'fundboard:accounts' %}" class="btn btn-secondary">Annuler</a>
+    </form>
+</div>
+
+{% endblock %}

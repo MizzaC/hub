@@ -1,0 +1,42 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h2>Comptes Bancaires</h2>
+    <hr>
+    
+    <!-- Bouton pour ajouter un compte bancaire -->
+    <a href="{% url 'fundboard:add_account' %}" class="btn btn-success mb-3">Ajouter un Compte Bancaire</a>
+    
+    <!-- Tableau des comptes bancaires -->
+    {% if accounts %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nom</th>
+                    <th>Solde</th>
+                    <th>Devise</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for account in accounts %}
+                    <tr>
+                        <td>{{ account.nom }}</td>
+                        <td>{{ account.solde }}</td>
+                        <td>{{ account.devise }}</td>
+                        <td>
+                            <a href="{% url 'fundboard:edit_account' account.id %}" class="btn btn-primary btn-sm">Éditer</a>
+                            <a href="{% url 'fundboard:delete_account' account.id %}" class="btn btn-danger btn-sm">Supprimer</a>
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    {% else %}
+        <p>Aucun compte bancaire ajouté.</p>
+    {% endif %}
+</div>
+
+{% endblock %}
