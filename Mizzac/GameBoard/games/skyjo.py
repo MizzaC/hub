@@ -1,11 +1,13 @@
 import pandas as pd
 from django.utils import timezone
 from GameBoard.models import SkyJoSave
-import json
+from django.core.serializers import serialize
+from DashBoard.utils.tools import Logger
+import json,os
 
 class SkyJo:
-    def __init__(self, db_name):
-        self.db_name = db_name
+    def __init__(self):
+        self.db_name = "zaed"
 
     def insert_data(self, data):
         
@@ -117,11 +119,24 @@ class SkyJo:
             
             self.insert_data(data_dict)
     
-    def export_data_from_json(self, file_path):
-        # Code to import game data from Excel using pandas
-        data = pd.read_excel(file_path)
-        # Process the data and insert it into the database
-        pass
+    def export_data_from_json(self, file_path = "GameBoard/data/SkyJo_Save.json"):
+        
+        # Vérifier si le dossier du fichier existe, sinon le créer
+        dir_path = os.path.dirname(file_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)  # Crée les dossiers nécessaires
+            
+       # Récupérer toutes les données de la table SkyJoSave
+        data = SkyJoSave.objects.all()
+
+        # Sérialiser les données en JSON
+        data_json = serialize('json', data)
+
+        # Écrire les données JSON dans un fichier
+        with open(file_path, 'w', encoding='utf-8') as json_file:
+            json_file.write(data_json)
+        
+        Logger().log(level=20, message=f"Data exported to JSON file: {file_path}", log_file="GameBoard.log")
 
     def other_useful_function(self):
         # Other useful functions related to SkyJo
