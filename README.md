@@ -17,6 +17,7 @@ Update your database for a first Django utilization:
 Initialize database with default values (Optional but recommended)
 
     python manage.py loaddata ToolBoard\fixtures\tools.json
+    python manage.py loaddata DrunkBoard/fixtures/aromes.json
 
 To create a superuser to connect to applications as such, particularly for test purposes (Optional)
 
