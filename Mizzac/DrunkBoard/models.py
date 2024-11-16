@@ -39,7 +39,7 @@ class Degustation(models.Model):
     note = models.JSONField()
     commentaire = models.TextField()
     date = models.DateField(auto_now_add=True)
-    commentaires = models.JSONField()
+    observations = models.JSONField() # json avec clé aromes, texture, couleur, etc contenant des listes de notes comme les aromes etc
     
 class Arome(models.Model):
     nom = models.CharField(max_length=40)
