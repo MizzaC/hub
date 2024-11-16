@@ -28,6 +28,7 @@ from django.db import models
 class Boisson(models.Model):
     nom = models.CharField(max_length=100, blank=False)
     categorie = models.CharField(max_length=100, blank=False)
+    taux_alcool = models.DecimalField(max_digits=4, decimal_places=1)
     annee = models.IntegerField(blank=False)
     histoire = models.TextField()
     Pays = models.CharField(max_length=20)
@@ -45,3 +46,17 @@ class Arome(models.Model):
     nom = models.CharField(max_length=40)
     famille_aromatique = models.CharField(max_length=30)
     sous_famille_aromatique = models.CharField(max_length=30)
+
+class Texture_Vin(models.Model):
+    texture = models.CharField(max_length=30)
+    
+class Texture_Whisky(models.Model):
+    texture = models.CharField(max_length=30)
+    
+class Couleur_Vin(models.Model):
+    nom_couleur = models.CharField(max_length=30)
+    code_couleur = models.CharField(max_length=30)
+    
+class Couleur_Whisky(models.Model):
+    nom_couleur = models.CharField(max_length=30)
+    code_couleur = models.CharField(max_length=30)
