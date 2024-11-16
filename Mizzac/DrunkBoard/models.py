@@ -27,7 +27,7 @@ from django.db import models
 
 class Boisson(models.Model):
     nom = models.CharField(max_length=100, blank=False)
-    categorie = models.ForeignKey(max_length=100, blank=False)
+    categorie = models.CharField(max_length=100, blank=False)
     annee = models.IntegerField(blank=False)
     histoire = models.TextField()
     Pays = models.CharField(max_length=20)
@@ -39,6 +39,9 @@ class Degustation(models.Model):
     note = models.JSONField()
     commentaire = models.TextField()
     date = models.DateField(auto_now_add=True)
-    aromes = models.JSONField()
-    texture = models.ForeignKey(Texture, on_delete=models.CASCADE)
-    visuel = models.JSONField()
+    commentaires = models.JSONField()
+    
+class Arome(models.Model):
+    nom = models.CharField(max_length=40)
+    famille_aromatique = models.CharField(max_length=30)
+    sous_famille_aromatique = models.CharField(max_length=30)
