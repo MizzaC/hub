@@ -36,9 +36,9 @@ class Boisson(models.Model):
 
 class Degustation(models.Model):
     boisson = models.ForeignKey(Boisson, on_delete=models.CASCADE)
-    note = models.JSONField()
-    commentaire = models.TextField()
-    date = models.DateField(auto_now_add=True)
+    note = models.JSONField() # json avec comme clés des noms de notes et comme valeurs des notes allant de 0 à 5 (ex: {"aromes": 3, "texture": 4, "couleur": 2, etc}) 
+    commentaire = models.TextField() # commentaire général
+    date = models.DateField(auto_now_add=True) # date de la dégustation
     observations = models.JSONField() # json avec clé aromes, texture, couleur, etc contenant des listes de notes comme les aromes etc
     
 class Arome(models.Model):
