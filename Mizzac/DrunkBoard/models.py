@@ -42,10 +42,11 @@ class Degustation(models.Model):
     date = models.DateField(auto_now_add=True) # date de la dégustation
     observations = models.JSONField() # json avec clé aromes, texture, couleur, etc contenant des listes de notes comme les aromes etc
     
-class Arome(models.Model):
+class Arome_whisky(models.Model):
     nom = models.CharField(max_length=40)
     famille_aromatique = models.CharField(max_length=30)
     sous_famille_aromatique = models.CharField(max_length=30)
+    color = models.CharField(max_length=7)
 
 class Texture_Vin(models.Model):
     texture = models.CharField(max_length=30)
