@@ -61,9 +61,12 @@ class Texture_Whisky(models.Model):
     texture = models.CharField(max_length=30)
     
 class Couleur_Vin(models.Model):
-    nom_couleur = models.CharField(max_length=30)
-    code_couleur = models.CharField(max_length=30)
+    nom = models.CharField(max_length=30)
+    cat_vin = models.CharField(max_length=30)
+    color = models.CharField(max_length=30)
+    echelle = models.CharField(max_length=30)
     
 class Couleur_Whisky(models.Model):
-    nom_couleur = models.CharField(max_length=30)
-    code_couleur = models.CharField(max_length=30)
+    nom = models.CharField(max_length=30)
+    color = models.CharField(max_length=30)
+    echelle = models.CharField(max_length=30)
