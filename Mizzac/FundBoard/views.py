@@ -11,7 +11,7 @@ from django.contrib import messages
 
 # FundBoard Dashboard View
 class FundBoardView(LoginRequiredMixin, TemplateView):
-    template_name = 'fundboard/dashboard.html'
+    template_name = 'pages/fundboard.html'
     login_url = reverse_lazy('fundboard:login')
 
 # Portfolio View
