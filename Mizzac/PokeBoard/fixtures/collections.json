@@ -1,0 +1,22 @@
+[
+    {
+        "model": "PokeBoard.collection",
+        "pk": 1,
+        "fields": {
+            "name": "Pokémon TCG Pocket",
+            "description": "Collection virtuelle des cartes du jeu Pokémon TCG Pocket",
+            "collection_type": "virtual",
+            "image_url": "PokeBoard/Collections/PkmnTCGPocket.webp"
+        }
+    },
+    {
+        "model": "PokeBoard.collection",
+        "pk": 2,
+        "fields": {
+            "name": "Pokémon TCG",
+            "description": "Collection de cartes Pokémon",
+            "collection_type": "physical",
+            "image_url": "PokeBoard/Collections/default.webp"
+        }
+    }
+]

@@ -26,6 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECURITY WARNING: keep the secret key used in production secret!
 load_dotenv()
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY')
+POKEMON_TCG_API_KEY = os.getenv('POKEMON_TCG_API_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -47,6 +48,7 @@ INSTALLED_APPS = [
     'DrunkBoard',
     'DashBoard',
     'ToolBoard',
+    'PokeBoard',
 ]
 
 MIDDLEWARE = [

@@ -1,0 +1,20 @@
+<!-- templates/pages/usercollection_detail.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>{{ user_collection.name }}</h1>
+<p>Type de collection : {{ user_collection.collection.get_collection_type_display }}</p>
+<p>Date de création : {{ user_collection.created_at }}</p>
+
+<h2>Cartes dans cette collection :</h2>
+<ul>
+    {% for user_card in user_collection.usercard_set.all %}
+        <li>{{ user_card.card.name }} - Quantité : {{ user_card.quantity }}</li>
+    {% empty %}
+        <li>Aucune carte dans cette collection.</li>
+    {% endfor %}
+</ul>
+
+<!-- Formulaire ou lien pour ajouter des cartes -->
+{% endblock %}

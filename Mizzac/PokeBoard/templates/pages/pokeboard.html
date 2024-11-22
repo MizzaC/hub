@@ -1,0 +1,22 @@
+<!-- templates/pages/pokeboard.html -->
+
+{% extends "base.html" %}
+
+{% block content %}
+<h1>Bienvenue, {{ user.username }} !</h1>
+
+<h2>Vos Collections</h2>
+<div class="collections">
+    {% for user_collection in user_collections %}
+        <div class="collection-card">
+            <a href="{% url 'pokeboard:usercollection_detail' user_collection.id %}">
+                <img src="{{ user_collection.collection.image_url}}" alt="{{ user_collection.name }}">
+                <h3>{{ user_collection.name }}</h3>
+                <p>{{ user_collection.collection.get_collection_type_display }}</p>
+            </a>
+        </div>
+    {% endfor %}
+</div>
+
+<a href="{% url 'pokeboard:create_usercollection' %}">Créer une nouvelle collection</a>
+{% endblock %}
