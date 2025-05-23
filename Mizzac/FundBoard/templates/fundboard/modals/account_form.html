@@ -1,0 +1,38 @@
+{% load static %}
+
+{#  - Si object existe  → édition
+    - Sinon            → ajout                          #}
+<form method="post"
+      action="{% if object %}
+                 {% url 'fundboard:edit_account_modal' object.pk %}
+              {% else %}
+                 {% url 'fundboard:add_account_modal' %}
+              {% endif %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% if object %}Modifier le compte{% else %}Ajouter un compte{% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mb-3">{{ form.nom.label_tag }}{{ form.nom }}</div>
+        <div class="mb-3">{{ form.type_compte.label_tag }}{{ form.type_compte }}</div>
+        <div class="mb-3">{{ form.solde.label_tag }}{{ form.solde }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-success">
+          {% if object %}Enregistrer{% else %}Ajouter{% endif %}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</form>

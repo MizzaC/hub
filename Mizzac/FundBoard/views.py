@@ -1,120 +1,102 @@
 # FundBoard/views.py
-
 from django.urls import reverse_lazy
-from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import (
+    TemplateView, ListView, CreateView, UpdateView, DeleteView
+)
+from django.http import HttpResponse, HttpResponseForbidden
+from django.template.loader import render_to_string
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
 from django.contrib import messages
 
 from .models import (
-    CompteBancaire,
-    InvestmentAccount,
-    Transaction,
-    Abonnement,
-    Revenu,
-    Asset,
-    ListeSuivi,
-    SuiviAsset
+    CompteBancaire, InvestmentAccount, Transaction,
+    Abonnement, Revenu
 )
 from .forms import AbonnementForm, ManualAccountForm
 
-# FundBoard Dashboard View
+# ========== Dashboard & pages classiques =========================
 class FundBoardView(LoginRequiredMixin, TemplateView):
     template_name = 'fundboard/fundboard.html'
     login_url = reverse_lazy('fundboard:login')
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
+    def get_context_data(self, **kw):
+        ctx = super().get_context_data(**kw)
         user = self.request.user
+        ctx.update(
+            accounts_count           = CompteBancaire.objects.filter(user=user).count(),
+            investment_accounts_count= InvestmentAccount.objects.filter(user=user).count(),
+            transactions_count       = Transaction.objects.filter(user=user).count(),
+            subscriptions_count      = Abonnement.objects.filter(user=user).count(),
+            recent_transactions      = Transaction.objects.filter(user=user).order_by('-date_transaction')[:5],
+            total_balance            = CompteBancaire.objects.filter(user=user).aggregate(Sum('solde'))['solde__sum'] or 0
+        )
+        return ctx
 
-        context['accounts_count'] = CompteBancaire.objects.filter(user=user).count()
-        context['investment_accounts_count'] = InvestmentAccount.objects.filter(user=user).count()
-        context['transactions_count'] = Transaction.objects.filter(user=user).count()
-        context['subscriptions_count'] = Abonnement.objects.filter(user=user).count()
-        context['recent_transactions'] = Transaction.objects.filter(user=user).order_by('-date_transaction')[:5]
-        context['total_balance'] = CompteBancaire.objects.filter(user=user).aggregate(Sum('solde'))['solde__sum'] or 0
-
-        return context
-
-# Portfolio View
 class PortfolioView(LoginRequiredMixin, TemplateView):
     template_name = 'fundboard/portfolio.html'
     login_url = reverse_lazy('fundboard:login')
+    def get_context_data(self, **kw):
+        ctx = super().get_context_data(**kw)
+        ctx['investment_accounts'] = InvestmentAccount.objects.filter(user=self.request.user)
+        return ctx
 
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        user = self.request.user
-        context['investment_accounts'] = InvestmentAccount.objects.filter(user=user)
-        return context
-
-# Transactions View
 class TransactionsView(LoginRequiredMixin, ListView):
     model = Transaction
     template_name = 'fundboard/transactions.html'
     context_object_name = 'transactions'
     login_url = reverse_lazy('fundboard:login')
-
     def get_queryset(self):
         return Transaction.objects.filter(user=self.request.user).order_by('-date_transaction')
 
-# Subscriptions View
 class SubscriptionsView(LoginRequiredMixin, ListView):
     model = Abonnement
     template_name = 'fundboard/subscriptions.html'
     context_object_name = 'subscriptions'
     login_url = reverse_lazy('fundboard:login')
-
     def get_queryset(self):
         return Abonnement.objects.filter(user=self.request.user).order_by('date_prochaine_echeance')
-
-    def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
-        frequency_data = Abonnement.objects.filter(user=self.request.user).values('frequence').annotate(total=Sum('montant'))
-        context['labels'] = [item['frequence'].title() for item in frequency_data]
-        context['data'] = [item['total'] for item in frequency_data]
-        return context
-
-# Add Subscription View
+    def get_context_data(self, **kw):
+        ctx = super().get_context_data(**kw)
+        freq = Abonnement.objects.filter(user=self.request.user).values('frequence').annotate(total=Sum('montant'))
+        ctx['labels'] = [f['frequence'].title() for f in freq]
+        ctx['data']   = [f['total'] for f in freq]
+        return ctx
+    
+    # ---------- CRUD Abonnement simples (pas en modal pour l’instant) ----------
 class AddSubscriptionView(LoginRequiredMixin, CreateView):
-    model = Abonnement
-    form_class = AbonnementForm
-    template_name = 'fundboard/add_subscription.html'
-    success_url = reverse_lazy('fundboard:subscriptions')
-    login_url = reverse_lazy('fundboard:login')
-
+    model         = Abonnement
+    form_class    = AbonnementForm
+    template_name = 'fundboard/subscriptions_form.html'
+    success_url   = reverse_lazy('fundboard:subscriptions')
+    login_url     = reverse_lazy('fundboard:login')
     def form_valid(self, form):
         form.instance.user = self.request.user
-        messages.success(self.request, 'Abonnement ajouté avec succès !')
+        messages.success(self.request, "Abonnement ajouté.")
         return super().form_valid(form)
 
-# Edit Subscription View
 class EditSubscriptionView(LoginRequiredMixin, UpdateView):
-    model = Abonnement
-    form_class = AbonnementForm
-    template_name = 'fundboard/edit_subscription.html'
-    success_url = reverse_lazy('fundboard:subscriptions')
-    login_url = reverse_lazy('fundboard:login')
-
+    model         = Abonnement
+    form_class    = AbonnementForm
+    template_name = 'fundboard/subscriptions_form.html'
+    success_url   = reverse_lazy('fundboard:subscriptions')
+    login_url     = reverse_lazy('fundboard:login')
     def get_queryset(self):
         return Abonnement.objects.filter(user=self.request.user)
-
     def form_valid(self, form):
-        messages.success(self.request, 'Abonnement mis à jour avec succès !')
+        messages.success(self.request, "Abonnement mis à jour.")
         return super().form_valid(form)
 
-# Delete Subscription View
 class DeleteSubscriptionView(LoginRequiredMixin, DeleteView):
-    model = Abonnement
-    template_name = 'fundboard/delete_subscription.html'
-    success_url = reverse_lazy('fundboard:subscriptions')
-    login_url = reverse_lazy('fundboard:login')
-
+    model         = Abonnement
+    template_name = 'fundboard/subscriptions_delete.html'
+    success_url   = reverse_lazy('fundboard:subscriptions')
+    login_url     = reverse_lazy('fundboard:login')
     def get_queryset(self):
         return Abonnement.objects.filter(user=self.request.user)
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Abonnement supprimé avec succès !')
-        return super().delete(request, *args, **kwargs)
+    def delete(self, request, *a, **kw):
+        messages.success(request, "Abonnement supprimé.")
+        return super().delete(request, *a, **kw)
 
 # Revenues View
 class RevenuesView(LoginRequiredMixin, ListView):
@@ -126,56 +108,63 @@ class RevenuesView(LoginRequiredMixin, ListView):
     def get_queryset(self):
         return Revenu.objects.filter(user=self.request.user).order_by('date_prochain_paiement')
 
-# Comptes Bancaires Views
+# ------------ Comptes (liste) -----------------------------------
 class AccountsView(LoginRequiredMixin, ListView):
     model = CompteBancaire
     template_name = 'fundboard/accounts.html'
     context_object_name = 'accounts'
     login_url = reverse_lazy('fundboard:login')
-
     def get_queryset(self):
         return CompteBancaire.objects.filter(user=self.request.user)
-    def get_context_data(self, **kwargs):
-        ctx = super().get_context_data(**kwargs)
+    def get_context_data(self, **kw):
+        ctx = super().get_context_data(**kw)
         ctx['manual_form'] = ManualAccountForm()
         return ctx
 
-# FundBoard/views.py  (extrait)
-class AddAccountView(LoginRequiredMixin, CreateView):
-    model         = CompteBancaire
-    form_class    = ManualAccountForm
-    template_name = 'fundboard/add_account_modal.html'  # n’est plus appelé via route directe
-    success_url   = reverse_lazy('fundboard:accounts')
 
+# =================================================================
+#               MIXIN & VUES MODALES (AJAX only)                   =
+# =================================================================
+class AjaxModalMixin:
+    template_name_fragment = None
+    def dispatch(self, request, *args, **kwargs):
+        if request.method == "GET" and request.headers.get('x-requested-with') != 'XMLHttpRequest':
+            return HttpResponseForbidden("Modal uniquement.")
+        return super().dispatch(request, *args, **kwargs)
+    def render_to_response(self, context, **resp_kwargs):
+        html = render_to_string(self.template_name_fragment, context, self.request)
+        return HttpResponse(html)
+
+class AccountSourceModal(AjaxModalMixin, TemplateView):
+    template_name_fragment = "fundboard/modals/account_source.html"
+
+class AddAccountModal(AjaxModalMixin, CreateView):
+    model = CompteBancaire
+    form_class = ManualAccountForm
+    template_name_fragment = 'fundboard/modals/account_form.html'
+    success_url = reverse_lazy('fundboard:accounts')
     def form_valid(self, form):
         form.instance.user = self.request.user
         messages.success(self.request, "Compte ajouté !")
         return super().form_valid(form)
 
-
-class EditAccountView(LoginRequiredMixin, UpdateView):
+class EditAccountModal(AjaxModalMixin, UpdateView):
     model = CompteBancaire
-    fields = ['nom', 'solde', 'devise']
-    template_name = 'fundboard/edit_account.html'
+    form_class = ManualAccountForm
+    template_name_fragment = 'fundboard/modals/account_form.html'
     success_url = reverse_lazy('fundboard:accounts')
-    login_url = reverse_lazy('fundboard:login')
-
     def get_queryset(self):
         return CompteBancaire.objects.filter(user=self.request.user)
-
     def form_valid(self, form):
-        messages.success(self.request, 'Compte bancaire mis à jour avec succès !')
+        messages.success(self.request, "Compte mis à jour.")
         return super().form_valid(form)
 
-class DeleteAccountView(LoginRequiredMixin, DeleteView):
+class DeleteAccountModal(AjaxModalMixin, DeleteView):
     model = CompteBancaire
-    template_name = 'fundboard/delete_account.html'
+    template_name_fragment = 'fundboard/modals/account_delete.html'
     success_url = reverse_lazy('fundboard:accounts')
-    login_url = reverse_lazy('fundboard:login')
-
     def get_queryset(self):
         return CompteBancaire.objects.filter(user=self.request.user)
-
-    def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Compte bancaire supprimé avec succès !')
-        return super().delete(request, *args, **kwargs)
+    def delete(self, request, *a, **kw):
+        messages.success(request, "Compte supprimé.")
+        return super().delete(request, *a, **kw)

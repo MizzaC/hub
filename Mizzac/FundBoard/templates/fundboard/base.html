@@ -1,10 +1,42 @@
 {% extends 'common/base.html' %}{% load static %}
 
-{# — wrapper FundBoard : sidebar fixe + off-canvas mobile — #}
 {% block content %}
-    {% include 'fundboard/_sidebar.html' %}   {# <-- la barre latérale #}
+    {% include 'fundboard/_sidebar.html' %}
 
     <div id="fbContentWrapper" class="p-4">
         {% block fb_content %}{% endblock fb_content %}
     </div>
+
+    {# ------------ conteneur modal dynamique (obligatoire) -------- #}
+    <div id="fbDynamicModal" class="modal fade" tabindex="-1"></div>
 {% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('click', async (e) => {
+  const btn = e.target.closest('[data-bs-toggle="dynamic-modal"]');
+  if (!btn) return;
+
+  e.preventDefault();
+  const url = btn.dataset.href;
+
+  // — récupère ou crée le conteneur modal —
+  let modalEl = document.getElementById('fbDynamicModal');
+  if (!modalEl) {
+      modalEl = document.createElement('div');
+      modalEl.id = 'fbDynamicModal';
+      modalEl.className = 'modal fade';
+      document.body.appendChild(modalEl);
+  }
+
+  // — charge le fragment HTML —
+  const html = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
+                     .then(r => r.text());
+  modalEl.innerHTML = html;
+
+  // — ouvre la modale —
+  new bootstrap.Modal(modalEl).show();
+});
+</script>
+{% endblock %}
+
