@@ -1,0 +1,44 @@
+{# Sidebar desktop & off-canvas mobile #}
+{% load static %}
+{% comment %}-- variables CSS : hauteur navbar / largeur sidebar --{% endcomment %}
+<style>
+  :root{
+    --fb-navbar-height:56px;     /* adapte si ta navbar est + haute */
+    --fb-sidebar-width:240px;
+  }
+  /* ----- Desktop ----- */
+  #fbSidebar{
+    position:fixed;
+    top:var(--fb-navbar-height);
+    left:0;
+    width:var(--fb-sidebar-width);
+    height:calc(100vh - var(--fb-navbar-height));
+    background:#364A63;
+    color:#fff;
+    overflow-y:auto;
+    transition:all .3s ease;
+    z-index:1030;               /* sous la navbar (1040) */
+  }
+  /* Décale le contenu desktop */
+  @media (min-width:768px){
+      #fbContentWrapper{ margin-left:var(--fb-sidebar-width); padding-top:var(--fb-navbar-height);}
+  }
+</style>
+
+{# ---------- Desktop sidebar ---------- #}
+<nav id="fbSidebar" class="d-none d-md-flex flex-column py-3">
+    <h4 class="px-3 mb-4 fw-bold">FundBoard</h4>
+    {% include 'fundboard/_sidebar_links.html' %}
+</nav>
+
+{# ---------- Mobile off-canvas ---------- #}
+<div class="offcanvas offcanvas-start d-md-none text-bg-dark"
+     tabindex="-1" id="fbSidebarMobile">
+  <div class="offcanvas-header">
+    <h5 class="offcanvas-title">FundBoard</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+  </div>
+  <div class="offcanvas-body p-0">
+    {% include 'fundboard/_sidebar_links.html' %}
+  </div>
+</div>

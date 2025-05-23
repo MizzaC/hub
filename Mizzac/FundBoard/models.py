@@ -43,17 +43,18 @@ class CompteBancaire(models.Model):
         return f"{self.nom} ({self.user.username})"
 
 class InvestmentAccount(models.Model):
-    """
-    Représente les comptes d'investissement de l'utilisateur (CTO, PEA, Crypto).
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     nom = models.CharField(max_length=255)
     type_compte = models.CharField(max_length=10, choices=INVESTMENT_ACCOUNT_TYPES)
     solde = models.DecimalField(max_digits=15, decimal_places=2, default=0.00)
     devise = models.CharField(max_length=10)
+    # Future API integrations
+    api_connected = models.BooleanField(default=False)
+    api_service = models.CharField(max_length=50, blank=True, null=True)
 
     def __str__(self):
         return f"{self.nom} - {self.get_type_compte_display()} ({self.user.username})"
+
 
 class Asset(models.Model):
     """

@@ -1,42 +1,61 @@
 {% extends 'common/base.html' %}
+{% load static %}
+
+{# ------------------------------------------------------------------ #}
+{#  FundBoard – Comptes bancaires (liste + actions)                   #}
+{#  Inclut un bouton de retour vers le dashboard FundBoard            #}
+{# ------------------------------------------------------------------ #}
 
 {% block content %}
+<div class="container my-4">
 
-<div class="container mt-4">
-    <h2>Comptes Bancaires</h2>
-    <hr>
-    
-    <!-- Bouton pour ajouter un compte bancaire -->
-    <a href="{% url 'fundboard:add_account' %}" class="btn btn-success mb-3">Ajouter un Compte Bancaire</a>
-    
-    <!-- Tableau des comptes bancaires -->
-    {% if accounts %}
-        <table class="table table-striped">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Solde</th>
-                    <th>Devise</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for account in accounts %}
-                    <tr>
-                        <td>{{ account.nom }}</td>
-                        <td>{{ account.solde }}</td>
-                        <td>{{ account.devise }}</td>
-                        <td>
-                            <a href="{% url 'fundboard:edit_account' account.id %}" class="btn btn-primary btn-sm">Éditer</a>
-                            <a href="{% url 'fundboard:delete_account' account.id %}" class="btn btn-danger btn-sm">Supprimer</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Aucun compte bancaire ajouté.</p>
-    {% endif %}
+    {# --- Breadcrumb / Back button --- #}
+    <div class="mb-3">
+        <a href="{% url 'fundboard:fundboard' %}" class="btn btn-link p-0 text-decoration-none">
+            <i class="bi bi-arrow-left"></i> &nbsp;Retour au tableau de bord
+        </a>
+    </div>
+
+    {# --- Header avec action ajout --- #}
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h2 class="fw-bold m-0">Comptes bancaires</h2>
+        <a href="{% url 'fundboard:add_account' %}" class="btn btn-primary rounded-pill">
+            <i class="bi bi-plus-lg me-1"></i> Ajouter un compte
+        </a>
+    </div>
+
+    <div class="card shadow-sm rounded-4">
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table table-hover mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th>Nom</th>
+                            <th class="text-end">Solde</th>
+                            <th>Devise</th>
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for acc in accounts %}
+                        <tr>
+                            <td class="fw-medium">{{ acc.nom }}</td>
+                            <td class="text-end">{{ acc.solde|floatformat:2 }}</td>
+                            <td>{{ acc.devise }}</td>
+                            <td class="text-end">
+                                <a href="{% url 'fundboard:edit_account' acc.pk %}" class="btn btn-sm btn-outline-secondary me-1">Éditer</a>
+                                <a href="{% url 'fundboard:delete_account' acc.pk %}" class="btn btn-sm btn-outline-danger">Supprimer</a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="text-center py-4 text-muted">Aucun compte bancaire enregistré.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
 </div>
-
 {% endblock %}

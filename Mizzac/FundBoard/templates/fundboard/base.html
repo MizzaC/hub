@@ -1,0 +1,10 @@
+{% extends 'common/base.html' %}{% load static %}
+
+{# — wrapper FundBoard : sidebar fixe + off-canvas mobile — #}
+{% block content %}
+    {% include 'fundboard/_sidebar.html' %}   {# <-- la barre latérale #}
+
+    <div id="fbContentWrapper" class="p-4">
+        {% block fb_content %}{% endblock fb_content %}
+    </div>
+{% endblock %}

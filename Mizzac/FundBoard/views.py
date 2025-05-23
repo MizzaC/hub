@@ -3,21 +3,49 @@
 from django.urls import reverse_lazy
 from django.views.generic import TemplateView, ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import CompteBancaire, Transaction, Abonnement, Revenu, Asset, InvestmentAccount, SuiviAsset, ListeSuivi
-from .forms import AbonnementForm
 from django.db.models import Sum
-from django.core.exceptions import ValidationError
 from django.contrib import messages
+
+from .models import (
+    CompteBancaire,
+    InvestmentAccount,
+    Transaction,
+    Abonnement,
+    Revenu,
+    Asset,
+    ListeSuivi,
+    SuiviAsset
+)
+from .forms import AbonnementForm
 
 # FundBoard Dashboard View
 class FundBoardView(LoginRequiredMixin, TemplateView):
-    template_name = 'pages/fundboard.html'
+    template_name = 'fundboard/fundboard.html'
     login_url = reverse_lazy('fundboard:login')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        context['accounts_count'] = CompteBancaire.objects.filter(user=user).count()
+        context['investment_accounts_count'] = InvestmentAccount.objects.filter(user=user).count()
+        context['transactions_count'] = Transaction.objects.filter(user=user).count()
+        context['subscriptions_count'] = Abonnement.objects.filter(user=user).count()
+        context['recent_transactions'] = Transaction.objects.filter(user=user).order_by('-date_transaction')[:5]
+        context['total_balance'] = CompteBancaire.objects.filter(user=user).aggregate(Sum('solde'))['solde__sum'] or 0
+
+        return context
 
 # Portfolio View
 class PortfolioView(LoginRequiredMixin, TemplateView):
     template_name = 'fundboard/portfolio.html'
     login_url = reverse_lazy('fundboard:login')
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user = self.request.user
+        context['investment_accounts'] = InvestmentAccount.objects.filter(user=user)
+        return context
 
 # Transactions View
 class TransactionsView(LoginRequiredMixin, ListView):
@@ -41,12 +69,9 @@ class SubscriptionsView(LoginRequiredMixin, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        # Calcul des dépenses par fréquence
         frequency_data = Abonnement.objects.filter(user=self.request.user).values('frequence').annotate(total=Sum('montant'))
-        labels = [item['frequence'].title() for item in frequency_data]
-        data = [item['total'] for item in frequency_data]
-        context['labels'] = labels
-        context['data'] = data
+        context['labels'] = [item['frequence'].title() for item in frequency_data]
+        context['data'] = [item['total'] for item in frequency_data]
         return context
 
 # Add Subscription View
@@ -59,7 +84,7 @@ class AddSubscriptionView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        messages.success(self.request, 'Abonnement ajouté avec succès!')
+        messages.success(self.request, 'Abonnement ajouté avec succès !')
         return super().form_valid(form)
 
 # Edit Subscription View
@@ -74,7 +99,7 @@ class EditSubscriptionView(LoginRequiredMixin, UpdateView):
         return Abonnement.objects.filter(user=self.request.user)
 
     def form_valid(self, form):
-        messages.success(self.request, 'Abonnement mis à jour avec succès!')
+        messages.success(self.request, 'Abonnement mis à jour avec succès !')
         return super().form_valid(form)
 
 # Delete Subscription View
@@ -88,7 +113,7 @@ class DeleteSubscriptionView(LoginRequiredMixin, DeleteView):
         return Abonnement.objects.filter(user=self.request.user)
 
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Abonnement supprimé avec succès!')
+        messages.success(request, 'Abonnement supprimé avec succès !')
         return super().delete(request, *args, **kwargs)
 
 # Revenues View
@@ -120,7 +145,7 @@ class AddAccountView(LoginRequiredMixin, CreateView):
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        messages.success(self.request, 'Compte bancaire ajouté avec succès!')
+        messages.success(self.request, 'Compte bancaire ajouté avec succès !')
         return super().form_valid(form)
 
 class EditAccountView(LoginRequiredMixin, UpdateView):
@@ -134,7 +159,7 @@ class EditAccountView(LoginRequiredMixin, UpdateView):
         return CompteBancaire.objects.filter(user=self.request.user)
 
     def form_valid(self, form):
-        messages.success(self.request, 'Compte bancaire mis à jour avec succès!')
+        messages.success(self.request, 'Compte bancaire mis à jour avec succès !')
         return super().form_valid(form)
 
 class DeleteAccountView(LoginRequiredMixin, DeleteView):
@@ -147,6 +172,5 @@ class DeleteAccountView(LoginRequiredMixin, DeleteView):
         return CompteBancaire.objects.filter(user=self.request.user)
 
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Compte bancaire supprimé avec succès!')
+        messages.success(request, 'Compte bancaire supprimé avec succès !')
         return super().delete(request, *args, **kwargs)
-
