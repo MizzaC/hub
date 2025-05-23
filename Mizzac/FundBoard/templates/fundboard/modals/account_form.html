@@ -1,7 +1,5 @@
 {% load static %}
 
-{#  - Si object existe  → édition
-    - Sinon            → ajout                          #}
 <form method="post"
       action="{% if object %}
                  {% url 'fundboard:edit_account_modal' object.pk %}
@@ -21,9 +19,9 @@
       </div>
 
       <div class="modal-body">
-        <div class="mb-3">{{ form.nom.label_tag }}{{ form.nom }}</div>
-        <div class="mb-3">{{ form.type_compte.label_tag }}{{ form.type_compte }}</div>
-        <div class="mb-3">{{ form.solde.label_tag }}{{ form.solde }}</div>
+        <div class="mb-3">{{ form.name.label_tag }}{{ form.name }}</div>
+        <div class="mb-3">{{ form.category.label_tag }}{{ form.category }}</div>
+        <div class="mb-3">{{ form.balance.label_tag }}{{ form.balance }}</div>
       </div>
 
       <div class="modal-footer">
