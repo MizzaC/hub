@@ -16,7 +16,7 @@ from .models import (
     ListeSuivi,
     SuiviAsset
 )
-from .forms import AbonnementForm
+from .forms import AbonnementForm, ManualAccountForm
 
 # FundBoard Dashboard View
 class FundBoardView(LoginRequiredMixin, TemplateView):
@@ -135,18 +135,23 @@ class AccountsView(LoginRequiredMixin, ListView):
 
     def get_queryset(self):
         return CompteBancaire.objects.filter(user=self.request.user)
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        ctx['manual_form'] = ManualAccountForm()
+        return ctx
 
+# FundBoard/views.py  (extrait)
 class AddAccountView(LoginRequiredMixin, CreateView):
-    model = CompteBancaire
-    fields = ['nom', 'solde', 'devise']
-    template_name = 'fundboard/add_account.html'
-    success_url = reverse_lazy('fundboard:accounts')
-    login_url = reverse_lazy('fundboard:login')
+    model         = CompteBancaire
+    form_class    = ManualAccountForm
+    template_name = 'fundboard/add_account_modal.html'  # n’est plus appelé via route directe
+    success_url   = reverse_lazy('fundboard:accounts')
 
     def form_valid(self, form):
         form.instance.user = self.request.user
-        messages.success(self.request, 'Compte bancaire ajouté avec succès !')
+        messages.success(self.request, "Compte ajouté !")
         return super().form_valid(form)
+
 
 class EditAccountView(LoginRequiredMixin, UpdateView):
     model = CompteBancaire

@@ -5,6 +5,15 @@ from django.contrib.auth.models import User
 from django.utils import timezone
 from django.core.exceptions import ValidationError
 
+ACCOUNT_TYPES = [
+    ('CURRENT',  'Compte courant'),
+    ('SAVINGS',  'Livret / Épargne'),
+    ('CTO',      'Compte Titres Ordinaire'),
+    ('PEA',      'Plan d’Épargne en Actions'),
+    ('CRYPTO',   'Portefeuille Crypto'),
+    ('OTHER',    'Autre'),
+]
+
 # Choices pour les types de comptes d'investissement
 INVESTMENT_ACCOUNT_TYPES = [
     ('CTO', 'Compte Titres Ordinaire'),
@@ -31,16 +40,14 @@ FREQUENCY_CHOICES = [
 ]
 
 class CompteBancaire(models.Model):
-    """
-    Représente les comptes bancaires de l'utilisateur.
-    """
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-    nom = models.CharField(max_length=255)
-    solde = models.DecimalField(max_digits=15, decimal_places=2)
-    devise = models.CharField(max_length=10)
+    user         = models.ForeignKey(User, on_delete=models.CASCADE)
+    nom          = models.CharField(max_length=255)
+    type_compte  = models.CharField(max_length=10, choices=ACCOUNT_TYPES, default='CURRENT')
+    solde        = models.DecimalField(max_digits=15, decimal_places=2, default=0, blank=True)
+    devise       = models.CharField(max_length=10, default='EUR', editable=False)
 
     def __str__(self):
-        return f"{self.nom} ({self.user.username})"
+        return f"{self.nom} – {self.get_type_compte_display()} ({self.user.username})"
 
 class InvestmentAccount(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
