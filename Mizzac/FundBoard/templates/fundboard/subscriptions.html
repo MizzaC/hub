@@ -1,103 +1,125 @@
-{% extends 'common/base.html' %}
+{% extends "fundboard/base.html" %}
 {% load static %}
+{% block fb_content %}
+<div class="container-fluid py-4">
 
-{% block content %}
-<div class="container mt-4">
-    <h2>Abonnements</h2>
-    <hr>
-    
-    <!-- Bouton pour ajouter un abonnement -->
-    <a href="{% url 'fundboard:add_subscription' %}" class="btn btn-primary mb-3">Ajouter un Abonnement</a>
-    
-    <!-- Tableau des abonnements -->
-    {% if subscriptions %}
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Montant (€)</th>
-                    <th>Fréquence</th>
-                    <th>Prochaine Échéance</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for abonnement in subscriptions %}
-                    <tr>
-                        <td>{{ abonnement.nom }}</td>
-                        <td>{{ abonnement.montant }}</td>
-                        <td>
-                            {% if abonnement.frequence == 'PERSONALIZED' and abonnement.frequence_personnalisee %}
-                                Personnalisé ({{ abonnement.frequence_personnalisee }} jours)
-                            {% else %}
-                                {{ abonnement.get_frequence_display }}
-                            {% endif %}
-                        </td>
-                        <td>{{ abonnement.date_prochaine_echeance|date:"d/m/Y" }}</td>
-                        <td>
-                            <!-- Actions possibles (éditer, supprimer) -->
-                            <a href="{% url 'fundboard:edit_subscription' abonnement.id %}" class="btn btn-sm btn-secondary">Éditer</a>
-                            <a href="{% url 'fundboard:delete_subscription' abonnement.id %}" class="btn btn-sm btn-danger">Supprimer</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Aucun abonnement enregistré.</p>
-    {% endif %}
-    
-    <!-- Graphique de Répartition des Dépenses par Fréquence -->
-    <div class="card mt-5">
-        <div class="card-header">
-            Répartition des Dépenses par Fréquence
-        </div>
+  {# ───── En-tête & bouton “Ajouter” ───── #}
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Dépenses récurrentes</h2>
+
+    <button class="btn btn-primary d-flex align-items-center gap-1"
+        data-bs-toggle="dynamic-modal"
+        data-href="{% url 'fundboard:add_subscription_modal' %}">
+    <i class="bi bi-plus-lg"></i> Ajouter
+    </button>
+  </div>
+
+  {# ───── Statistiques rapides ───── #}
+  <div class="row gy-3 mb-4">
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm border-info h-100 text-center">
         <div class="card-body">
-            <canvas id="subscriptionsChart"></canvas>
+          <small class="text-uppercase text-muted">Total mensuel</small>
+          <h3 class="fw-bold mb-0">{{ monthly_total|floatformat:2 }} €</h3>
         </div>
+      </div>
     </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm border-warning h-100 text-center">
+        <div class="card-body">
+          <small class="text-uppercase text-muted">Total annuel</small>
+          <h3 class="fw-bold mb-0">{{ yearly_total|floatformat:2 }} €</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm border-success h-100 text-center">
+        <div class="card-body">
+          <small class="text-uppercase text-muted">Abonnements</small>
+          <h3 class="fw-bold mb-0">{{ subscriptions|length }}</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-sm-6 col-lg-3">
+      <div class="card shadow-sm border-primary h-100 text-center">
+        <div class="card-body">
+          <small class="text-uppercase text-muted">Prochaine échéance</small>
+          <h6 class="fw-bold mb-0">{{ next_due|date:"d M Y" }}</h6>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ───── Tableau des abonnements ───── #}
+  <div class="card shadow-sm rounded-4 mb-4">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0 align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Nom</th>
+            <th class="text-end">Montant</th>
+            <th class="text-nowrap">Fréquence</th>
+            <th class="text-nowrap">Prochaine échéance</th>
+            <th class="text-nowrap">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for sub in subscriptions %}
+          <tr>
+            <td>{{ sub.name }}</td>
+            <td class="text-end">{{ sub.amount|floatformat:2 }} €</td>
+            <td>{{ sub.get_freq_display }}
+                {% if sub.freq == 'PERSONALIZED' %}({{ sub.freq_custom }} j){% endif %}
+            </td>
+            <td>{{ sub.next_due|date:"d/m/Y" }}</td>
+            <td class="text-nowrap">
+                <button class="btn btn-sm btn-outline-secondary"
+                        data-bs-toggle="dynamic-modal"
+                        data-href="{% url 'fundboard:edit_subscription_modal' sub.pk %}">
+                    Éditer
+                </button>
+                <button class="btn btn-sm btn-outline-danger"
+                    data-bs-toggle="dynamic-modal"
+                    data-href="{% url 'fundboard:delete_subscription_modal' sub.pk %}">
+                Supprimer
+                </button>
+            </td>
+          </tr>
+          {% empty %}
+          <tr><td colspan="5" class="text-center py-4 text-muted">Aucun abonnement.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {# ───── Camembert répartition — facultatif ───── #}
+  <div class="card shadow-sm rounded-4">
+    <div class="card-header bg-white border-0"><h5 class="mb-0">Répartition par fréquence</h5></div>
+    <div class="card-body d-flex justify-content-center">
+      <canvas id="freqChart" height="180"></canvas>
+    </div>
+  </div>
+
 </div>
+{% endblock fb_content %}
 
-<!-- Intégration de Chart.js -->
+{% block extra_js %}
+{{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-{{ labels|json_script:"labels-data" }}
-{{ data|json_script:"data-values" }}
+
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var ctx = document.getElementById('subscriptionsChart').getContext('2d');
+const labels = JSON.parse('{{ labels|safe|escapejs }}');
+const data   = JSON.parse('{{ data|safe|escapejs }}');
 
-        // Génération des labels
-        var labels = JSON.parse(document.getElementById('labels-data').textContent);
-        var data = JSON.parse(document.getElementById('data-values').textContent);
-
-        var subscriptionsChart = new Chart(ctx, {
-            type: 'pie',
-            data: {
-                labels: labels,
-                datasets: [{
-                    data: data,
-                    backgroundColor: [
-                        '#FF6384',
-                        '#36A2EB',
-                        '#FFCE56',
-                        '#4BC0C0',
-                        '#9966FF'
-                    ]
-                }]
-            },
-            options: {
-                responsive: true,
-                plugins: {
-                    legend: {
-                        position: 'bottom'
-                    },
-                    title: {
-                        display: true,
-                        text: 'Répartition des Dépenses par Fréquence'
-                    }
-                }
-            }
-        });
-    });
+if (labels.length){
+  new Chart(
+      document.getElementById('freqChart'),
+      { type:'doughnut',
+        data:{ labels:labels, datasets:[{ data:data }] },
+        options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
+      });
+}
 </script>
 {% endblock %}
+

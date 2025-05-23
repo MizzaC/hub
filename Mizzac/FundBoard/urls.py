@@ -1,7 +1,7 @@
 from django.urls import path
 from .views import (
     FundBoardView, PortfolioView, TransactionsView,
-    SubscriptionsView, AddSubscriptionView, EditSubscriptionView, DeleteSubscriptionView,
+    SubscriptionsView, AddSubscriptionModal, EditSubscriptionModal, DeleteSubscriptionModal,
     RevenuesView, AccountsView,
     AccountSourceModal, AddAccountModal, EditAccountModal, DeleteAccountModal
 )
@@ -15,9 +15,9 @@ urlpatterns = [
 
     # Abonnements
     path("subscriptions/",                   SubscriptionsView.as_view(),      name="subscriptions"),
-    path("subscriptions/add/",               AddSubscriptionView.as_view(),    name="add_subscription"),
-    path("subscriptions/edit/<int:pk>/",     EditSubscriptionView.as_view(),   name="edit_subscription"),
-    path("subscriptions/delete/<int:pk>/",   DeleteSubscriptionView.as_view(), name="delete_subscription"),
+    path("subscriptions/add/modal/",   AddSubscriptionModal.as_view(),  name="add_subscription_modal"),
+    path("subscriptions/<int:pk>/edit/modal/", EditSubscriptionModal.as_view(), name="edit_subscription_modal"),
+    path("subscriptions/<int:pk>/delete/modal/",   DeleteSubscriptionModal.as_view(), name="delete_subscription_modal"),
 
     # Revenus
     path("revenues/", RevenuesView.as_view(), name="revenues"),

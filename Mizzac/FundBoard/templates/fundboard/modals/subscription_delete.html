@@ -1,0 +1,29 @@
+<form method="post"
+      action="{% url 'fundboard:delete_subscription_modal' object.pk %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0">
+
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Supprimer la dépense&nbsp;?</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <p>
+          Confirmer la suppression de<br>
+          <strong>{{ object.name }}</strong>
+          (<span class="text-muted">{{ object.amount|floatformat:2 }} €</span>)&nbsp;?
+        </p>
+        <p class="small text-muted mb-0">Cette action est irréversible.</p>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-danger">Supprimer</button>
+      </div>
+
+    </div>
+  </div>
+</form>

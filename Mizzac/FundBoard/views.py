@@ -79,38 +79,31 @@ class SubscriptionsView(LoginRequiredMixin, ListView):
     login_url           = reverse_lazy('fundboard:login')
 
     def get_queryset(self):
-        return Subscription.objects.filter(user=self.request.user)\
-                                   .order_by('next_due')
+        return Subscription.objects.filter(user=self.request.user).order_by('next_due')
 
     def get_context_data(self, **kw):
-        ctx = super().get_context_data(**kw)
-        qs  = Subscription.objects.filter(user=self.request.user)\
-                                  .values('freq').annotate(total=Sum('amount'))
-        ctx['labels'] = [r['freq'].title() for r in qs]
-        ctx['data']   = [r['total'] for r in qs]
+        ctx  = super().get_context_data(**kw)
+        subs = ctx['subscriptions']
+
+        # totaux
+        ctx['monthly_total'] = sum(s.amount for s in subs if s.freq == 'MONTHLY')
+        ctx['yearly_total']  = sum(
+            s.amount * (12 if s.freq == 'MONTHLY' else
+                        1  if s.freq == 'YEARLY'  else
+                        365/s.freq_custom if s.freq == 'PERSONALIZED' else
+                        0) for s in subs
+        )
+        ctx['next_due'] = subs.first().next_due if subs else None
+
+        # données camembert
+        agg = subs.values('freq').annotate(total=Sum('amount'))
+        ctx['labels'] = [a['freq'].title() for a in agg]
+        ctx['data']   = [a['total'] for a in agg]
         return ctx
 
 
-class AddSubscriptionView(LoginRequiredMixin, CreateView):
-    model         = Subscription
-    form_class    = SubscriptionForm
-    template_name = 'fundboard/subscriptions_form.html'
-    success_url   = reverse_lazy('fundboard:subscriptions')
-    login_url     = reverse_lazy('fundboard:login')
-
-    def form_valid(self, form):
-        form.instance.user = self.request.user
-        messages.success(self.request, "Abonnement ajouté.")
-        return super().form_valid(form)
 
 
-class EditSubscriptionView(AddSubscriptionView, UpdateView):
-    def get_queryset(self):
-        return Subscription.objects.filter(user=self.request.user)
-
-    def form_valid(self, form):
-        messages.success(self.request, "Abonnement mis à jour.")
-        return super().form_valid(form)
 
 
 class DeleteSubscriptionView(LoginRequiredMixin, DeleteView):
@@ -216,3 +209,40 @@ class DeleteAccountModal(AjaxModalMixin, DeleteView):
     def delete(self, request, *a, **kw):
         messages.success(request, "Compte supprimé.")
         return super().delete(request, *a, **kw)
+
+class AddSubscriptionModal(AjaxModalMixin, CreateView):
+    model                  = Subscription
+    form_class             = SubscriptionForm
+    template_name_fragment = 'fundboard/modals/subscription_form.html'
+    success_url            = reverse_lazy('fundboard:subscriptions')
+
+    def form_valid(self, form):
+        form.instance.user = self.request.user
+        messages.success(self.request, "Dépense ajoutée.")
+        return super().form_valid(form)
+
+
+class EditSubscriptionModal(AjaxModalMixin, UpdateView):
+    model                  = Subscription
+    form_class             = SubscriptionForm
+    template_name_fragment = 'fundboard/modals/subscription_form.html'
+    success_url            = reverse_lazy('fundboard:subscriptions')
+
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, "Dépense mise à jour.")
+        return super().form_valid(form)
+    
+class DeleteSubscriptionModal(AjaxModalMixin, DeleteView):
+    model                  = Subscription
+    template_name_fragment = 'fundboard/modals/subscription_delete.html'
+    success_url            = reverse_lazy('fundboard:subscriptions')
+
+    def get_queryset(self):
+        return Subscription.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Dépense supprimée.")
+        return super().delete(request, *args, **kwargs)
