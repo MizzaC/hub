@@ -1,0 +1,47 @@
+{# charge static si vous affichez un logo ensuite #}
+{% load static %}
+
+<form method="post"
+      action="{% if object %}
+                 {% url 'fundboard:edit_subscription_modal' object.pk %}
+               {% else %}
+                 {% url 'fundboard:add_subscription_modal' %}
+               {% endif %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% if object %}Modifier la dépense{% else %}Ajouter une dépense{% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mb-3">{{ form.name.label_tag }}{{ form.name }}</div>
+        <div class="mb-3">{{ form.amount.label_tag }}{{ form.amount }}</div>
+
+        <div class="row gx-2">
+          <div class="col-6 mb-3">
+            {{ form.freq.label_tag }}{{ form.freq }}
+          </div>
+          <div class="col-6 mb-3">
+            {{ form.freq_custom.label_tag }}{{ form.freq_custom }}
+          </div>
+        </div>
+
+        <div class="mb-3">{{ form.next_due.label_tag }}{{ form.next_due }}</div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-success">
+          {% if object %}Enregistrer{% else %}Ajouter{% endif %}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</form>
