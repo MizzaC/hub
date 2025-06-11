@@ -5,6 +5,7 @@ import configparser
 import websockets
 import requests
 import pandas as pd
+from FundBoard.models import Transaction
 
 class TradeRepublic:
     
@@ -14,6 +15,7 @@ class TradeRepublic:
         self.pin = pin
         self.extract_details = True
         self.output_format = "json"
+        self.session_token = None
 
     def headers_to_dict(response):
         """
@@ -110,6 +112,7 @@ class TradeRepublic:
             - `transaction_data`: Un dictionnaire avec les informations extraites de la transaction.
             - `message_id`: L'ID du message incrémenté après chaque requête pour gérer l'abonnement/désabonnement.
         """
+        
         payload = {"type": "timelineDetailV2", "id": transaction_id, "token": token}
         message_id += 1
         await websocket.send(f"sub {message_id} {json.dumps(payload)}")
@@ -133,7 +136,7 @@ class TradeRepublic:
 
         return transaction_data, message_id
 
-    async def fetch_all_transactions(token, extract_details):
+    async def fetch_all_transactions(self, user):
         """
         Fonction principale qui récupère toutes les transactions via WebSocket et les sauvegarde dans un fichier.
         
@@ -149,6 +152,7 @@ class TradeRepublic:
                         Si `True`, chaque transaction sera enrichie de données supplémentaires ; sinon, seules les transactions de base seront récupérées.
         :return: Elle sauvegarde les données récupérées dans un fichier (soit JSON, soit CSV) dans le dossier spécifié.
         """
+        
         all_data = []
         message_id = 0
 
@@ -161,13 +165,11 @@ class TradeRepublic:
                 "clientVersion": "3.151.3"
             }
             await websocket.send(f"connect 31 {json.dumps(locale_config)}")
-            await websocket.recv()  # Réponse de connexion
+            await websocket.recv()
 
-            print("✅ Connexion à la WebSocket réussie!\n⏳ Veuillez patienter...")
-            
             after_cursor = None
             while True:
-                payload = {"type": "timelineTransactions", "token": token}
+                payload = {"type": "timelineTransactions", "token": self.session_token}
                 if after_cursor:
                     payload["after"] = after_cursor
 
@@ -175,20 +177,22 @@ class TradeRepublic:
                 await websocket.send(f"sub {message_id} {json.dumps(payload)}")
                 response = await websocket.recv()
                 await websocket.send(f"unsub {message_id}")
-                await websocket.recv()  # Confirmation de désabonnement
+                await websocket.recv()
                 start_index = response.find('{')
                 end_index = response.rfind('}')
                 response = response[start_index:end_index + 1] if start_index != -1 and end_index != -1 else "{}"
                 data = json.loads(response)
-                
+
                 if not data.get("items"):
                     break
 
-                if extract_details:
+                if self.extract_details:
                     for transaction in data["items"]:
                         transaction_id = transaction.get("id")
                         if transaction_id:
-                            details, message_id = await fetch_transaction_details(websocket, transaction_id, token, message_id)
+                            details, message_id = await self.fetch_transaction_details(
+                                websocket, transaction_id, self.session_token, message_id
+                            )
                             transaction.update(details)
                         all_data.append(transaction)
                 else:
@@ -197,77 +201,58 @@ class TradeRepublic:
                 after_cursor = data.get("cursors", {}).get("after")
                 if not after_cursor:
                     break
-            
-        if output_format.lower() == "json":
-            output_path = os.path.join(output_folder, "trade_republic_transactions.json")
-            with open(output_path, "w", encoding="utf-8") as f:
-                json.dump(all_data, f, indent=4, ensure_ascii=False)
-            print("✅ Données sauvegardées dans 'trade_republic_transactions.json'")
-        else:
-            flattened_data = flatten_and_clean_json(all_data)
-            if flattened_data:
-                df = pd.DataFrame(flattened_data)
-                df = df.dropna(axis=1, how='all')
-                df = transform_data_types(df)
-                output_path = os.path.join(output_folder, "trade_republic_transactions.csv")
-                df.to_csv(output_path, index=False, sep=";", encoding="utf-8-sig")
-                print("✅ Données sauvegardées dans 'trade_republic_transactions.csv'")
 
-    if __name__ == "__main__":
-        # Chargement de la configuration
-        config = configparser.ConfigParser()
-        config.read('config.ini')
-
-        # Variables de configuration
-        phone_number = config.get('secret', 'phone_number')
-        pin = config.getint('secret', 'pin')
-        output_format = config.get('general', 'output_format') # Format de sortie : json ou csv
-        output_folder = config.get('general', 'output_folder')
-        extract_details = config.getboolean('general', 'extract_details', fallback=False)
-        os.makedirs(output_folder, exist_ok=True)
-
-        # Validation du format de sortie
-        if output_format.lower() not in ["json", "csv"]:
-            print(f"❌ Le format '{output_format}' est inconnu. Veuillez saisir 'json' ou 'csv'.")
-            exit()
-
-        # Envoi de la requête de connexion
+        # Enregistrement en base de données
+        for transaction in all_data:
+            Transaction.objects.update_or_create(
+                user=user,
+                transaction_id=transaction.get("id"),
+                defaults={"data": transaction}
+            )
+        return len(all_data)  # ou retourne ce que tu veux
+    
+    def login(self, code_callback):
+        """
+        Authentifie l'utilisateur et récupère le token de session.
+        code_callback: fonction qui prend (countdown) et retourne le code 2FA saisi par l'utilisateur.
+        """
+        
         response = requests.post(
             "https://api.traderepublic.com/api/v1/auth/web/login",
-            json={"phoneNumber": phone_number, "pin": pin}
+            json={"phoneNumber": self.phone_number, "pin": self.pin}
         ).json()
 
-        # Récupération des informations de connexion
         process_id = response.get('processId')
         countdown = response.get('countdownInSeconds')
         if not process_id:
-            print("❌ Échec de l'initialisation de la connexion. Vérifiez votre numéro de téléphone et PIN.")
-            exit()
+            raise Exception("Échec de l'initialisation de la connexion. Vérifiez votre numéro de téléphone et PIN.")
 
-        # Saisie du code 2FA
-        code = input(f"❓ Entrez le code 2FA reçu ({countdown} secondes restantes) ou tapez 'SMS': ")
-
-        # Si l'utilisateur choisit de recevoir le code 2FA par SMS, une requête est envoyée pour renvoyer le code.
+        code = code_callback(countdown)
         if code == 'SMS':
             requests.post(f"https://api.traderepublic.com/api/v1/auth/web/login/{process_id}/resend")
-            code = input("❓ Entrez le code 2FA reçu par SMS: ")
+            code = code_callback(countdown)
 
-        # Vérification de l'appareil avec le code 2FA saisi.
         response = requests.post(f"https://api.traderepublic.com/api/v1/auth/web/login/{process_id}/{code}")
         if response.status_code != 200:
-            print("❌ Échec de la vérification de l'appareil. Vérifiez le code et réessayez.")
-            exit()
+            raise Exception("Échec de la vérification de l'appareil. Vérifiez le code et réessayez.")
 
-        print("✅ Appareil vérifié avec succès!")
+        response_headers = self.headers_to_dict(response)
+        self.session_token = response_headers.get('Set-Cookie', {}).get('tr_session')
+        if not self.session_token:
+            raise Exception("Token de connexion introuvable.")
+    
+    
+    
+    
+#     # views.py
+# from .tools.trade_republic import TradeRepublic
 
-        # Extraction du token de session
-        response_headers = headers_to_dict(response)
-        session_token = response_headers.get('Set-Cookie', {}).get('tr_session')
-        if not session_token:
-            print("❌ Token de connexion introuvable.")
-            exit()
+# def import_transactions(request):
+#     if request.user.is_authenticated:
+#         tr = TradeRepublic(phone_number, pin)
+#         # ... login etc ...
+#         asyncio.run(tr.fetch_all_transactions(request.user))  # <--- ici on passe l'utilisateur connecté
 
-        print("✅ Token de connexion trouvé!")
-
-        # Exécution de la récupération des transactions
-        asyncio.run(fetch_all_transactions(session_token, extract_details))
+# tr = TradeRepublic(phone_number, pin)
+# tr.login(code_callback)  # code_callback = fonction qui récupère le code 2FA de l'utilisateur
+# asyncio.run(tr.fetch_all_transactions(request.user))

@@ -96,6 +96,7 @@ class Transaction(models.Model):
     unit_price  = models.DecimalField(max_digits=15, decimal_places=2, null=True, blank=True)
     date_trx    = models.DateTimeField(default=timezone.now)
     trx_type    = models.CharField(max_length=20, choices=TRANSACTION_TYPES)
+    other_details = models.TextField(blank=True, null=True)
 
     def __str__(self):
         return f"{self.get_trx_type_display()} – {self.amount} – {self.date_trx:%d/%m/%Y}"
