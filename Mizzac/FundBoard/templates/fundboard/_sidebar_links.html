@@ -21,6 +21,12 @@
   </li>
 
   <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'portfolio' %}active{% endif %}"
+       href="{% url 'fundboard:incomes' %}">
+      <i class="bi bi-graph-up-arrow me-2"></i> Revenus
+    </a>
+
+  <li class="nav-item">
     <a class="nav-link {% if request.resolver_match.url_name == 'expenses' %}active{% endif %}"
        href="{% url 'fundboard:expenses' %}">
       <i class="bi bi-credit-card-2-back-fill me-2"></i> Dépenses

@@ -17,9 +17,13 @@ from django.views.generic import (
 )
 
 # --- Models & Forms ---
-from .models import Account, Expense, Transaction
-from .forms import ManualAccountForm, ExpenseForm
-
+from .models import Account, Expense, Transaction, Income
+from .forms import (
+    ManualAccountForm,
+    ExpenseForm,
+    IncomeForm,
+    MarkIncomeForm,
+)
 
 # ============================================================
 #                         HELPERS
@@ -56,10 +60,7 @@ def dec_to_float(d: Decimal | None) -> float:
 
 
 def monthly_equivalent(exp: Expense) -> Decimal:
-    """
-    Compute monthly-equivalent amount for a recurring Expense.
-    All math in Decimal to avoid float issues.
-    """
+    """Compute monthly-equivalent amount for a recurring Expense."""
     if not getattr(exp, "is_recurring", False):
         return Decimal("0")
 
@@ -93,42 +94,47 @@ def _add_months(d: date, months: int) -> date:
     return date(y, m, day)
 
 
-def upcoming_due(exp: Expense, ref: date | None = None) -> date:
+def upcoming_due(obj, ref: date | None = None) -> date:
     """
-    Compute next upcoming due date for the expense given 'ref' (today by default).
-    - For one-time: returns exp.next_due (or today if None).
+    Compute next upcoming due date for Expense/Income given 'ref' (today by default).
+    - For one-time: returns obj.next_due/next_payday (or today if None).
     - For recurring: roll the date forward according to freq until >= ref.
     """
     if ref is None:
         ref = date.today()
 
-    d = exp.next_due or ref
-    if not exp.is_recurring:
+    # support both Expense (next_due) and Income (next_payday)
+    base_date = getattr(obj, "next_due", None) or getattr(obj, "next_payday", None) or ref
+    d = base_date
+    is_rec = getattr(obj, "is_recurring", False)
+    freq = getattr(obj, "freq", None)
+    freq_custom = getattr(obj, "freq_custom", None)
+
+    if not is_rec:
         return d
 
-    # roll forward by frequency
-    if exp.freq == "DAILY":
+    if freq == "DAILY":
         while d < ref:
             d = d + timedelta(days=1)
         return d
 
-    if exp.freq == "WEEKLY":
+    if freq == "WEEKLY":
         while d < ref:
             d = d + timedelta(weeks=1)
         return d
 
-    if exp.freq == "MONTHLY":
+    if freq == "MONTHLY":
         while d < ref:
             d = _add_months(d, 1)
         return d
 
-    if exp.freq == "YEARLY":
+    if freq == "YEARLY":
         while d < ref:
             d = date(d.year + 1, d.month, min(d.day, calendar.monthrange(d.year + 1, d.month)[1]))
         return d
 
-    if exp.freq == "PERSONALIZED" and exp.freq_custom:
-        step = timedelta(days=exp.freq_custom)
+    if freq == "PERSONALIZED" and freq_custom:
+        step = timedelta(days=freq_custom)
         while d < ref:
             d = d + step
         return d
@@ -137,12 +143,7 @@ def upcoming_due(exp: Expense, ref: date | None = None) -> date:
 
 
 def month_expense_category_split(user, month_start: date, month_end: date) -> tuple[dict[str, Decimal], Decimal]:
-    """
-    Build a map category->Decimal for the current month combining:
-      - recurring monthly-equivalent amounts
-      - one-time expenses falling inside [month_start, month_end]
-    Returns (category_map, total_sum).
-    """
+    """Category -> sum for current month (recurring-equivalent + one-time in range)."""
     cat_map: dict[str, Decimal] = {}
 
     # Recurring
@@ -164,9 +165,7 @@ def month_expense_category_split(user, month_start: date, month_end: date) -> tu
 
 
 def month_total_deposits(user, month_start: date, month_end: date) -> Decimal:
-    """
-    Sum of cash inflows considered as 'Entrées' for cashflow.
-    """
+    """Sum of 'DEPOSIT' transactions in period."""
     return (
         Transaction.objects.filter(
             user=user, trx_type="DEPOSIT", date_trx__date__range=(month_start, month_end)
@@ -174,13 +173,12 @@ def month_total_deposits(user, month_start: date, month_end: date) -> Decimal:
         or Decimal("0")
     )
 
-
 # ============================================================
 #                         PAGES
 # ============================================================
 
 class FundBoardView(LoginRequiredMixin, TemplateView):
-    """Main dashboard: cards + charts including a simple cashflow (Sankey-like)."""
+    """Main dashboard."""
     template_name = 'fundboard/fundboard.html'
     login_url = reverse_lazy('fundboard:login')
 
@@ -235,7 +233,6 @@ class FundBoardView(LoginRequiredMixin, TemplateView):
 
 
 class PortfolioView(LoginRequiredMixin, TemplateView):
-    """Simple portfolio page (kept if you still want a dedicated route)."""
     template_name = 'fundboard/portfolio.html'
     login_url = reverse_lazy('fundboard:login')
 
@@ -248,7 +245,6 @@ class PortfolioView(LoginRequiredMixin, TemplateView):
 
 
 class TransactionsView(LoginRequiredMixin, ListView):
-    """Transaction history."""
     model = Transaction
     template_name = 'fundboard/transactions.html'
     context_object_name = 'transactions'
@@ -259,14 +255,7 @@ class TransactionsView(LoginRequiredMixin, ListView):
 
 
 class ExpensesView(LoginRequiredMixin, TemplateView):
-    """
-    Unified 'Expenses' page:
-      - Tab 1 (default): Latest (chronological list of all expenses, with type & account)
-      - Tab 2: Recurring
-      - Tab 3: One-time
-      - Tab 4: Assets (placeholder: uses 'holdings' if/when provided)
-      - Charts: donut by category (current month), stacked bar (6 months)
-    """
+    """Unified Expenses page (Latest + Recurring + One-time + charts)."""
     template_name = 'fundboard/expenses.html'
     login_url = reverse_lazy('fundboard:login')
 
@@ -274,34 +263,28 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
 
-        # Querysets
         recurring_qs = Expense.objects.filter(user=user, is_recurring=True).order_by('next_due')
         one_time_qs  = Expense.objects.filter(user=user, is_recurring=False).order_by('-next_due')
 
-        # Compute display 'upcoming' dates (server-side) to avoid relying on template logic
         today = date.today()
         for e in list(recurring_qs) + list(one_time_qs):
             e.next_due_display = upcoming_due(e, today)
 
-        # Latest (merged list), ordered desc by upcoming/display date
         latest_list = sorted(
             list(recurring_qs) + list(one_time_qs),
             key=lambda x: x.next_due_display or today,
             reverse=True
         )
 
-        # Current month aggregates for charts
         month_start, month_end = month_bounds(today)
         total_recurring = sum((monthly_equivalent(e) for e in recurring_qs), Decimal("0.00"))
         total_one_time = one_time_qs.filter(next_due__range=(month_start, month_end)) \
                                     .aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
 
-        # Donut split
         cat_map, _ = month_expense_category_split(user, month_start, month_end)
         donut_labels = list(cat_map.keys())
         donut_data = [dec_to_float(v) for v in cat_map.values()]
 
-        # 6-month stacked bars
         months = last_n_month_starts(6)
         months_labels = [m.strftime("%b %Y") for m in months]
         monthly_one_vals: list[float] = []
@@ -311,7 +294,6 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
             monthly_one_vals.append(dec_to_float(one_m))
         monthly_rec_vals = [dec_to_float(total_recurring) for _ in months]
 
-        # Assets tab placeholder (so template doesn't error if not provided)
         ctx.update(
             latest_list=latest_list,
             recurring_list=recurring_qs,
@@ -327,19 +309,17 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
             monthly_rec_vals_json=json.dumps(monthly_rec_vals, ensure_ascii=False),
             monthly_one_vals_json=json.dumps(monthly_one_vals, ensure_ascii=False),
 
-            holdings=[]  # replace with real holdings later
+            holdings=[],
         )
         return ctx
 
 
 class AssetsView(LoginRequiredMixin, TemplateView):
-    """Deprecated in favor of the Expenses 'Actifs' tab. Kept if you still browse /assets/."""
     template_name = 'fundboard/assets.html'
     login_url = reverse_lazy('fundboard:login')
 
 
 class AccountsView(LoginRequiredMixin, ListView):
-    """Accounts list page."""
     model = Account
     template_name = 'fundboard/accounts.html'
     context_object_name = 'accounts'
@@ -349,16 +329,38 @@ class AccountsView(LoginRequiredMixin, ListView):
         return Account.objects.filter(user=self.request.user)
 
 
-class RevenuesView(LoginRequiredMixin, TemplateView):
-    """Placeholder Revenues page."""
-    template_name = 'fundboard/revenues.html'
+class IncomesView(LoginRequiredMixin, TemplateView):
+    """Incomes page (list + modals)."""
+    template_name = 'fundboard/incomes.html'
     login_url = reverse_lazy('fundboard:login')
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        user = self.request.user
+
+        recurring_qs = Income.objects.filter(user=user, is_recurring=True).order_by('next_payday')
+        one_time_qs  = Income.objects.filter(user=user, is_recurring=False).order_by('-next_payday')
+
+        today = date.today()
+        for inc in list(recurring_qs) + list(one_time_qs):
+            inc.next_payday_display = upcoming_due(inc, today)
+
+        latest_list = sorted(
+            list(recurring_qs) + list(one_time_qs),
+            key=lambda x: x.next_payday_display or today,
+            reverse=True
+        )
+
+        ctx.update(
+            recurring_list=recurring_qs,
+            one_time_list=one_time_qs,
+            latest_list=latest_list,
+        )
+        return ctx
 
 
 class SubscriptionsRedirectView(RedirectView):
-    """Backward-compat route: /subscriptions -> /expenses"""
     pattern_name = 'fundboard:expenses'
-
 
 # ============================================================
 #                   AJAX MODALS (shared mixin)
@@ -377,18 +379,15 @@ class AjaxModalMixin:
         html = render_to_string(self.template_name_fragment, context, self.request)
         return HttpResponse(html)
 
-
 # ============================================================
 #                   ACCOUNT MODALS (AJAX)
 # ============================================================
 
 class AccountSourceModal(LoginRequiredMixin, AjaxModalMixin, TemplateView):
-    """First step modal (choose connector)."""
     template_name_fragment = "fundboard/modals/account_source.html"
 
 
 class AddAccountModal(LoginRequiredMixin, AjaxModalMixin, CreateView):
-    """Manual account creation modal."""
     model = Account
     form_class = ManualAccountForm
     template_name_fragment = 'fundboard/modals/account_form.html'
@@ -434,7 +433,6 @@ class DeleteAccountModal(LoginRequiredMixin, AjaxModalMixin, DeleteView):
             super().delete(request, *args, **kwargs)
             return HttpResponse(status=204)
         return super().delete(request, *args, **kwargs)
-
 
 # ============================================================
 #                   EXPENSE MODALS (AJAX)
@@ -495,3 +493,112 @@ class DeleteExpenseModal(LoginRequiredMixin, AjaxModalMixin, DeleteView):
             super().delete(request, *args, **kwargs)
             return HttpResponse(status=204)
         return super().delete(request, *args, **kwargs)
+
+# ============================================================
+#                    INCOME MODALS (AJAX)
+# ============================================================
+
+class AddIncomeModal(LoginRequiredMixin, AjaxModalMixin, CreateView):
+    """Create income (modal)."""
+    model = Income
+    form_class = IncomeForm
+    template_name_fragment = 'fundboard/modals/income_form.html'
+    success_url = reverse_lazy('fundboard:incomes')
+
+    def get_initial(self):
+        initial = super().get_initial()
+        rec = self.request.GET.get('recurring')
+        if rec in {'1', 'true', 'True'}:
+            initial['is_recurring'] = True
+        if rec in {'0', 'false', 'False'}:
+            initial['is_recurring'] = False
+        return initial
+
+    def form_valid(self, form):
+        obj = form.save(commit=False)
+        obj.user = self.request.user
+        obj.save()
+        messages.success(self.request, "Revenu enregistré.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return HttpResponse(status=204)
+        return super().form_valid(form)
+
+
+class EditIncomeModal(LoginRequiredMixin, AjaxModalMixin, UpdateView):
+    """Edit income (modal)."""
+    model = Income
+    form_class = IncomeForm
+    template_name_fragment = 'fundboard/modals/income_form.html'
+    success_url = reverse_lazy('fundboard:incomes')
+
+    def get_queryset(self):
+        return Income.objects.filter(user=self.request.user)
+
+    def form_valid(self, form):
+        messages.success(self.request, "Revenu mis à jour.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return HttpResponse(status=204)
+        return super().form_valid(form)
+
+
+class DeleteIncomeModal(LoginRequiredMixin, AjaxModalMixin, DeleteView):
+    """Delete income (modal)."""
+    model = Income
+    template_name_fragment = 'fundboard/modals/income_delete.html'
+    success_url = reverse_lazy('fundboard:incomes')
+
+    def get_queryset(self):
+        return Income.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        messages.success(request, "Revenu supprimé.")
+        if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            super().delete(request, *args, **kwargs)
+            return HttpResponse(status=204)
+        return super().delete(request, *args, **kwargs)
+
+
+class MarkIncomeModal(LoginRequiredMixin, AjaxModalMixin, CreateView):
+    """
+    Mark an income as received: this typically creates a DEPOSIT transaction
+    and optionally updates next_payday (for recurring incomes).
+    """
+    form_class = MarkIncomeForm
+    template_name_fragment = 'fundboard/modals/income_mark.html'
+    success_url = reverse_lazy('fundboard:incomes')
+
+    # we use get_object to fetch the income being marked
+    def get_object(self):
+        return Income.objects.get(pk=self.kwargs["pk"], user=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        ctx = super().get_context_data(**kwargs)
+        income = self.get_object()
+        # expose income on the view for template access via {{ view.income }}
+        self.income = income
+        ctx["income"] = income
+        return ctx
+
+    def form_valid(self, form):
+        income = self.get_object()
+        cleaned = form.cleaned_data
+
+        # create a deposit transaction
+        Transaction.objects.create(
+            user=self.request.user,
+            account=cleaned["account"],
+            amount=cleaned["amount"],
+            date_trx=cleaned["date_posted"],
+            trx_type="DEPOSIT",
+            memo=cleaned.get("memo") or f"Income: {income.name}",
+        )
+
+        # update next payday if recurring
+        if income.is_recurring:
+            income.next_payday = upcoming_due(income, ref=cleaned["date_posted"] + timedelta(days=1))
+            income.save(update_fields=["next_payday"])
+
+        messages.success(self.request, "Revenu marqué comme reçu.")
+        if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
+            return HttpResponse(status=204)
+        return super().form_valid(form)
