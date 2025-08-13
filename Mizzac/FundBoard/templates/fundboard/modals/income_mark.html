@@ -1,0 +1,25 @@
+<form method="post" action="{% url 'fundboard:mark_income_modal' view.income.pk %}">
+  {% csrf_token %}
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h5 class="modal-title">Marquer comme reçu</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <div class="alert alert-light">
+          <div><strong>Revenu :</strong> {{ view.income.name }}</div>
+          <div><strong>Montant prévu :</strong> {{ view.income.amount|floatformat:2 }} €</div>
+        </div>
+        <div class="mb-3">{{ form.account.label_tag }}{{ form.account }}</div>
+        <div class="mb-3">{{ form.amount.label_tag }}{{ form.amount }}</div>
+        <div class="mb-3">{{ form.date_posted.label_tag }}{{ form.date_posted }}</div>
+        <div class="mb-0">{{ form.memo.label_tag }}{{ form.memo }}</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn btn-success" type="submit">Enregistrer</button>
+      </div>
+    </div>
+  </div>
+</form>

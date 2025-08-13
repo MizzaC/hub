@@ -1,42 +1,47 @@
-{# Sidebar desktop & off-canvas mobile #}
 {% load static %}
-{% comment %}-- variables CSS : hauteur navbar / largeur sidebar --{% endcomment %}
+
 <style>
   :root{
-    --fb-navbar-height:56px;     /* adapte si ta navbar est + haute */
+    --fb-navbar-height:56px;   /* ajuste si la navbar globale change de taille */
     --fb-sidebar-width:240px;
   }
-  /* ----- Desktop ----- */
+  /* Sidebar desktop fixée */
   #fbSidebar{
-    position:fixed;
-    top:var(--fb-navbar-height);
-    left:0;
-    width:var(--fb-sidebar-width);
-    height:calc(100vh - var(--fb-navbar-height));
-    background:#364A63;
-    color:#fff;
-    overflow-y:auto;
-    transition:all .3s ease;
-    z-index:1030;               /* sous la navbar (1040) */
+    position: fixed;
+    top: var(--fb-navbar-height);
+    left: 0;
+    width: var(--fb-sidebar-width);
+    height: calc(100vh - var(--fb-navbar-height));
+    background: #364A63;
+    color: #fff;
+    overflow-y: auto;
+    transition: all .3s ease;
+    z-index: 1030; /* sous la navbar globale fixée */
   }
-  /* Décale le contenu desktop */
-  @media (min-width:768px){
-      #fbContentWrapper{ margin-left:var(--fb-sidebar-width); padding-top:var(--fb-navbar-height);}
+  /* Décale le contenu principal à droite (md+) */
+  @media (min-width: 768px){
+    #fbContentWrapper{
+      margin-left: var(--fb-sidebar-width);
+      padding-top: var(--fb-navbar-height);
+    }
   }
+  /* Style des liens */
+  #fbSidebar a{ color:#cfe0ff; text-decoration:none; }
+  #fbSidebar a.active, #fbSidebar a:hover{ color:#fff; }
 </style>
 
-{# ---------- Desktop sidebar ---------- #}
+{# ----- Sidebar desktop ----- #}
 <nav id="fbSidebar" class="d-none d-md-flex flex-column py-3">
-    <h4 class="px-3 mb-4 fw-bold">FundBoard</h4>
-    {% include 'fundboard/_sidebar_links.html' %}
+  <h4 class="px-3 mb-4 fw-bold">FundBoard</h4>
+  {% include 'fundboard/_sidebar_links.html' %}
 </nav>
 
-{# ---------- Mobile off-canvas ---------- #}
+{# ----- Off-canvas mobile ----- #}
 <div class="offcanvas offcanvas-start d-md-none text-bg-dark"
-     tabindex="-1" id="fbSidebarMobile">
+     tabindex="-1" id="fbSidebarMobile" aria-labelledby="fbSidebarMobileLabel">
   <div class="offcanvas-header">
-    <h5 class="offcanvas-title">FundBoard</h5>
-    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas"></button>
+    <h5 class="offcanvas-title" id="fbSidebarMobileLabel">FundBoard</h5>
+    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="offcanvas" aria-label="Fermer"></button>
   </div>
   <div class="offcanvas-body p-0">
     {% include 'fundboard/_sidebar_links.html' %}

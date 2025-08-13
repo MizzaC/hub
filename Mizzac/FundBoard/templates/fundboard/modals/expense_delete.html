@@ -1,33 +1,24 @@
-{# =====================================================================
-   Modal delete — Expense (recurring OR one-time)
-   ===================================================================== #}
+{% load static %}
 
-<form method="post"
-      action="{% url 'fundboard:delete_expense_modal' object.pk %}">
+<form method="post" action="{% url 'fundboard:delete_expense_modal' object.pk %}">
   {% csrf_token %}
 
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0">
-
       <div class="modal-header">
-        <h5 class="modal-title text-danger">Delete expense?</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
+        <h5 class="modal-title text-danger">Supprimer la dépense&nbsp;?</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
 
       <div class="modal-body">
-        <p>
-          Confirm deletion of<br>
-          <strong>{{ object.name }}</strong>
-          (<span class="text-muted">{{ object.amount|floatformat:2 }} €</span>)?
-        </p>
-        <p class="small text-muted mb-0">This action is irreversible.</p>
+        <p>Cette action est <strong>irréversible</strong>.</p>
+        <p>Confirmer la suppression de <strong>{{ object.name }}</strong> ({{ object.amount|floatformat:2 }} €) ?</p>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
-        <button type="submit" class="btn btn-danger">Delete</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-danger">Supprimer</button>
       </div>
-
     </div>
   </div>
 </form>

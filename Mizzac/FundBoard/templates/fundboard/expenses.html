@@ -1,63 +1,41 @@
 {% extends "fundboard/base.html" %}
 {% load static %}
 
-<!-- {# =====================================================================
-   FundBoard – Expenses (unified page: recurring + one-time)
-   - Uses modal triggers for add/edit/delete
-   - Shows computed next due date with e.next_due_upcoming
-   ===================================================================== #} -->
-
 {% block fb_content %}
 <div class="container-fluid py-4">
 
   {# ── Header & primary actions ── #}
   <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Expenses</h2>
+    <h2 class="mb-0">Dépenses</h2>
     <div class="d-flex gap-2">
       <button class="btn btn-outline-primary d-flex align-items-center gap-1"
               data-bs-toggle="dynamic-modal"
               data-href="{% url 'fundboard:add_expense_modal' %}?recurring=1">
-        <i class="bi bi-plus-lg"></i> Add recurring
+        <i class="bi bi-plus-lg"></i> Ajouter récurrente
       </button>
       <button class="btn btn-primary d-flex align-items-center gap-1"
               data-bs-toggle="dynamic-modal"
               data-href="{% url 'fundboard:add_expense_modal' %}?recurring=0">
-        <i class="bi bi-plus-lg"></i> Add one-time
+        <i class="bi bi-plus-lg"></i> Ajouter ponctuelle
       </button>
     </div>
   </div>
 
-  {# ── Stat cards ── #}
+  {# ── Stat cards (monthly focus) ── #}
   <div class="row gy-3 mb-4">
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-lg-6">
       <div class="card shadow-sm h-100 border-primary">
         <div class="card-body text-center">
-          <small class="text-uppercase text-muted">Recurring / month</small>
-          <h3 class="fw-bold mb-0">{{ recurring_month_total|floatformat:2 }} €</h3>
+          <small class="text-uppercase text-muted">Récurrent / mois (équiv.)</small>
+          <h3 class="fw-bold mb-0">{{ total_recurring_month|default:0|floatformat:2 }} €</h3>
         </div>
       </div>
     </div>
-    <div class="col-6 col-lg-3">
-      <div class="card shadow-sm h-100 border-info">
-        <div class="card-body text-center">
-          <small class="text-uppercase text-muted">Recurring / year</small>
-          <h3 class="fw-bold mb-0">{{ recurring_year_total|floatformat:2 }} €</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-lg-3">
-      <div class="card shadow-sm h-100 border-warning">
-        <div class="card-body text-center">
-          <small class="text-uppercase text-muted">One-time (this month)</small>
-          <h3 class="fw-bold mb-0">{{ onetime_month_total|floatformat:2 }} €</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-6 col-lg-3">
+    <div class="col-12 col-lg-6">
       <div class="card shadow-sm h-100 border-success">
         <div class="card-body text-center">
-          <small class="text-uppercase text-muted">One-time (YTD)</small>
-          <h3 class="fw-bold mb-0">{{ onetime_year_total|floatformat:2 }} €</h3>
+          <small class="text-uppercase text-muted">Ponctuelles (ce mois)</small>
+          <h3 class="fw-bold mb-0">{{ total_one_time_month|default:0|floatformat:2 }} €</h3>
         </div>
       </div>
     </div>
@@ -68,7 +46,7 @@
     <div class="col-lg-8 mb-4 mb-lg-0">
       <div class="card shadow-sm rounded-4 h-100">
         <div class="card-header bg-white border-0">
-          <h5 class="mb-0">Last 6 months</h5>
+          <h5 class="mb-0">6 derniers mois</h5>
         </div>
         <div class="card-body">
           <canvas id="bar6m" height="140"></canvas>
@@ -78,7 +56,7 @@
     <div class="col-lg-4">
       <div class="card shadow-sm rounded-4 h-100">
         <div class="card-header bg-white border-0">
-          <h5 class="mb-0">Split by type</h5>
+          <h5 class="mb-0">Répartition par catégorie (mois courant)</h5>
         </div>
         <div class="card-body d-flex align-items-center">
           <canvas id="donutType" height="200"></canvas>
@@ -87,66 +65,133 @@
     </div>
   </div>
 
-  {# ── Tabs (Recurring / One-time) ── #}
+  {# ── Tabs: Latest (default) / Recurring / One-time / Assets ── #}
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item" role="presentation">
-      <button class="nav-link active" id="tab-recurring" data-bs-toggle="tab"
+      <button class="nav-link active" id="tab-latest" data-bs-toggle="tab"
+              data-bs-target="#pane-latest" type="button" role="tab">
+        Derniers mouvements
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-recurring" data-bs-toggle="tab"
               data-bs-target="#pane-recurring" type="button" role="tab">
-        Recurring
+        Récurrentes
       </button>
     </li>
     <li class="nav-item" role="presentation">
       <button class="nav-link" id="tab-onetime" data-bs-toggle="tab"
               data-bs-target="#pane-onetime" type="button" role="tab">
-        One-time
+        Ponctuelles
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" id="tab-assets" data-bs-toggle="tab"
+              data-bs-target="#pane-assets" type="button" role="tab">
+        Actifs
       </button>
     </li>
   </ul>
 
   <div class="tab-content">
-    {# ── Recurring table ── #}
-    <div class="tab-pane fade show active" id="pane-recurring" role="tabpanel" aria-labelledby="tab-recurring">
+
+    {# ── Latest (default) ── #}
+    <div class="tab-pane fade show active" id="pane-latest" role="tabpanel" aria-labelledby="tab-latest">
       <div class="card shadow-sm rounded-4">
         <div class="table-responsive">
           <table class="table table-hover mb-0 align-middle">
             <thead class="table-light">
               <tr>
-                <th>Name</th>
-                <th class="text-end">Amount</th>
-                <th class="text-nowrap">Frequency</th>
-                <th class="text-nowrap">Next due</th>
+                <th>Date</th>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>Catégorie</th>
+                <th>Compte</th>
+                <th class="text-end">Montant</th>
                 <th class="text-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {% for e in recurring %}
+              {% for e in latest_list %}
               <tr>
+                <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
                 <td>{{ e.name }}</td>
-                <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
                 <td>
-                  {% if e.freq == 'PERSONALIZED' and e.freq_custom %}
-                    Personalized ({{ e.freq_custom }} days)
-                  {% else %}
-                    {{ e.get_freq_display }}
-                  {% endif %}
+                  {% if e.is_recurring %}<span class="badge bg-primary">Récurrent</span>
+                  {% else %}<span class="badge bg-secondary">Ponctuel</span>{% endif %}
                 </td>
-                <td>{{ e.next_due_upcoming|date:"d/m/Y" }}</td>
+                <td>{{ e.tag|default:"—" }}</td>
+                <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
+                <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
                           data-href="{% url 'fundboard:edit_expense_modal' e.pk %}">
-                    Edit
+                    Éditer
                   </button>
                   <button class="btn btn-sm btn-outline-danger"
                           data-bs-toggle="dynamic-modal"
                           data-href="{% url 'fundboard:delete_expense_modal' e.pk %}">
-                    Delete
+                    Supprimer
                   </button>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="text-center py-4 text-muted">No recurring expenses yet.</td>
+                <td colspan="7" class="text-center py-4 text-muted">Aucun mouvement.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ── Recurring table ── #}
+    <div class="tab-pane fade" id="pane-recurring" role="tabpanel" aria-labelledby="tab-recurring">
+      <div class="card shadow-sm rounded-4">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Nom</th>
+                <th class="text-end">Montant</th>
+                <th class="text-nowrap">Fréquence</th>
+                <th class="text-nowrap">Prochaine échéance</th>
+                <th>Compte</th>
+                <th class="text-nowrap">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for e in recurring_list %}
+              <tr>
+                <td>{{ e.name }}</td>
+                <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
+                <td>
+                  {% if e.freq == 'PERSONALIZED' and e.freq_custom %}
+                    Personnalisée ({{ e.freq_custom }} j)
+                  {% else %}
+                    {{ e.get_freq_display }}
+                  {% endif %}
+                </td>
+                <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
+                <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
+                <td class="text-nowrap">
+                  <button class="btn btn-sm btn-outline-secondary"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:edit_expense_modal' e.pk %}">
+                    Éditer
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:delete_expense_modal' e.pk %}">
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center py-4 text-muted">Aucune dépense récurrente.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -162,37 +207,38 @@
           <table class="table table-hover mb-0 align-middle">
             <thead class="table-light">
               <tr>
-                <th>Name</th>
-                <th class="text-end">Amount</th>
+                <th>Nom</th>
+                <th class="text-end">Montant</th>
                 <th class="text-nowrap">Date</th>
-                <th>Account</th>
+                <th>Catégorie</th>
+                <th>Compte</th>
                 <th class="text-nowrap">Actions</th>
               </tr>
             </thead>
             <tbody>
-              {% for e in onetime %}
+              {% for e in one_time_list %}
               <tr>
                 <td>{{ e.name }}</td>
                 <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
-                {# For a one-time expense, next_due_upcoming returns the stored date #}
-                <td>{{ e.next_due_upcoming|date:"d/m/Y" }}</td>
-                <td>{% if e.account %}{{ e.account.name }}{% else %}–{% endif %}</td>
+                <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
+                <td>{{ e.tag|default:"—" }}</td>
+                <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
                           data-href="{% url 'fundboard:edit_expense_modal' e.pk %}">
-                    Edit
+                    Éditer
                   </button>
                   <button class="btn btn-sm btn-outline-danger"
                           data-bs-toggle="dynamic-modal"
                           data-href="{% url 'fundboard:delete_expense_modal' e.pk %}">
-                    Delete
+                    Supprimer
                   </button>
                 </td>
               </tr>
               {% empty %}
               <tr>
-                <td colspan="5" class="text-center py-4 text-muted">No one-time expenses yet.</td>
+                <td colspan="6" class="text-center py-4 text-muted">Aucune dépense ponctuelle.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -201,21 +247,56 @@
       </div>
     </div>
 
-  </div>
+    {# ── Assets tab (inline from previous assets.html) ── #}
+    <div class="tab-pane fade" id="pane-assets" role="tabpanel" aria-labelledby="tab-assets">
+      <div class="card shadow-sm rounded-4">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Compte</th>
+                <th>Actif</th>
+                <th class="text-end">Quantité</th>
+                <th class="text-end">Coût moyen</th>
+                <th class="text-end">Coût total</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for h in holdings %}
+              <tr>
+                <td>{{ h.account.name }}</td>
+                <td>{{ h.asset.ticker }} <small class="text-muted">{{ h.asset.name }}</small></td>
+                <td class="text-end">{{ h.quantity }}</td>
+                <td class="text-end">{{ h.avg_cost|floatformat:4 }} €</td>
+                <td class="text-end">{{ h.cost_basis|floatformat:2 }} €</td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center py-4 text-muted">
+                  Aucune position. Ajoutez une opération d’achat pour créer votre première ligne.
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div> {# /.tab-content #}
 </div>
 {% endblock fb_content %}
 
 {% block extra_js %}
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
 <script>
-/* Datasets are pre-serialized as JSON strings in the context. */
-const donutLabels      = JSON.parse('{{ donut_labels_json|escapejs }}'     || '[]');
-const donutData        = JSON.parse('{{ donut_data_json|escapejs }}'       || '[]');
-const monthsLabels     = JSON.parse('{{ months_labels_json|escapejs }}'    || '[]');
-const monthlyRecVals   = JSON.parse('{{ monthly_rec_vals_json|escapejs }}' || '[]');
-const monthlyOneVals   = JSON.parse('{{ monthly_one_vals_json|escapejs }}' || '[]');
+/* ---- Safely parse JSON data provided by the view ---- */
+const donutLabels    = JSON.parse('{{ donut_labels_json|default:"[]"|escapejs }}');
+const donutData      = JSON.parse('{{ donut_data_json|default:"[]"|escapejs }}');
+const monthsLabels   = JSON.parse('{{ months_labels_json|default:"[]"|escapejs }}');
+const monthlyRecVals = JSON.parse('{{ monthly_rec_vals_json|default:"[]"|escapejs }}');
+const monthlyOneVals = JSON.parse('{{ monthly_one_vals_json|default:"[]"|escapejs }}');
 
 (function renderCharts(){
   const donutEl = document.getElementById('donutType');
@@ -234,8 +315,8 @@ const monthlyOneVals   = JSON.parse('{{ monthly_one_vals_json|escapejs }}' || '[
       data: {
         labels: monthsLabels,
         datasets: [
-          { label: 'Recurring (monthly eq.)', data: monthlyRecVals, stack: 'x' },
-          { label: 'One-time',                data: monthlyOneVals, stack: 'x' }
+          { label: 'Récurrent (équiv. mensuelle)', data: monthlyRecVals, stack: 'x' },
+          { label: 'Ponctuel',                     data: monthlyOneVals, stack: 'x' }
         ]
       },
       options: {

@@ -1,23 +1,36 @@
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:fundboard' %}">
-        <i class="bi bi-pie-chart-fill me-2"></i> Tableau de bord
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:accounts' %}">
-        <i class="bi bi-plug-fill me-2"></i> Connecter un compte
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:transactions' %}">
-        <i class="bi bi-bar-chart-fill me-2"></i> Actifs
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:subscriptions' %}">
-        <i class="bi bi-credit-card-2-back-fill me-2"></i> Dépenses
-      </a>
-    </li>
-  </ul>
-  
+<ul class="nav nav-pills flex-column px-2 gap-1">
+  <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'fundboard' %}active{% endif %}"
+       href="{% url 'fundboard:fundboard' %}">
+      <i class="bi bi-pie-chart-fill me-2"></i> Tableau de bord
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'accounts' %}active{% endif %}"
+       href="{% url 'fundboard:accounts' %}">
+      <i class="bi bi-plug-fill me-2"></i> Comptes
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'assets' %}active{% endif %}"
+       href="{% url 'fundboard:assets' %}">
+      <i class="bi bi-bar-chart-fill me-2"></i> Actifs
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'expenses' %}active{% endif %}"
+       href="{% url 'fundboard:expenses' %}">
+      <i class="bi bi-credit-card-2-back-fill me-2"></i> Dépenses
+    </a>
+  </li>
+
+  <li class="nav-item">
+    <a class="nav-link {% if request.resolver_match.url_name == 'transactions' %}active{% endif %}"
+       href="{% url 'fundboard:transactions' %}">
+      <i class="bi bi-clock-history me-2"></i> Transactions
+    </a>
+  </li>
+</ul>
