@@ -3,11 +3,7 @@
 
 {# =====================================================================
    FundBoard – Expenses (unified page: recurring + one-time)
-   - Headline cards for quick stats
-   - Donut (Recurring vs One-time)
-   - 6-month stacked bars (approx monthly cost)
-   - Tabs: Recurring | One-time
-   - Uses dynamic-modal system via data-bs-toggle="dynamic-modal"
+   FIX: datasets are valid JSON strings -> JSON.parse safely
    ===================================================================== #}
 
 {% block fb_content %}
@@ -178,9 +174,7 @@
                 <td>{{ e.name }}</td>
                 <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
                 <td>{{ e.next_due|date:"d/m/Y" }}</td>
-                <td>
-                  {% if e.account %}{{ e.account.name }}{% else %}–{% endif %}
-                </td>
+                <td>{% if e.account %}{{ e.account.name }}{% else %}–{% endif %}</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
@@ -214,11 +208,12 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-const donutLabels      = JSON.parse('{{ donut_labels|safe|escapejs }}'     || '[]');
-const donutData        = JSON.parse('{{ donut_data|safe|escapejs }}'       || '[]');
-const monthsLabels     = JSON.parse('{{ months_labels|safe|escapejs }}'    || '[]');
-const monthlyRecVals   = JSON.parse('{{ monthly_rec_vals|safe|escapejs }}' || '[]');
-const monthlyOneVals   = JSON.parse('{{ monthly_one_vals|safe|escapejs }}' || '[]');
+/* Datasets are pre-serialized as JSON strings in the context. */
+const donutLabels      = JSON.parse('{{ donut_labels_json|escapejs }}'     || '[]');
+const donutData        = JSON.parse('{{ donut_data_json|escapejs }}'       || '[]');
+const monthsLabels     = JSON.parse('{{ months_labels_json|escapejs }}'    || '[]');
+const monthlyRecVals   = JSON.parse('{{ monthly_rec_vals_json|escapejs }}' || '[]');
+const monthlyOneVals   = JSON.parse('{{ monthly_one_vals_json|escapejs }}' || '[]');
 
 (function renderCharts(){
   const donutEl = document.getElementById('donutType');

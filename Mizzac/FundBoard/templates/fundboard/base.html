@@ -31,12 +31,76 @@ document.addEventListener('click', async (e) => {
 
   // — charge le fragment HTML —
   const html = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                     .then(r => r.text());
+                     .then(r => r.text())
+                     .catch(() => '<div class="modal-dialog"><div class="modal-content"><div class="modal-body">Erreur de chargement.</div></div></div>');
   modalEl.innerHTML = html;
+
+  // — initialise les comportements pour le fragment injecté —
+  initFundboardModal(modalEl);
 
   // — ouvre la modale —
   new bootstrap.Modal(modalEl).show();
 });
+
+/**
+ * Initialise les comportements pour les modales FundBoard.
+ * Appelée après l’injection du HTML dans #fbDynamicModal.
+ */
+function initFundboardModal(root){
+  // Modale Dépense (unifiée : one-time / récurrente)
+  if (root.querySelector('form[action*="expenses"]')) {
+    initExpenseModal(root);
+  }
+  // (ajoute ici d'autres initialisations si besoin)
+}
+
+/**
+ * UX du formulaire Dépense :
+ * - Affiche/masque le bloc de récurrence selon la case "Dépense récurrente"
+ * - Affiche le champ "Jours" seulement si fréquence = "PERSONALIZED"
+ * - Gère dynamiquement required/disabled + met à jour le libellé de la date
+ */
+function initExpenseModal(root){
+  const q = (sel) => root.querySelector(sel);
+
+  const chk            = q('input[name="is_recurring"]');
+  const recurBox       = q('#recurrenceFields');
+  const nextDueLabel   = q('#nextDueLabel');
+
+  const freqSel        = q('select[name="freq"]');
+  const freqCustomWrap = q('#freqCustomGroup');
+  const freqCustomIn   = q('input[name="freq_custom"]');
+
+  function updatePersonalized(){
+    if (!freqSel || !freqCustomWrap || !freqCustomIn) return;
+    const isOn    = !!(chk && chk.checked);
+    const isPerso = (freqSel.value === 'PERSONALIZED');
+
+    freqCustomWrap.style.display = (isOn && isPerso) ? '' : 'none';
+    freqCustomIn.disabled = !(isOn && isPerso);
+    freqCustomIn.required =  (isOn && isPerso);
+    if (!(isOn && isPerso)) freqCustomIn.value = '';
+  }
+
+  function updateRecurring(){
+    const on = !!(chk && chk.checked);
+
+    if (recurBox)     recurBox.style.display = on ? '' : 'none';
+    if (nextDueLabel) nextDueLabel.textContent = on ? 'Prochaine échéance' : 'Date';
+
+    if (freqSel) {
+      freqSel.disabled = !on;
+      freqSel.required =  on;
+      if (!on) freqSel.value = '';
+    }
+    updatePersonalized();
+  }
+
+  if (chk)     chk.addEventListener('change', updateRecurring);
+  if (freqSel) freqSel.addEventListener('change', updatePersonalized);
+
+  // État initial à l’ouverture de la modale
+  updateRecurring();
+}
 </script>
 {% endblock %}
-

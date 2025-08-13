@@ -3,11 +3,13 @@
 Views for FundBoard.
 - Unified "Expenses" page (recurring + one-time)
 - Single modal form for both types (ExpenseForm + is_recurring toggle)
-- Legacy /subscriptions is redirected to /expenses
+- Legacy /subscriptions redirects to /expenses
+- FIX: chart datasets are now JSON-serialized in the context
 """
 
 from datetime import date
 from calendar import monthrange
+import json
 
 from django.urls import reverse_lazy
 from django.views.generic import (
@@ -18,7 +20,6 @@ from django.http import HttpResponse, HttpResponseForbidden
 from django.template.loader import render_to_string
 from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models import Sum
-        # noqa: F401
 from django.utils import timezone
 from django.contrib import messages
 
@@ -32,6 +33,7 @@ from .forms import (
     ExpenseForm,
     IncomeForm
 )
+
 
 # ======================================================================
 #                             DASHBOARD & PAGES
@@ -48,7 +50,6 @@ class FundBoardView(LoginRequiredMixin, TemplateView):
         transactions_qs = Transaction.objects.filter(user=user)
         recurring_qs    = Expense.objects.filter(user=user, is_recurring=True)
 
-        # Aggregate quick stats
         ctx['accounts_count'] = accounts_qs.count()
         ctx['investment_accounts_count'] = accounts_qs.filter(
             category__in=['CTO', 'PEA', 'CRYPTO']
@@ -168,6 +169,7 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
             total = sum(e.amount for e in onetime_qs if start <= e.next_due <= end)
             monthly_one_vals.append(float(total or 0))
 
+        # Normal context variables (querysets etc.)
         ctx.update(
             recurring=recurring_qs,
             onetime=onetime_qs,
@@ -175,11 +177,15 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
             recurring_year_total=recurring_year_total,
             onetime_month_total=onetime_month_total,
             onetime_year_total=onetime_year_total,
-            donut_labels=donut_labels,
-            donut_data=donut_data,
-            months_labels=months_labels,
-            monthly_rec_vals=monthly_rec_vals,
-            monthly_one_vals=monthly_one_vals,
+        )
+
+        # 🚀 FIX: JSON-serialize datasets for Chart.js
+        ctx.update(
+            donut_labels_json=json.dumps(donut_labels),
+            donut_data_json=json.dumps(donut_data),
+            months_labels_json=json.dumps(months_labels),
+            monthly_rec_vals_json=json.dumps(monthly_rec_vals),
+            monthly_one_vals_json=json.dumps(monthly_one_vals),
         )
         return ctx
 
@@ -266,10 +272,12 @@ class AddExpenseModal(AjaxModalMixin, CreateView):
 
     def get_initial(self):
         init = super().get_initial()
-        # Optional: allow preselect via querystring (?recurring=1)
         rec = self.request.GET.get('recurring')
         if rec is not None:
-            init['is_recurring'] = bool(int(rec))
+            try:
+                init['is_recurring'] = bool(int(rec))
+            except ValueError:
+                pass
         return init
 
     def form_valid(self, form):

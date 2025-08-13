@@ -1,9 +1,9 @@
 {% load static %}
-{# =====================================================================
-   Modal form — Unified Expense (recurring OR one-time)
-   Uses ExpenseForm with an is_recurring toggle.
-   JS below shows/hides the frequency fields accordingly.
-   ===================================================================== #}
+<!-- {# =====================================================================
+   Modal form — Unified Expense (récurrente OU ponctuelle)
+   → Aucun <script> ici : la logique d’affichage dynamique est initialisée
+     dans fundboard/base.html après injection du fragment.
+   ===================================================================== #} -->
 
 <form method="post"
       action="{% if object %}
@@ -18,40 +18,51 @@
 
       <div class="modal-header">
         <h5 class="modal-title">
-          {% if object %}Edit expense{% else %}Add expense{% endif %}
+          {% if object %}Modifier la dépense{% else %}Ajouter une dépense{% endif %}
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
       </div>
 
       <div class="modal-body">
+
+        {# ---- Switch récurrence ---- #}
         <div class="form-check form-switch mb-3">
-          {{ form.is_recurring }} <label class="form-check-label ms-2" for="{{ form.is_recurring.id_for_label }}">Recurring expense</label>
+          {{ form.is_recurring }}
+          <label class="form-check-label ms-2"
+                 for="{{ form.is_recurring.id_for_label }}">Dépense récurrente</label>
         </div>
 
+        {# ---- Nom ---- #}
         <div class="mb-3">
           {{ form.name.label_tag }}{{ form.name }}
         </div>
 
+        {# ---- Montant + Date/Échéance ---- #}
         <div class="row gx-2">
           <div class="col-6 mb-3">
             {{ form.amount.label_tag }}{{ form.amount }}
           </div>
           <div class="col-6 mb-3">
-            {{ form.next_due.label_tag }}{{ form.next_due }}
+            <label id="nextDueLabel" for="{{ form.next_due.id_for_label }}">
+              {{ form.next_due.label }}
+            </label>
+            {{ form.next_due }}
           </div>
         </div>
 
+        {# ---- Bloc récurrence (masqué si non récurrent) ---- #}
         <div id="recurrenceFields">
           <div class="row gx-2">
             <div class="col-6 mb-3">
               {{ form.freq.label_tag }}{{ form.freq }}
             </div>
-            <div class="col-6 mb-3">
+            <div class="col-6 mb-3" id="freqCustomGroup">
               {{ form.freq_custom.label_tag }}{{ form.freq_custom }}
             </div>
           </div>
         </div>
 
+        {# ---- Compte / tag ---- #}
         <div class="row gx-2">
           <div class="col-6 mb-3">
             {{ form.account.label_tag }}{{ form.account }}
@@ -61,34 +72,19 @@
           </div>
         </div>
 
+        {# ---- Notes ---- #}
         <div class="mb-2">
           {{ form.notes.label_tag }}{{ form.notes }}
         </div>
       </div>
 
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
         <button type="submit" class="btn btn-success">
-          {% if object %}Save{% else %}Add{% endif %}
+          {% if object %}Enregistrer{% else %}Ajouter{% endif %}
         </button>
       </div>
 
     </div>
   </div>
 </form>
-
-<script>
-/* Small helper to toggle frequency fields based on the switch. */
-(function(){
-  const chk = document.getElementById('{{ form.is_recurring.id_for_label }}');
-  const box = document.getElementById('recurrenceFields');
-  function toggle(){
-    if(!chk || !box) return;
-    box.style.display = chk.checked ? '' : 'none';
-  }
-  if (chk) {
-    chk.addEventListener('change', toggle);
-    toggle();
-  }
-})();
-</script>
