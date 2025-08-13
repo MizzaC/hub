@@ -461,6 +461,12 @@ class AddExpenseModal(LoginRequiredMixin, AjaxModalMixin, CreateView):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return HttpResponse(status=204)
         return super().form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        kwargs['user'] = self.request.user
+        return kwargs
+
 
 
 class EditExpenseModal(LoginRequiredMixin, AjaxModalMixin, UpdateView):

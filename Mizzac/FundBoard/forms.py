@@ -58,6 +58,13 @@ class ExpenseForm(forms.ModelForm):
             cleaned['freq'] = None
             cleaned['freq_custom'] = None
         return cleaned
+    
+    def __init__(self, *args, **kwargs):
+        user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+        if user:
+            # Only show accounts owned by the current user
+            self.fields['account'].queryset = Account.objects.filter(user=user)
 
 
 # ──────────────────────────────────────────────────────────────
