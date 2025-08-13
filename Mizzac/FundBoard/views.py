@@ -4,11 +4,12 @@ Views for FundBoard.
 - Unified "Expenses" page (recurring + one-time)
 - Single modal form for both types (ExpenseForm + is_recurring toggle)
 - Legacy /subscriptions redirects to /expenses
-- FIX: chart datasets are now JSON-serialized in the context
+- FIX: use Decimal everywhere for money math; convert to float only for charts
 """
 
 from datetime import date
 from calendar import monthrange
+from decimal import Decimal
 import json
 
 from django.urls import reverse_lazy
@@ -57,8 +58,7 @@ class FundBoardView(LoginRequiredMixin, TemplateView):
         ctx['transactions_count'] = transactions_qs.count()
         ctx['subscriptions_count'] = recurring_qs.count()
         ctx['recent_transactions'] = transactions_qs.select_related('account', 'asset').order_by('-date_trx')[:5]
-        ctx['total_balance'] = accounts_qs.aggregate(Sum('balance'))['balance__sum'] or 0
-
+        ctx['total_balance'] = accounts_qs.aggregate(Sum('balance'))['balance__sum'] or Decimal('0')
         return ctx
 
 
@@ -115,38 +115,51 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
         onetime_qs   = Expense.objects.filter(user=user, is_recurring=False).order_by('-next_due')
 
         # ---- Totals for headline cards ----
-        def monthly_eq(exp):
-            if exp.is_recurring:
-                if exp.freq == 'MONTHLY':
-                    return exp.amount
-                if exp.freq == 'WEEKLY':
-                    return exp.amount * 4.33
-                if exp.freq == 'DAILY':
-                    return exp.amount * 30
-                if exp.freq == 'YEARLY':
-                    return exp.amount / 12
-                if exp.freq == 'PERSONALIZED' and exp.freq_custom:
-                    return exp.amount * (30 / exp.freq_custom)
-            return 0
+        def monthly_eq(exp: Expense) -> Decimal:
+            """
+            Convert a recurring expense to a monthly equivalent using Decimals.
+            DAILY    ≈ amount * 30
+            WEEKLY   ≈ amount * 4.33
+            MONTHLY  =  amount
+            YEARLY   ≈ amount / 12
+            PERSONALIZED (n days) ≈ amount * (30 / n)
+            """
+            amt = exp.amount or Decimal('0')
+            if not exp.is_recurring:
+                return Decimal('0')
 
-        recurring_month_total = sum(monthly_eq(e) for e in recurring_qs)
-        recurring_year_total  = recurring_month_total * 12
+            if exp.freq == 'MONTHLY':
+                return amt
+            if exp.freq == 'WEEKLY':
+                return (amt * Decimal('4.33'))
+            if exp.freq == 'DAILY':
+                return (amt * Decimal('30'))
+            if exp.freq == 'YEARLY':
+                return (amt / Decimal('12'))
+            if exp.freq == 'PERSONALIZED' and exp.freq_custom and exp.freq_custom > 0:
+                return amt * (Decimal('30') / Decimal(exp.freq_custom))
+            return Decimal('0')
+
+        recurring_month_total = sum((monthly_eq(e) for e in recurring_qs), start=Decimal('0'))
+        recurring_year_total  = recurring_month_total * Decimal('12')
 
         # One-time totals limited to current month / year
         month_start = today.replace(day=1)
         year_start  = today.replace(month=1, day=1)
         onetime_month_total = sum(
-            e.amount for e in onetime_qs if month_start <= e.next_due <= today
+            (e.amount for e in onetime_qs if month_start <= e.next_due <= today),
+            start=Decimal('0')
         )
         onetime_year_total = sum(
-            e.amount for e in onetime_qs if year_start <= e.next_due <= today
+            (e.amount for e in onetime_qs if year_start <= e.next_due <= today),
+            start=Decimal('0')
         )
 
         # Donut by type (Recurring vs One-time)
         donut_labels = ['Recurring', 'One-time']
         donut_data   = [
-            float(sum(e.amount for e in recurring_qs) or 0),
-            float(sum(e.amount for e in onetime_qs) or 0)
+            float(sum((e.amount for e in recurring_qs), start=Decimal('0'))),
+            float(sum((e.amount for e in onetime_qs),   start=Decimal('0')))
         ]
 
         # Last 6 months stacked bars
@@ -159,15 +172,19 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
                 m = 12
                 y -= 1
         months.reverse()
-        months_labels = [f"{m:02d}/{y}" for (y, m) in months]
+        months_labels = [f"{mm:02d}/{yy}" for (yy, mm) in months]
 
         monthly_rec_vals = [float(recurring_month_total) for _ in months]
+
         monthly_one_vals = []
-        for y, m in months:
-            start = date(y, m, 1)
-            end   = date(y, m, monthrange(y, m)[1])
-            total = sum(e.amount for e in onetime_qs if start <= e.next_due <= end)
-            monthly_one_vals.append(float(total or 0))
+        for yy, mm in months:
+            start = date(yy, mm, 1)
+            end   = date(yy, mm, monthrange(yy, mm)[1])
+            total = sum(
+                (e.amount for e in onetime_qs if start <= e.next_due <= end),
+                start=Decimal('0')
+            )
+            monthly_one_vals.append(float(total))
 
         # Normal context variables (querysets etc.)
         ctx.update(
@@ -179,7 +196,7 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
             onetime_year_total=onetime_year_total,
         )
 
-        # 🚀 FIX: JSON-serialize datasets for Chart.js
+        # JSON for Chart.js
         ctx.update(
             donut_labels_json=json.dumps(donut_labels),
             donut_data_json=json.dumps(donut_data),

@@ -1,10 +1,11 @@
 {% extends "fundboard/base.html" %}
 {% load static %}
 
-{# =====================================================================
+<!-- {# =====================================================================
    FundBoard – Expenses (unified page: recurring + one-time)
-   FIX: datasets are valid JSON strings -> JSON.parse safely
-   ===================================================================== #}
+   - Uses modal triggers for add/edit/delete
+   - Shows computed next due date with e.next_due_upcoming
+   ===================================================================== #} -->
 
 {% block fb_content %}
 <div class="container-fluid py-4">
@@ -129,7 +130,7 @@
                     {{ e.get_freq_display }}
                   {% endif %}
                 </td>
-                <td>{{ e.next_due|date:"d/m/Y" }}</td>
+                <td>{{ e.next_due_upcoming|date:"d/m/Y" }}</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
@@ -173,7 +174,8 @@
               <tr>
                 <td>{{ e.name }}</td>
                 <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
-                <td>{{ e.next_due|date:"d/m/Y" }}</td>
+                {# For a one-time expense, next_due_upcoming returns the stored date #}
+                <td>{{ e.next_due_upcoming|date:"d/m/Y" }}</td>
                 <td>{% if e.account %}{{ e.account.name }}{% else %}–{% endif %}</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
