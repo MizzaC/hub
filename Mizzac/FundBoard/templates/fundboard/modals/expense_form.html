@@ -1,0 +1,94 @@
+{% load static %}
+{# =====================================================================
+   Modal form — Unified Expense (recurring OR one-time)
+   Uses ExpenseForm with an is_recurring toggle.
+   JS below shows/hides the frequency fields accordingly.
+   ===================================================================== #}
+
+<form method="post"
+      action="{% if object %}
+                {% url 'fundboard:edit_expense_modal' object.pk %}
+              {% else %}
+                {% url 'fundboard:add_expense_modal' %}
+              {% endif %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% if object %}Edit expense{% else %}Add expense{% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="form-check form-switch mb-3">
+          {{ form.is_recurring }} <label class="form-check-label ms-2" for="{{ form.is_recurring.id_for_label }}">Recurring expense</label>
+        </div>
+
+        <div class="mb-3">
+          {{ form.name.label_tag }}{{ form.name }}
+        </div>
+
+        <div class="row gx-2">
+          <div class="col-6 mb-3">
+            {{ form.amount.label_tag }}{{ form.amount }}
+          </div>
+          <div class="col-6 mb-3">
+            {{ form.next_due.label_tag }}{{ form.next_due }}
+          </div>
+        </div>
+
+        <div id="recurrenceFields">
+          <div class="row gx-2">
+            <div class="col-6 mb-3">
+              {{ form.freq.label_tag }}{{ form.freq }}
+            </div>
+            <div class="col-6 mb-3">
+              {{ form.freq_custom.label_tag }}{{ form.freq_custom }}
+            </div>
+          </div>
+        </div>
+
+        <div class="row gx-2">
+          <div class="col-6 mb-3">
+            {{ form.account.label_tag }}{{ form.account }}
+          </div>
+          <div class="col-6 mb-3">
+            {{ form.tag.label_tag }}{{ form.tag }}
+          </div>
+        </div>
+
+        <div class="mb-2">
+          {{ form.notes.label_tag }}{{ form.notes }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button type="submit" class="btn btn-success">
+          {% if object %}Save{% else %}Add{% endif %}
+        </button>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<script>
+/* Small helper to toggle frequency fields based on the switch. */
+(function(){
+  const chk = document.getElementById('{{ form.is_recurring.id_for_label }}');
+  const box = document.getElementById('recurrenceFields');
+  function toggle(){
+    if(!chk || !box) return;
+    box.style.display = chk.checked ? '' : 'none';
+  }
+  if (chk) {
+    chk.addEventListener('change', toggle);
+    toggle();
+  }
+})();
+</script>
