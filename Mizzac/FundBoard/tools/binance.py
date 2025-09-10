@@ -90,8 +90,15 @@ class Binance_Reader:
         
         
         
-        
+    def first_retrieve():
+            
 
+
+    def get_timestamp(self, ):
+        
+        
+        
+        return start_time, end_time
 
     def binance_request(self, endpoint, params=None, signed=True, OptionnalAuth=False, base_url="https://api.binance.com"):
         """
