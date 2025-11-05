@@ -1,18 +1,22 @@
 {% extends 'common/base.html' %}{% load static %}
 
 {% block content %}
-    {% include 'fundboard/_sidebar.html' %}
+  {% include 'fundboard/_sidebar.html' %}
 
-    <div id="fbContentWrapper" class="p-4">
-        {% block fb_content %}{% endblock fb_content %}
-    </div>
+  <div id="fbContentWrapper" class="p-4">
+    {% block fb_content %}{% endblock fb_content %}
+  </div>
 
-    {# ------------ conteneur modal dynamique (obligatoire) -------- #}
-    <div id="fbDynamicModal" class="modal fade" tabindex="-1"></div>
+  {# Conteneur unique pour toutes les modales dynamiques #}
+  <div id="fbDynamicModal" class="modal fade" tabindex="-1"></div>
 {% endblock %}
 
 {% block extra_js %}
 <script>
+/**
+ * Global listener for FundBoard dynamic modals.
+ * Use buttons/links with: data-bs-toggle="dynamic-modal" data-href="URL"
+ */
 document.addEventListener('click', async (e) => {
   const btn = e.target.closest('[data-bs-toggle="dynamic-modal"]');
   if (!btn) return;
@@ -20,23 +24,103 @@ document.addEventListener('click', async (e) => {
   e.preventDefault();
   const url = btn.dataset.href;
 
-  // — récupère ou crée le conteneur modal —
+  // Allocate or reuse the shared modal
   let modalEl = document.getElementById('fbDynamicModal');
   if (!modalEl) {
-      modalEl = document.createElement('div');
-      modalEl.id = 'fbDynamicModal';
-      modalEl.className = 'modal fade';
-      document.body.appendChild(modalEl);
+    modalEl = document.createElement('div');
+    modalEl.id = 'fbDynamicModal';
+    modalEl.className = 'modal fade';
+    document.body.appendChild(modalEl);
   }
 
-  // — charge le fragment HTML —
-  const html = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                     .then(r => r.text());
-  modalEl.innerHTML = html;
+  try {
+    const res  = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+    const html = await res.text();
 
-  // — ouvre la modale —
-  new bootstrap.Modal(modalEl).show();
+    if (!res.ok) {
+      modalEl.innerHTML = `
+        <div class="modal-dialog"><div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title text-danger">Erreur</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+          </div>
+          <div class="modal-body"><pre class="mb-0" style="white-space:pre-wrap">${html}</pre></div>
+        </div></div>`;
+    } else {
+      modalEl.innerHTML = html;
+    }
+
+    if (typeof initFundboardModal === 'function') {
+      initFundboardModal(modalEl);
+    }
+
+    const instance = new bootstrap.Modal(modalEl);
+    instance.show();
+
+    // Simple strategy: refresh after closing (reflects possible changes)
+    modalEl.addEventListener('hidden.bs.modal', () => {
+      window.location.reload();
+    }, { once: true });
+
+  } catch (err) {
+    console.error(err);
+    modalEl.innerHTML = `
+      <div class="modal-dialog"><div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title text-danger">Erreur réseau</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">Impossible de charger la fenêtre.</div>
+      </div></div>`;
+    new bootstrap.Modal(modalEl).show();
+  }
 });
+
+/* Helpers used by modal fragments to toggle recurring sections */
+function initFundboardModal(root){
+  // Expense/Income recurring toggles (both use same field names patterns)
+  initRecurringToggle(root, {
+    checkbox:      'input[name="is_recurring"]',
+    freqSelect:    'select[name="freq"]',
+    customGroup:   '#freqCustomGroup',
+    customInput:   'input[name="freq_custom"]',
+    dateLabel:     '#nextDueLabel, #nextPaydayLabel', // either one may exist
+    recurrenceBox: '#recurrenceFields',
+    dateLabelOne:  'Date',
+    dateLabelRec:  'Prochaine échéance'
+  });
+}
+
+function initRecurringToggle(root, opts){
+  const qAll = (sel) => root.querySelectorAll(sel);
+  const q    = (sel) => root.querySelector(sel);
+
+  const chk = q(opts.checkbox);
+  const sel = q(opts.freqSelect);
+  const box = q(opts.recurrenceBox);
+  const labs = qAll(opts.dateLabel);
+  const grp = q(opts.customGroup);
+  const inp = q(opts.customInput);
+
+  function updatePersonalized(){
+    const isOn    = !!(chk && chk.checked);
+    const isPerso = (sel && sel.value === 'PERSONALIZED');
+    if (grp) grp.style.display = (isOn && isPerso) ? '' : 'none';
+    if (inp){ inp.disabled = !(isOn && isPerso); inp.required = (isOn && isPerso); if (!(isOn && isPerso)) inp.value=''; }
+  }
+  function updateRecurring(){
+    const on = !!(chk && chk.checked);
+    if (box) box.style.display = on ? '' : 'none';
+    if (labs && labs.length){
+      labs.forEach(lab => lab.textContent = on ? opts.dateLabelRec : opts.dateLabelOne);
+    }
+    if (sel){ sel.disabled = !on; sel.required = on; if(!on) sel.value=''; }
+    updatePersonalized();
+  }
+
+  if (chk) chk.addEventListener('change', updateRecurring);
+  if (sel) sel.addEventListener('change', updatePersonalized);
+  updateRecurring(); // initial
+}
 </script>
 {% endblock %}
-

@@ -4,13 +4,12 @@
 {% block fb_content %}
 <div class="container-fluid py-4">
 
-  {# ───── Titre, filtres & recherche ───── #}
+  {# ───── Title, filters & search ───── #}
   <div class="d-lg-flex justify-content-between align-items-center mb-4">
     <h2 class="mb-3 mb-lg-0">Historique des transactions</h2>
 
     <div class="d-flex flex-wrap gap-2">
-
-      {# Filtre Compte #}
+      {# Account filter (optional dataset provided by view) #}
       <select id="filterAccount" class="form-select" style="width:180px;">
         <option value="">Tous les comptes</option>
         {% for acct in accounts %}
@@ -18,7 +17,7 @@
         {% endfor %}
       </select>
 
-      {# Filtre Type #}
+      {# Type filter #}
       <select id="filterType" class="form-select" style="width:160px;">
         <option value="">Tous les types</option>
         {% for code, label in transaction_choices %}
@@ -26,14 +25,13 @@
         {% endfor %}
       </select>
 
-      {# Recherche texte #}
+      {# Free text search #}
       <input id="searchInput" type="search" class="form-control"
              placeholder="Rechercher…" style="width:200px;">
-
     </div>
   </div>
 
-  {# ───── Tableau ───── #}
+  {# ───── Table ───── #}
   <div class="card shadow-sm rounded-4">
     <div class="table-responsive">
       <table class="table table-hover mb-0 align-middle" id="trxTable">
@@ -48,29 +46,23 @@
           </tr>
         </thead>
         <tbody>
-            {% for t in transactions %}
-              <tr data-account="{{ t.account.id }}" data-type="{{ t.trx_type }}">
-                <td>{{ t.date_trx|date:"d/m/Y H:i" }}</td>
-                <td>{{ t.get_trx_type_display }}</td>
-                <td>{{ t.account.name }}</td>
-                <td>
-                  {% if t.asset %}
-                      {{ t.asset.ticker }}
-                  {% else %}
-                      –
-                  {% endif %}
-                </td>
-                <td class="text-end">{{ t.quantity|default:"-" }}</td>
-                <td class="text-end {% if t.amount < 0 %}text-danger{% else %}text-success{% endif %}">
-                  {{ t.amount|floatformat:2 }} €
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="6" class="text-center py-4 text-muted">Aucune transaction.</td>
-              </tr>
-            {% endfor %}
-        </tbody>                
+          {% for t in transactions %}
+            <tr data-account="{% if t.account %}{{ t.account.id }}{% endif %}" data-type="{{ t.trx_type }}">
+              <td>{{ t.date_trx|date:"d/m/Y H:i" }}</td>
+              <td>{{ t.get_trx_type_display }}</td>
+              <td>{% if t.account %}{{ t.account.name }}{% else %}–{% endif %}</td>
+              <td>{% if t.asset %}{{ t.asset.ticker }}{% else %}–{% endif %}</td>
+              <td class="text-end">{{ t.quantity|default:"-" }}</td>
+              <td class="text-end {% if t.amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ t.amount|floatformat:2 }} €
+              </td>
+            </tr>
+          {% empty %}
+            <tr>
+              <td colspan="6" class="text-center py-4 text-muted">Aucune transaction.</td>
+            </tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
   </div>
@@ -81,16 +73,16 @@
 {% block extra_js %}
 {{ block.super }}
 <script>
-/* ====  Filtres (compte, type, recherche)  ==== */
+/* Simple client-side filters (account, type, text) */
 const accountSel = document.getElementById('filterAccount');
 const typeSel    = document.getElementById('filterType');
 const searchIn   = document.getElementById('searchInput');
 const rows       = document.querySelectorAll('#trxTable tbody tr');
 
 function applyFilters(){
-  const acc = accountSel.value;
-  const typ = typeSel.value;
-  const q   = searchIn.value.trim().toLowerCase();
+  const acc = accountSel ? accountSel.value : '';
+  const typ = typeSel ? typeSel.value : '';
+  const q   = (searchIn ? searchIn.value : '').trim().toLowerCase();
 
   rows.forEach(tr=>{
     const matchAcc = !acc || tr.dataset.account === acc;
@@ -99,6 +91,6 @@ function applyFilters(){
     tr.style.display = (matchAcc && matchTyp && matchTxt) ? '' : 'none';
   });
 }
-[accountSel, typeSel, searchIn].forEach(el=>el.addEventListener('input', applyFilters));
+[accountSel, typeSel, searchIn].forEach(el=>{ if (el) el.addEventListener('input', applyFilters); });
 </script>
 {% endblock %}

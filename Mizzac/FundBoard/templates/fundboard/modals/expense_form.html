@@ -1,0 +1,80 @@
+{% load static %}
+
+<form method="post"
+      action="{% if object %}{% url 'fundboard:edit_expense_modal' object.pk %}{% else %}{% url 'fundboard:add_expense_modal' %}{% endif %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h5 class="modal-title">
+          {% if object %}Modifier la dépense{% else %}Ajouter une dépense{% endif %}
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+
+      <div class="modal-body">
+        <!-- Basic fields -->
+        <div class="mb-3">{{ form.name.label_tag }} {{ form.name }}</div>
+        <div class="mb-3">{{ form.amount.label_tag }} {{ form.amount }}</div>
+        <div class="mb-3">{{ form.account.label_tag }} {{ form.account }}</div>
+        <div class="mb-3">{{ form.tag.label_tag }} {{ form.tag }}</div>
+        <div class="mb-3">{{ form.notes.label_tag }} {{ form.notes }}</div>
+
+        <hr class="text-muted">
+
+        <!-- Recurring toggle -->
+        <div class="form-check form-switch mb-3">
+          {{ form.is_recurring }}
+          <label class="form-check-label" for="{{ form.is_recurring.id_for_label }}">Dépense récurrente</label>
+        </div>
+
+        <!-- Recurrence details -->
+        <div id="recurrenceFields" class="border rounded-3 p-3 mb-3">
+          <div class="mb-3">{{ form.freq.label_tag }} {{ form.freq }}</div>
+          <div class="mb-0" id="freqCustomGroup">
+            {{ form.freq_custom.label_tag }} {{ form.freq_custom }}
+            <div class="form-text">Nombre de jours entre chaque paiement (si « Personnalisé »).</div>
+          </div>
+        </div>
+
+        <!-- Date/Next due -->
+        <div class="mb-0">
+          <label id="nextDueLabel" class="form-label" for="{{ form.next_due.id_for_label }}">Date / prochaine échéance</label>
+          {{ form.next_due }}
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-success">{% if object %}Enregistrer{% else %}Ajouter{% endif %}</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<script>
+/* Modal-local behavior: toggle recurring parts in-place */
+(() => {
+  const modal = document.currentScript.closest('.modal');
+  if (!modal) return;
+
+  const isRec   = modal.querySelector('input[name="is_recurring"]');
+  const freq    = modal.querySelector('select[name="freq"]');
+  const freqBox = modal.querySelector('#recurrenceFields');
+  const customG = modal.querySelector('#freqCustomGroup');
+  const nextLbl = modal.querySelector('#nextDueLabel');
+
+  function syncUI() {
+    const rec = isRec && isRec.checked;
+    if (freqBox)  freqBox.style.display = rec ? '' : 'none';
+    if (nextLbl)  nextLbl.textContent = rec ? 'Prochaine échéance' : 'Date';
+    if (customG && freq) {
+      customG.style.display = (rec && freq.value === 'PERSONALIZED') ? '' : 'none';
+    }
+  }
+  if (isRec) isRec.addEventListener('change', syncUI);
+  if (freq)  freq.addEventListener('change', syncUI);
+  syncUI();
+})();
+</script>

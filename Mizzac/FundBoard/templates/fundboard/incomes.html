@@ -1,0 +1,192 @@
+{% extends "fundboard/base.html" %}
+{% load static %}
+
+{% block fb_content %}
+<div class="container-fluid py-4">
+  <div class="d-flex justify-content-between align-items-center mb-4">
+    <h2 class="mb-0">Revenus</h2>
+    <div class="d-flex gap-2">
+      <!-- Add one-time -->
+      <button class="btn btn-primary d-flex align-items-center gap-1"
+              data-bs-toggle="dynamic-modal"
+              data-href="{% url 'fundboard:add_income_modal' %}?recurring=0">
+        <i class="bi bi-plus-lg"></i> Ajouter (ponctuel)
+      </button>
+      <!-- Add recurring -->
+      <button class="btn btn-outline-primary d-flex align-items-center gap-1"
+              data-bs-toggle="dynamic-modal"
+              data-href="{% url 'fundboard:add_income_modal' %}?recurring=1">
+        <i class="bi bi-repeat"></i> Ajouter (récurrent)
+      </button>
+    </div>
+  </div>
+
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabLatest" type="button" role="tab">
+        Derniers (chronologique)
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRecurring" type="button" role="tab">
+        Récurrents
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOneTime" type="button" role="tab">
+        Ponctuels
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    <!-- Latest -->
+    <div class="tab-pane fade show active" id="tabLatest" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Prochaine date</th>
+                  <th>Nom</th>
+                  <th>Montant</th>
+                  <th>Récurrent</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inc in latest_list %}
+                <tr>
+                  <td>{{ inc.next_payday_display|date:"d/m/Y" }}</td>
+                  <td>{{ inc.name }}</td>
+                  <td>{{ inc.amount|floatformat:2 }} €</td>
+                  <td>{% if inc.is_recurring %}<span class="badge bg-info">Oui</span>{% else %}Non{% endif %}</td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-success"
+                            title="Marquer comme reçu"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:mark_income_modal' inc.pk %}">
+                      Marquer Reçu
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:edit_income_modal' inc.pk %}">
+                      Éditer
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:delete_income_modal' inc.pk %}">
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="5" class="text-center text-muted py-4">Aucun revenu.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recurring -->
+    <div class="tab-pane fade" id="tabRecurring" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Prochain paiement</th>
+                  <th>Nom</th>
+                  <th>Montant</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inc in recurring_list %}
+                <tr>
+                  <td>{{ inc.next_payday_display|date:"d/m/Y" }}</td>
+                  <td>{{ inc.name }}</td>
+                  <td>{{ inc.amount|floatformat:2 }} €</td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-success"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:mark_income_modal' inc.pk %}">
+                      Marquer Reçu
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:edit_income_modal' inc.pk %}">
+                      Éditer
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:delete_income_modal' inc.pk %}">
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">Aucun revenu récurrent.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- One-time -->
+    <div class="tab-pane fade" id="tabOneTime" role="tabpanel">
+      <div class="card shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Nom</th>
+                  <th>Montant</th>
+                  <th class="text-end">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for inc in one_time_list %}
+                <tr>
+                  <td>{{ inc.next_payday_display|date:"d/m/Y" }}</td>
+                  <td>{{ inc.name }}</td>
+                  <td>{{ inc.amount|floatformat:2 }} €</td>
+                  <td class="text-end">
+                    <button class="btn btn-sm btn-outline-success"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:mark_income_modal' inc.pk %}">
+                      Marquer Reçu
+                    </button>
+                    <button class="btn btn-sm btn-outline-secondary"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:edit_income_modal' inc.pk %}">
+                      Éditer
+                    </button>
+                    <button class="btn btn-sm btn-outline-danger"
+                            data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:delete_income_modal' inc.pk %}">
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="4" class="text-center text-muted py-4">Aucun revenu ponctuel.</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock fb_content %}
