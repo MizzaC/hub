@@ -155,11 +155,15 @@ class Transaction(models.Model):
 #   we provide helpers to roll it forward to "upcoming" and to iterate occurrences.
 
 class Expense(models.Model):
+    id           = models.AutoField(primary_key=True)
     user         = models.ForeignKey(User, on_delete=models.CASCADE)
     is_recurring = models.BooleanField(default=False)
 
     name         = models.CharField(max_length=255)
     amount       = models.DecimalField(max_digits=15, decimal_places=2)  # positive magnitude
+
+    start_date = models.DateField(default=timezone.now)
+    end_date     = models.DateField(null=True, blank=True, help_text="Date de fin pour les dépenses récurrentes (optionnel)")
 
     # Recurrence
     freq         = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, null=True, blank=True)
@@ -322,11 +326,15 @@ class Expense(models.Model):
 # ─────────────────────────────────────────────────────────────
 
 class Income(models.Model):
+    id           = models.AutoField(primary_key=True)
     user         = models.ForeignKey(User, on_delete=models.CASCADE)
 
     is_recurring = models.BooleanField(default=False)
     name         = models.CharField(max_length=255)
     amount       = models.DecimalField(max_digits=15, decimal_places=2)  # positive magnitude
+
+    start_date = models.DateField(default=timezone.now)
+    end_date     = models.DateField(null=True, blank=True, help_text="Date de fin pour les revenus récurrents (optionnel)")
 
     # Recurrence (optional)
     freq         = models.CharField(max_length=20, choices=FREQUENCY_CHOICES, null=True, blank=True)

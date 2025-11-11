@@ -13,15 +13,16 @@ class ExpenseForm(forms.ModelForm):
     class Meta:
         model  = Expense
         fields = [
-            'is_recurring', 'name', 'amount', 'next_due',
-            'freq', 'freq_custom',
-            'account', 'tag', 'notes',
+            'is_recurring', 'name', 'amount', 'start_date', 'end_date', 'next_due',
+            'freq', 'freq_custom', 'account', 'tag', 'notes',
         ]
         labels = {
             'is_recurring': 'Dépense récurrente',
             'name':        'Nom',
             'amount':      'Montant',
-            'next_due':    'Date / prochaine échéance',
+            'start_date':  'Date de début',
+            'end_date':    'Date de fin (optionnel)',
+            'next_due':    'Prochaine échéance',
             'freq':        'Fréquence',
             'freq_custom': 'Jours (si personnalisé)',
             'account':     'Compte lié (optionnel)',
@@ -32,6 +33,8 @@ class ExpenseForm(forms.ModelForm):
             'is_recurring': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'name':         forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex. Loyer, Netflix, Courses'}),
             'amount':       forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'inputmode': 'decimal'}),
+            'start_date':  forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date':    forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'next_due':     forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'freq':         forms.Select(attrs={'class': 'form-select'}),
             'freq_custom':  forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
@@ -73,11 +76,16 @@ class ExpenseForm(forms.ModelForm):
 class IncomeForm(forms.ModelForm):
     class Meta:
         model  = Income
-        fields = ['is_recurring', 'name', 'amount', 'next_payday', 'freq', 'freq_custom', 'notes']
+        fields = [
+            'is_recurring', 'name', 'amount', 'start_date', 'end_date',
+            'next_payday', 'freq', 'freq_custom', 'notes'
+        ]
         labels = {
             'is_recurring': 'Revenu récurrent',
             'name':        'Source',
             'amount':      'Montant',
+            'start_date':  'Date de début',
+            'end_date':    'Date de fin (optionnel)',
             'next_payday': 'Date / prochain paiement',
             'freq':        'Fréquence',
             'freq_custom': 'Jours (si personnalisé)',
@@ -87,6 +95,8 @@ class IncomeForm(forms.ModelForm):
             'is_recurring': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
             'name':         forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex. Salaire, Prime'}),
             'amount':       forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
+            'start_date':  forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
+            'end_date':    forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'next_payday':  forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
             'freq':         forms.Select(attrs={'class': 'form-select'}),
             'freq_custom':  forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
