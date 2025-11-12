@@ -5,6 +5,8 @@ import json
 import calendar
 from decimal import Decimal, ROUND_HALF_UP
 from datetime import date, timedelta
+from django.utils.http import urlencode
+from django.db.models import Q
 
 from django.contrib import messages
 from django.contrib.auth.mixins import LoginRequiredMixin
@@ -143,25 +145,59 @@ def upcoming_due(obj, ref: date | None = None) -> date:
 
 
 def month_expense_category_split(user, month_start: date, month_end: date) -> tuple[dict[str, Decimal], Decimal]:
-    """Category -> sum for current month (recurring-equivalent + one-time in range)."""
+    """
+    Catégorie -> somme pour le mois sélectionné, en respectant start_date/end_date :
+    - Récurrentes : ajoutent leur monthly_equivalent() uniquement si actives dans le mois.
+    - Ponctuelles : prises si next_due ∈ [month_start, month_end].
+    """
     cat_map: dict[str, Decimal] = {}
 
-    # Recurring
-    recurring_qs = Expense.objects.filter(user=user, is_recurring=True)
+    # Récurrentes actives sur le mois
+    recurring_qs = Expense.objects.filter(user=user, is_recurring=True).filter(
+        Q(start_date__lte=month_end) & (Q(end_date__isnull=True) | Q(end_date__gte=month_start))
+    )
+
     for e in recurring_qs:
         tag = e.tag or "Autre"
-        cat_map[tag] = cat_map.get(tag, Decimal("0")) + monthly_equivalent(e)
+        cat_map[tag] = cat_map.get(tag, Decimal("0")) + e.monthly_equivalent()
 
-    # One-time
+    # Ponctuelles dans la fenêtre
     one_time_qs = Expense.objects.filter(
         user=user, is_recurring=False, next_due__range=(month_start, month_end)
     )
+
     for e in one_time_qs:
         tag = e.tag or "Autre"
         cat_map[tag] = cat_map.get(tag, Decimal("0")) + (e.amount or Decimal("0"))
 
     total = sum(cat_map.values(), Decimal("0"))
     return cat_map, total
+
+
+def month_income_source_split(user, month_start: date, month_end: date) -> tuple[dict[str, Decimal], Decimal]:
+    """
+    Source (ou tag/nom) -> somme des revenus du mois, en respectant start_date/end_date :
+    - Récurrents actifs : monthly_equivalent()
+    - Ponctuels : si next_payday ∈ [month_start, month_end]
+    """
+    src_map: dict[str, Decimal] = {}
+
+    recurring_qs = Income.objects.filter(user=user, is_recurring=True).filter(
+        Q(start_date__lte=month_end) & (Q(end_date__isnull=True) | Q(end_date__gte=month_start))
+    )
+    for i in recurring_qs:
+        label = getattr(i, "source", None) or getattr(i, "tag", None) or i.name or "Autre"
+        src_map[label] = src_map.get(label, Decimal("0")) + i.monthly_equivalent()
+
+    one_time_qs = Income.objects.filter(
+        user=user, is_recurring=False, next_payday__range=(month_start, month_end)
+    )
+    for i in one_time_qs:
+        label = getattr(i, "source", None) or getattr(i, "tag", None) or i.name or "Autre"
+        src_map[label] = src_map.get(label, Decimal("0")) + (i.amount or Decimal("0"))
+
+    total = sum(src_map.values(), Decimal("0"))
+    return src_map, total
 
 
 def month_total_deposits(user, month_start: date, month_end: date) -> Decimal:
@@ -172,6 +208,66 @@ def month_total_deposits(user, month_start: date, month_end: date) -> Decimal:
         ).aggregate(s=Sum("amount"))["s"]
         or Decimal("0")
     )
+
+def parse_ym(request, fallback_date: date) -> date:
+    """
+    Lit 'ym' au format YYYY-MM dans la querystring et renvoie un date() sur le 1er du mois.
+    Sinon renvoie fallback_date normalisé au 1er du mois.
+    """
+    ym = request.GET.get("ym")
+    if ym:
+        try:
+            y, m = ym.split("-")
+            return date(int(y), int(m), 1)
+        except Exception:
+            pass
+    return fallback_date.replace(day=1)
+
+def ym_str(d: date) -> str:
+    return f"{d.year:04d}-{d.month:02d}"
+
+def month_is_active_for(obj, month_start: date, month_end: date) -> bool:
+    """
+    Vrai si l'objet (Expense/Income) est actif durant la fenêtre [month_start, month_end].
+    Règle : start_date <= month_end AND (end_date is null OR end_date >= month_start)
+    """
+    sd = getattr(obj, "start_date", None)
+    ed = getattr(obj, "end_date", None)
+    if sd and sd > month_end:
+        return False
+    if ed and ed < month_start:
+        return False
+    return True
+
+def month_total_recurring_expenses_active(user, month_start: date, month_end: date) -> Decimal:
+    qs = Expense.objects.filter(user=user, is_recurring=True).filter(
+        Q(start_date__lte=month_end) & (Q(end_date__isnull=True) | Q(end_date__gte=month_start))
+    )
+    return sum((e.monthly_equivalent() for e in qs), Decimal("0.00"))
+
+def month_total_onetime_expenses(user, month_start: date, month_end: date) -> Decimal:
+    return Expense.objects.filter(
+        user=user, is_recurring=False, next_due__range=(month_start, month_end)
+    ).aggregate(s=Sum('amount'))['s'] or Decimal("0.00")
+
+def month_total_recurring_incomes_active(user, month_start: date, month_end: date) -> Decimal:
+    qs = Income.objects.filter(user=user, is_recurring=True).filter(
+        Q(start_date__lte=month_end) & (Q(end_date__isnull=True) | Q(end_date__gte=month_start))
+    )
+    return sum((i.monthly_equivalent() for i in qs), Decimal("0.00"))
+
+def month_total_onetime_incomes(user, month_start: date, month_end: date) -> Decimal:
+    return Income.objects.filter(
+        user=user, is_recurring=False, next_payday__range=(month_start, month_end)
+    ).aggregate(s=Sum('amount'))['s'] or Decimal("0.00")
+
+def month_total_incomes_active(user, month_start: date, month_end: date) -> Decimal:
+    """
+    Revenus du mois : récurrents actifs (monthly_equivalent) + ponctuels (next_payday in window).
+    """
+    rec = month_total_recurring_incomes_active(user, month_start, month_end)
+    one = month_total_onetime_incomes(user, month_start, month_end)
+    return rec + one
 
 # ============================================================
 #                         PAGES
@@ -220,6 +316,7 @@ class FundBoardView(LoginRequiredMixin, TemplateView):
             subscriptions_count=subscriptions_count,
             recent_transactions=recent_transactions,
             total_balance=total_balance,
+            active_period_label=f"{month_start:%d/%m/%Y} → {month_end:%d/%m/%Y}",
 
             donut_labels_json=json.dumps(donut_labels, ensure_ascii=False),
             donut_data_json=json.dumps(donut_values, ensure_ascii=False),
@@ -263,10 +360,19 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
 
+        # --- Mois sélectionné (via ?ym=YYYY-MM), navigation ---
+        base_today = date.today()
+        month_first = parse_ym(self.request, base_today)  # 1er du mois choisi
+        month_start, month_end = month_bounds(month_first)
+        prev_month_first = (month_start - timedelta(days=1)).replace(day=1)
+        next_month_first = (month_end + timedelta(days=1)).replace(day=1)
+        period_label = month_start.strftime("%B %Y").capitalize()
+
+        # --- Listes Latest / Recurring / One-time (avec next_due_display calculé) ---
         recurring_qs = Expense.objects.filter(user=user, is_recurring=True).order_by('next_due')
         one_time_qs  = Expense.objects.filter(user=user, is_recurring=False).order_by('-next_due')
 
-        today = date.today()
+        today = base_today
         for e in list(recurring_qs) + list(one_time_qs):
             e.next_due_display = upcoming_due(e, today)
 
@@ -276,39 +382,73 @@ class ExpensesView(LoginRequiredMixin, TemplateView):
             reverse=True
         )
 
-        month_start, month_end = month_bounds(today)
-        total_recurring = sum((monthly_equivalent(e) for e in recurring_qs), Decimal("0.00"))
-        total_one_time = one_time_qs.filter(next_due__range=(month_start, month_end)) \
-                                    .aggregate(s=Sum('amount'))['s'] or Decimal('0.00')
+        # --- KPI du mois sélectionné (respecte start/end) ---
+        total_recurring = month_total_recurring_expenses_active(user, month_start, month_end)
+        total_one_time  = month_total_onetime_expenses(user, month_start, month_end)
+        total_incomes   = month_total_incomes_active(user, month_start, month_end)
+        total_expenses  = total_recurring + total_one_time
+        net_cashflow    = (total_incomes or Decimal('0')) - (total_expenses or Decimal('0'))
 
+        # --- Donut catégorie (mois sélectionné) ---
         cat_map, _ = month_expense_category_split(user, month_start, month_end)
         donut_labels = list(cat_map.keys())
-        donut_data = [dec_to_float(v) for v in cat_map.values()]
+        donut_data   = [dec_to_float(v) for v in cat_map.values()]
 
-        months = last_n_month_starts(6)
+        # --- Série 12 mois: du mois sélectionné - 11 mois, vers le mois sélectionné ---
+        months = last_n_month_starts(12, ref=month_end)
         months_labels = [m.strftime("%b %Y") for m in months]
         monthly_one_vals: list[float] = []
+        monthly_rec_vals: list[float] = []
         for m in months:
             ms, me = month_bounds(m)
-            one_m = one_time_qs.filter(next_due__range=(ms, me)).aggregate(s=Sum('amount'))['s'] or Decimal("0")
+            one_m = month_total_onetime_expenses(user, ms, me)
+            rec_m = month_total_recurring_expenses_active(user, ms, me)
             monthly_one_vals.append(dec_to_float(one_m))
-        monthly_rec_vals = [dec_to_float(total_recurring) for _ in months]
+            monthly_rec_vals.append(dec_to_float(rec_m))
+
+        # --- URLs navigation ---
+        def with_ym(d: date) -> str:
+            base = self.request.path
+            query = self.request.GET.copy()
+            query['ym'] = ym_str(d)
+            return f"{base}?{urlencode(query)}"
 
         ctx.update(
+            # tables
             latest_list=latest_list,
             recurring_list=recurring_qs,
             one_time_list=one_time_qs,
-            total_recurring_month=total_recurring,
-            total_one_time_month=total_one_time,
+
+            # période
             month_start=month_start,
             month_end=month_end,
+            cashflow_period_label=period_label,
+            inout_period_label=period_label,
 
+            # cards
+            total_recurring_month=total_recurring,
+            total_one_time_month=total_one_time,
+            total_incomes_month=total_incomes,
+            total_expenses_month=total_expenses,
+            net_cashflow_month=net_cashflow,
+
+            # donut mois sélectionné
             donut_labels_json=json.dumps(donut_labels, ensure_ascii=False),
             donut_data_json=json.dumps(donut_data, ensure_ascii=False),
+
+            # bar 12 mois empilé
             months_labels_json=json.dumps(months_labels, ensure_ascii=False),
             monthly_rec_vals_json=json.dumps(monthly_rec_vals, ensure_ascii=False),
             monthly_one_vals_json=json.dumps(monthly_one_vals, ensure_ascii=False),
 
+            # nav mois
+            ym_current=ym_str(month_start),
+            ym_prev=ym_str(prev_month_first),
+            ym_next=ym_str(next_month_first),
+            url_prev_month=with_ym(prev_month_first),
+            url_next_month=with_ym(next_month_first),
+
+            # holdings (inchangé)
             holdings=[],
         )
         return ctx
@@ -330,7 +470,7 @@ class AccountsView(LoginRequiredMixin, ListView):
 
 
 class IncomesView(LoginRequiredMixin, TemplateView):
-    """Incomes page (list + modals)."""
+    """Incomes page (latest + recurring + one-time + charts, avec navigation mensuelle)."""
     template_name = 'fundboard/incomes.html'
     login_url = reverse_lazy('fundboard:login')
 
@@ -338,10 +478,19 @@ class IncomesView(LoginRequiredMixin, TemplateView):
         ctx = super().get_context_data(**kwargs)
         user = self.request.user
 
+        # --- Mois sélectionné & navigation ---
+        base_today = date.today()
+        month_first = parse_ym(self.request, base_today)
+        month_start, month_end = month_bounds(month_first)
+        prev_month_first = (month_start - timedelta(days=1)).replace(day=1)
+        next_month_first = (month_end + timedelta(days=1)).replace(day=1)
+        period_label = month_start.strftime("%B %Y").capitalize()
+
+        # --- Listes (ordre + next_payday_display) ---
         recurring_qs = Income.objects.filter(user=user, is_recurring=True).order_by('next_payday')
         one_time_qs  = Income.objects.filter(user=user, is_recurring=False).order_by('-next_payday')
 
-        today = date.today()
+        today = base_today
         for inc in list(recurring_qs) + list(one_time_qs):
             inc.next_payday_display = upcoming_due(inc, today)
 
@@ -351,10 +500,56 @@ class IncomesView(LoginRequiredMixin, TemplateView):
             reverse=True
         )
 
+        # --- KPI revenus du mois ---
+        total_recurring_income_month = month_total_recurring_incomes_active(user, month_start, month_end)
+        total_onetime_income_month   = month_total_onetime_incomes(user, month_start, month_end)
+        total_income_month           = total_recurring_income_month + total_onetime_income_month
+
+        # --- Donut par source (mois) ---
+        src_map, _ = month_income_source_split(user, month_start, month_end)
+        incomes_donut_labels = list(src_map.keys())
+        incomes_donut_data   = [dec_to_float(v) for v in src_map.values()]
+
+        # --- Série 12 mois revenus ---
+        months = last_n_month_starts(12, ref=month_end)
+        months_labels = [m.strftime("%b %Y") for m in months]
+        monthly_rec_income_vals: list[float] = []
+        monthly_one_income_vals: list[float] = []
+        for m in months:
+            ms, me = month_bounds(m)
+            monthly_rec_income_vals.append(dec_to_float(month_total_recurring_incomes_active(user, ms, me)))
+            monthly_one_income_vals.append(dec_to_float(month_total_onetime_incomes(user, ms, me)))
+
+        # --- URLs navigation ---
+        def with_ym(d: date) -> str:
+            base = self.request.path
+            query = self.request.GET.copy()
+            query['ym'] = ym_str(d)
+            return f"{base}?{urlencode(query)}"
+
         ctx.update(
+            # tables
             recurring_list=recurring_qs,
             one_time_list=one_time_qs,
             latest_list=latest_list,
+
+            # période
+            ym_current=ym_str(month_start),
+            url_prev_month=with_ym(prev_month_first),
+            url_next_month=with_ym(next_month_first),
+            income_period_label=period_label,
+
+            # cards
+            total_recurring_income_month=total_recurring_income_month,
+            total_onetime_income_month=total_onetime_income_month,
+            total_income_month=total_income_month,
+
+            # charts
+            incomes_donut_labels_json=json.dumps(incomes_donut_labels, ensure_ascii=False),
+            incomes_donut_data_json=json.dumps(incomes_donut_data, ensure_ascii=False),
+            months_labels_json=json.dumps(months_labels, ensure_ascii=False),
+            monthly_rec_income_vals_json=json.dumps(monthly_rec_income_vals, ensure_ascii=False),
+            monthly_one_income_vals_json=json.dumps(monthly_one_income_vals, ensure_ascii=False),
         )
         return ctx
 
@@ -401,6 +596,10 @@ class AddAccountModal(LoginRequiredMixin, AjaxModalMixin, CreateView):
         if self.request.headers.get('x-requested-with') == 'XMLHttpRequest':
             return HttpResponse(status=204)
         return super().form_valid(form)
+    
+    def get_form_kwargs(self):
+        kwargs = super().get_form_kwargs()
+        return kwargs
 
 
 class EditAccountModal(LoginRequiredMixin, AjaxModalMixin, UpdateView):
@@ -466,7 +665,6 @@ class AddExpenseModal(LoginRequiredMixin, AjaxModalMixin, CreateView):
         kwargs = super().get_form_kwargs()
         kwargs['user'] = self.request.user
         return kwargs
-
 
 
 class EditExpenseModal(LoginRequiredMixin, AjaxModalMixin, UpdateView):

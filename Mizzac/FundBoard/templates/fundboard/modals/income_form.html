@@ -21,6 +21,15 @@
         <div class="mb-3">{{ form.name.label_tag }}{{ form.name }}</div>
         <div class="mb-3">{{ form.amount.label_tag }}{{ form.amount }}</div>
 
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.start_date.label_tag }} {{ form.start_date }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.end_date.label_tag }} {{ form.end_date }}
+          </div>
+        </div>
+
         <div class="mb-3">
           <label id="nextPaydayLabel" class="form-label" for="{{ form.next_payday.id_for_label }}">Date / prochain paiement</label>
           {{ form.next_payday }}

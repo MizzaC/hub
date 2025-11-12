@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from django.contrib import admin
-from .models import Account, Expense, Transaction
+from .models import Account, Expense, Transaction, Income
 
 
 # ---------- Account ----------
@@ -42,14 +42,8 @@ class ExpenseAdmin(admin.ModelAdmin):
     Admin for unified expenses (one-time & recurring).
     """
     list_display = (
-        "name",
-        "user",
-        "amount",
-        "is_recurring",
-        "freq",          # DAILY / WEEKLY / MONTHLY / YEARLY / PERSONALIZED / None
-        "next_due",
-        "tag",
-        "account",
+    "name", "user", "amount", "is_recurring", "freq",
+    "start_date", "end_date", "next_due", "tag", "account",
     )
     list_filter = (
         "is_recurring",
@@ -66,13 +60,9 @@ class ExpenseAdmin(admin.ModelAdmin):
     ordering = ("-next_due",)
     autocomplete_fields = ("account",)
     fieldsets = (
-        ("General", {
-            "fields": ("user", "name", "amount", "tag", "account")
-        }),
-        ("Recurrence", {
-            "fields": ("is_recurring", "freq", "freq_custom", "next_due"),
-            "description": "If not recurring, only 'next_due' is used as the expense date.",
-        }),
+    ("Général", {"fields": ("user", "name", "amount", "tag", "account")}),
+    ("Période", {"fields": ("start_date", "end_date", "next_due")}),
+    ("Récurrence", {"fields": ("is_recurring", "freq", "freq_custom")}),
     )
 
 
@@ -106,3 +96,15 @@ class TransactionAdmin(admin.ModelAdmin):
             "fields": ("user", "account", "trx_type", "amount", "date_trx")
         }),
     )
+
+# ---------- Income ----------
+
+@admin.register(Income)
+class IncomeAdmin(admin.ModelAdmin):
+    list_display = (
+        "name", "user", "amount", "is_recurring",
+        "freq", "start_date", "end_date", "next_payday"
+    )
+    list_filter = ("is_recurring", "freq")
+    search_fields = ("name", "user__username")
+    ordering = ("-next_payday",)

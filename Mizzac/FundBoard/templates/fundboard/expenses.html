@@ -4,14 +4,36 @@
 {% block fb_content %}
 <div class="container-fluid py-4">
 
-  {# ── Header & primary actions ── #}
-  <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Dépenses</h2>
-    <div class="d-flex gap-2">
+  {# ── Header & actions ── #}
+  <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-3">
+      <h2 class="mb-0">Dépenses</h2>
+      <span class="badge bg-light text-dark border text-uppercase">
+        {{ cashflow_period_label }}
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      {# Navigation mois #}
+      <div class="btn-group" role="group" aria-label="Mois">
+        <a class="btn btn-outline-secondary" href="{{ url_prev_month }}" title="Mois précédent">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+        <input type="month"
+               class="form-control"
+               style="width: 170px;"
+               value="{{ ym_current }}"
+               id="monthPicker">
+        <a class="btn btn-outline-secondary" href="{{ url_next_month }}" title="Mois suivant">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </div>
+
+      {# Ajouts #}
       <button class="btn btn-outline-primary d-flex align-items-center gap-1"
               data-bs-toggle="dynamic-modal"
               data-href="{% url 'fundboard:add_expense_modal' %}?recurring=1">
-        <i class="bi bi-plus-lg"></i> Ajouter récurrente
+        <i class="bi bi-repeat"></i> Ajouter récurrente
       </button>
       <button class="btn btn-primary d-flex align-items-center gap-1"
               data-bs-toggle="dynamic-modal"
@@ -21,9 +43,9 @@
     </div>
   </div>
 
-  {# ── Stat cards (monthly focus) ── #}
+  {# ── Stat cards (mois sélectionné) ── #}
   <div class="row gy-3 mb-4">
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-xl-3 col-lg-6">
       <div class="card shadow-sm h-100 border-primary">
         <div class="card-body text-center">
           <small class="text-uppercase text-muted">Récurrent / mois (équiv.)</small>
@@ -31,11 +53,34 @@
         </div>
       </div>
     </div>
-    <div class="col-12 col-lg-6">
+    <div class="col-12 col-xl-3 col-lg-6">
       <div class="card shadow-sm h-100 border-success">
         <div class="card-body text-center">
-          <small class="text-uppercase text-muted">Ponctuelles (ce mois)</small>
+          <small class="text-uppercase text-muted">Ponctuelles (mois)</small>
           <h3 class="fw-bold mb-0">{{ total_one_time_month|default:0|floatformat:2 }} €</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-3 col-lg-6">
+      <div class="card shadow-sm h-100 border-info">
+        <div class="card-body text-center">
+          <small class="text-uppercase text-muted">Revenus (mois)</small>
+          <h3 class="fw-bold mb-0">{{ total_incomes_month|default:0|floatformat:2 }} €</h3>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xl-3 col-lg-6">
+      {% if net_cashflow_month >= 0 %}
+      <div class="card shadow-sm h-100 border-success">
+      {% else %}
+      <div class="card shadow-sm h-100 border-danger">
+      {% endif %}
+        <div class="card-body text-center">
+          <small class="text-uppercase text-muted">Cashflow net (mois)</small>
+          <h3 class="fw-bold mb-0">
+            {{ net_cashflow_month|default:0|floatformat:2 }} €
+          </h3>
         </div>
       </div>
     </div>
@@ -46,17 +91,18 @@
     <div class="col-lg-8 mb-4 mb-lg-0">
       <div class="card shadow-sm rounded-4 h-100">
         <div class="card-header bg-white border-0">
-          <h5 class="mb-0">6 derniers mois</h5>
+          <h5 class="mb-0">12 derniers mois (dépenses)</h5>
+          <small class="text-muted">Récurrent (équiv. mensuelle) + Ponctuel</small>
         </div>
         <div class="card-body">
-          <canvas id="bar6m" height="140"></canvas>
+          <canvas id="bar12m" height="140"></canvas>
         </div>
       </div>
     </div>
     <div class="col-lg-4">
       <div class="card shadow-sm rounded-4 h-100">
         <div class="card-header bg-white border-0">
-          <h5 class="mb-0">Répartition par catégorie (mois courant)</h5>
+          <h5 class="mb-0">Répartition ({{ cashflow_period_label }})</h5>
         </div>
         <div class="card-body d-flex align-items-center">
           <canvas id="donutType" height="200"></canvas>
@@ -65,7 +111,21 @@
     </div>
   </div>
 
-  {# ── Tabs: Latest (default) / Recurring / One-time / Assets ── #}
+  {# ── Revenus vs Dépenses (mois en cours) ── #}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Revenus vs Dépenses — {{ cashflow_period_label }}</h5>
+        </div>
+        <div class="card-body">
+          <canvas id="incomeVsExpense" height="90"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Tabs: Latest / Recurring / One-time / Assets ── #}
   <ul class="nav nav-tabs mb-3" role="tablist">
     <li class="nav-item" role="presentation">
       <button class="nav-link active" id="tab-latest" data-bs-toggle="tab"
@@ -108,6 +168,7 @@
                 <th>Catégorie</th>
                 <th>Compte</th>
                 <th class="text-end">Montant</th>
+                <th class="text-nowrap">Période</th>
                 <th class="text-nowrap">Actions</th>
               </tr>
             </thead>
@@ -117,12 +178,19 @@
                 <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
                 <td>{{ e.name }}</td>
                 <td>
-                  {% if e.is_recurring %}<span class="badge bg-primary">Récurrent</span>
-                  {% else %}<span class="badge bg-secondary">Ponctuel</span>{% endif %}
+                  {% if e.is_recurring %}
+                    <span class="badge bg-primary">Récurrent</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Ponctuel</span>
+                  {% endif %}
                 </td>
                 <td>{{ e.tag|default:"—" }}</td>
                 <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
                 <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
+                <td>
+                  {% if e.start_date %}{{ e.start_date|date:"d/m/Y" }}{% endif %}
+                  {% if e.end_date %} → {{ e.end_date|date:"d/m/Y" }}{% endif %}
+                </td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
@@ -138,7 +206,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="7" class="text-center py-4 text-muted">Aucun mouvement.</td>
+                <td colspan="8" class="text-center py-4 text-muted">Aucun mouvement.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -158,6 +226,7 @@
                 <th class="text-end">Montant</th>
                 <th class="text-nowrap">Fréquence</th>
                 <th class="text-nowrap">Prochaine échéance</th>
+                <th>Période</th>
                 <th>Compte</th>
                 <th class="text-nowrap">Actions</th>
               </tr>
@@ -175,6 +244,10 @@
                   {% endif %}
                 </td>
                 <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
+                <td>
+                  {% if e.start_date %}{{ e.start_date|date:"d/m/Y" }}{% endif %}
+                  {% if e.end_date %} → {{ e.end_date|date:"d/m/Y" }}{% endif %}
+                </td>
                 <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
@@ -191,7 +264,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center py-4 text-muted">Aucune dépense récurrente.</td>
+                <td colspan="7" class="text-center py-4 text-muted">Aucune dépense récurrente.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -212,6 +285,7 @@
                 <th class="text-nowrap">Date</th>
                 <th>Catégorie</th>
                 <th>Compte</th>
+                <th class="text-nowrap">Période</th>
                 <th class="text-nowrap">Actions</th>
               </tr>
             </thead>
@@ -223,6 +297,10 @@
                 <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
                 <td>{{ e.tag|default:"—" }}</td>
                 <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
+                <td>
+                  {% if e.start_date %}{{ e.start_date|date:"d/m/Y" }}{% endif %}
+                  {% if e.end_date %} → {{ e.end_date|date:"d/m/Y" }}{% endif %}
+                </td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
@@ -238,7 +316,7 @@
               </tr>
               {% empty %}
               <tr>
-                <td colspan="6" class="text-center py-4 text-muted">Aucune dépense ponctuelle.</td>
+                <td colspan="7" class="text-center py-4 text-muted">Aucune dépense ponctuelle.</td>
               </tr>
               {% endfor %}
             </tbody>
@@ -247,7 +325,7 @@
       </div>
     </div>
 
-    {# ── Assets tab (inline from previous assets.html) ── #}
+    {# ── Assets tab ── #}
     <div class="tab-pane fade" id="pane-assets" role="tabpanel" aria-labelledby="tab-assets">
       <div class="card shadow-sm rounded-4">
         <div class="table-responsive">
@@ -291,16 +369,30 @@
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
-/* ---- Safely parse JSON data provided by the view ---- */
+/* --- Month picker navigation --- */
+(function(){
+  const picker = document.getElementById('monthPicker');
+  if (!picker) return;
+  picker.addEventListener('change', () => {
+    const val = picker.value; // "YYYY-MM"
+    const url = new URL(window.location.href);
+    url.searchParams.set('ym', val);
+    window.location.href = url.toString();
+  });
+})();
+
+/* ---- Data from view ---- */
 const donutLabels    = JSON.parse('{{ donut_labels_json|default:"[]"|escapejs }}');
 const donutData      = JSON.parse('{{ donut_data_json|default:"[]"|escapejs }}');
 const monthsLabels   = JSON.parse('{{ months_labels_json|default:"[]"|escapejs }}');
 const monthlyRecVals = JSON.parse('{{ monthly_rec_vals_json|default:"[]"|escapejs }}');
 const monthlyOneVals = JSON.parse('{{ monthly_one_vals_json|default:"[]"|escapejs }}');
+const totalIncomes   = parseFloat('{{ total_incomes_month|default:"0" }}');
+const totalExpenses  = parseFloat('{{ total_expenses_month|default:"0" }}');
 
 (function renderCharts(){
   const donutEl = document.getElementById('donutType');
-  if (donutEl && donutLabels.length && donutData.length) {
+  if (donutEl) {
     new Chart(donutEl, {
       type: 'doughnut',
       data: { labels: donutLabels, datasets: [{ data: donutData }] },
@@ -308,15 +400,15 @@ const monthlyOneVals = JSON.parse('{{ monthly_one_vals_json|default:"[]"|escapej
     });
   }
 
-  const barEl = document.getElementById('bar6m');
+  const barEl = document.getElementById('bar12m');
   if (barEl && monthsLabels.length) {
     new Chart(barEl, {
       type: 'bar',
       data: {
         labels: monthsLabels,
         datasets: [
-          { label: 'Récurrent (équiv. mensuelle)', data: monthlyRecVals, stack: 'x' },
-          { label: 'Ponctuel',                     data: monthlyOneVals, stack: 'x' }
+          { label: 'Récurrent (équiv.)', data: monthlyRecVals, stack: 'x' },
+          { label: 'Ponctuel',           data: monthlyOneVals, stack: 'x' }
         ]
       },
       options: {
@@ -324,6 +416,24 @@ const monthlyOneVals = JSON.parse('{{ monthly_one_vals_json|default:"[]"|escapej
         interaction: { mode: 'index', intersect: false },
         scales: { x: { stacked: true }, y: { stacked: true } },
         plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+
+  const ive = document.getElementById('incomeVsExpense');
+  if (ive) {
+    new Chart(ive, {
+      type: 'bar',
+      data: {
+        labels: ['Revenus', 'Dépenses'],
+        datasets: [
+          { label: 'Montant', data: [totalIncomes, totalExpenses] }
+        ]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true } }
       }
     });
   }
