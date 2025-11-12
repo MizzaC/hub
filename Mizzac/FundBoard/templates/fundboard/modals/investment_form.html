@@ -1,0 +1,52 @@
+<form method="post" action="{% url 'fundboard:add_investment_modal' %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+
+      <div class="modal-header">
+        <h5 class="modal-title">Nouvelle opération</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+        <div class="mb-3">{{ form.account.label_tag }}{{ form.account }}</div>
+        <div class="mb-3">{{ form.asset.label_tag }}{{ form.asset }}</div>
+        <div class="row g-3">
+          <div class="col-md-4">
+            {{ form.trx_type.label_tag }}{{ form.trx_type }}
+          </div>
+          <div class="col-md-4">
+            {{ form.quantity.label_tag }}{{ form.quantity }}
+          </div>
+          <div class="col-md-4">
+            {{ form.unit_price.label_tag }}{{ form.unit_price }}
+          </div>
+        </div>
+        <div class="row g-3 mt-0">
+          <div class="col-md-6">
+            {{ form.fees.label_tag }}{{ form.fees }}
+          </div>
+            <div class="col-md-6">
+            {{ form.date_trx.label_tag }}{{ form.date_trx }}
+          </div>
+        </div>
+        <div class="mt-3">{{ form.memo.label_tag }}{{ form.memo }}</div>
+
+        <div class="small text-muted mt-2">
+          <ul class="mb-0">
+            <li><strong>Achat</strong> : sortie de liquidités (cash négatif) et mise à jour des positions.</li>
+            <li><strong>Vente</strong> : entrée de liquidités (cash positif) et diminution des positions.</li>
+            <li>Le coût moyen est recalculé automatiquement (méthode du coût moyen pondéré).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-success">Enregistrer</button>
+      </div>
+
+    </div>
+  </div>
+</form>

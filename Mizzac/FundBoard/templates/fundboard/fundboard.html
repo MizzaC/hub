@@ -1,0 +1,341 @@
+{% extends "fundboard/base.html" %}
+{% load static %}
+
+{% block fb_content %}
+<div class="container-xxl py-4">
+
+  <style>
+    .dashboard-header.card { 
+      background: linear-gradient(135deg, #0b1220 0%, #0d1b2a 45%, #111827 100%);
+    }
+    :root{
+      --chart-h: 320px;
+      --chart-h-sm: 260px;
+      --donut-size: 300px;
+      --section-gap: 2rem;
+    }
+    @media (max-width: 991.98px){
+      :root{ --chart-h: 280px; --donut-size: 260px; }
+    }
+    @media (min-width: 1200px){
+      :root{ --chart-h: 300px; --donut-size: 280px; }
+    }
+    @media (min-width: 1920px){
+      :root{ --chart-h: 280px; --donut-size: 260px; }
+    }
+    @media (min-width: 2560px){
+      :root{ --chart-h: 260px; --donut-size: 240px; }
+    }
+    .chart-box { position: relative; height: var(--chart-h); width: 100%; }
+    .chart-box--sm { height: var(--chart-h-sm); }
+    .donut-wrap { width: 100%; display: grid; place-items: center; }
+    .donut-wrap .donut-canvas { width: min(100%, var(--donut-size)); height: min(100%, var(--donut-size)); }
+    .card { border-radius: 1rem; }
+    .card-header { padding: 0.9rem 1.25rem; }
+    .card-body { padding: 1.25rem; }
+    .stat-card h2 { font-size: clamp(1.6rem, 2.5vw, 2.2rem); }
+    .section-gap { margin-top: var(--section-gap); }
+  </style>
+
+  {# ---------- Header ---------- #}
+  <div class="row mb-4">
+    <div class="col-12">
+      <div class="card dashboard-header text-white shadow-lg rounded-4 p-4">
+        <h1 class="fw-bold mb-1">Bonjour {{ user.username }}</h1>
+        <p class="lead mb-3">Vue d’ensemble de votre patrimoine.</p>
+        <h3 class="m-0">
+          Valeur du patrimoine&nbsp;:
+          <span class="text-warning">{{ total_balance|default:"0"|floatformat:2 }} €</span>
+        </h3>
+        <small class="text-light opacity-75 d-block mt-2">Période active&nbsp;: {{ active_period_label }}</small>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Quick stats (3 cartes) ---------- #}
+  <div class="row gy-3">
+    <div class="col-6 col-lg-4">
+      <div class="card shadow-sm border-primary rounded-4 h-100 stat-card">
+        <div class="card-body d-flex flex-column">
+          <small class="text-uppercase text-muted mb-1">Comptes</small>
+          <h2 class="fw-bold mb-auto">{{ accounts_count|default:0 }}</h2>
+          <a href="{% url 'fundboard:accounts' %}" class="btn btn-sm btn-primary w-100">Voir détails</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-6 col-lg-4">
+      <div class="card shadow-sm border-success rounded-4 h-100 stat-card">
+        <div class="card-body d-flex flex-column">
+          <small class="text-uppercase text-muted mb-1">Transactions</small>
+          <h2 class="fw-bold mb-auto">{{ transactions_count|default:0 }}</h2>
+          <a href="{% url 'fundboard:transactions' %}" class="btn btn-sm btn-success w-100">Historique</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-lg-4">
+      <div class="card shadow-sm border-warning rounded-4 h-100 stat-card">
+        <div class="card-body d-flex flex-column">
+          <small class="text-uppercase text-muted mb-1">Abonnements actifs</small>
+          <h2 class="fw-bold mb-auto">{{ subscriptions_count|default:0 }}</h2>
+          <a href="{% url 'fundboard:expenses' %}" class="btn btn-sm btn-warning w-100">Gérer</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Cashflow + Dépenses par catégorie ---------- #}
+  <div class="row section-gap">
+    <div class="col-12 col-xxl-8 mb-4">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Cashflow du mois (Revenus → Catégories de dépenses)</h5>
+          <small class="text-muted">{{ cashflow_period_label|default:"Ce mois" }}</small>
+        </div>
+        <div class="card-body">
+          <div class="chart-box">
+            <canvas id="cashflowSankey"></canvas>
+            <canvas id="cashflowFallback" class="d-none"></canvas>
+          </div>
+          <div id="cashflowEmpty" class="text-center text-muted py-4 d-none">
+            Aucune donnée de cashflow disponible.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="col-12 col-xxl-4 mb-4">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Répartition des dépenses (mois)</h5>
+        </div>
+        <div class="card-body">
+          <div class="donut-wrap">
+            <canvas id="expenseDonut" class="donut-canvas"></canvas>
+          </div>
+          <div id="donutEmpty" class="text-center text-muted py-4 d-none">
+            Pas de dépenses pour la période.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Entrées vs Sorties (bar) ---------- #}
+  <div class="row">
+    <div class="col-12">
+      <div class="card shadow-sm rounded-4">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+          <h5 class="mb-0">Entrées vs Sorties — {{ inout_period_label|default:"mois en cours" }}</h5>
+          <a href="{% url 'fundboard:expenses' %}" class="btn btn-sm btn-outline-secondary">Derniers mouvements</a>
+        </div>
+        <div class="card-body">
+          <div class="chart-box chart-box--sm">
+            <canvas id="inoutBar"></canvas>
+          </div>
+          <div id="inoutEmpty" class="text-center text-muted py-4 d-none">
+            Aucune donnée d’entrées/sorties.
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ---------- Dernières transactions ---------- #}
+  <div class="row mt-4">
+    <div class="col-12">
+      <div class="card shadow-sm rounded-4">
+        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
+          <h5 class="m-0">Dernières transactions</h5>
+          <a href="{% url 'fundboard:transactions' %}" class="btn btn-sm btn-outline-secondary">Tout voir</a>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>Date</th>
+                  <th>Type</th>
+                  <th>Montant</th>
+                  <th>Compte</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for tx in recent_transactions %}
+                <tr>
+                  <td>{{ tx.date_trx|date:"d/m/Y H:i" }}</td>
+                  <td>{{ tx.get_trx_type_display }}</td>
+                  <td>{{ tx.amount|floatformat:2 }} €</td>
+                  <td>{% if tx.account %}{{ tx.account.name }}{% else %}–{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                  <td colspan="4" class="text-center py-4 text-muted">Aucune transaction récente.</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock fb_content %}
+
+{% block extra_js %}
+{{ block.super }}
+
+<!-- Chart.js v4 -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- Plugin Sankey v4 (UMD) -->
+<script src="https://cdn.jsdelivr.net/npm/chartjs-chart-sankey@4"></script>
+
+<script>
+(function attach(){
+  const ready = () => document.readyState === 'complete' || document.readyState === 'interactive';
+  const init  = () => requestAnimationFrame(registerAndRender);
+
+  if (window.Turbo)      document.addEventListener('turbo:load', init, { once:true });
+  if (window.htmx)       document.addEventListener('htmx:afterSettle', init, { once:true });
+  if (ready()) init(); else document.addEventListener('DOMContentLoaded', init, { once:true });
+})();
+
+function registerAndRender(){
+  if (typeof window.Chart === 'undefined') {
+    console.error('[FundBoard] Chart.js non chargé');
+    showEmpty('cashflowEmpty'); showEmpty('donutEmpty'); showEmpty('inoutEmpty');
+    return;
+  }
+
+  // Essai d’enregistrement Sankey (si non présent, on fera un fallback)
+  try {
+    const SankeyUMD = window['chartjs-chart-sankey'];
+    if (SankeyUMD && SankeyUMD.SankeyController && SankeyUMD.Flow) {
+      const isRegistered = !!Chart.registry.controllers.get('sankey');
+      if (!isRegistered) Chart.register(SankeyUMD.SankeyController, SankeyUMD.Flow);
+    }
+  } catch (e) { /* no-op, on gère le fallback plus bas */ }
+
+  renderAll();
+}
+
+function jparse(s, fb){ try { return JSON.parse(s); } catch { return fb; } }
+function toNumberArray(arr){ return (arr||[]).map(v => (typeof v==='number'? v : Number(v)||0)); }
+function showEmpty(id){ const el = document.getElementById(id); if (el) el.classList.remove('d-none'); }
+
+function renderAll(){
+  const cfLinksRaw  = jparse('{{ cf_links_json|default:"[]"|escapejs }}', []);
+  const donutLabels = jparse('{{ donut_labels_json|default:"[]"|escapejs }}', []);
+  const donutData   = toNumberArray(jparse('{{ donut_data_json|default:"[]"|escapejs }}', []));
+  const inOutLabels = jparse('{{ in_out_labels_json|default:"[]"|escapejs }}', []);
+  const inOutData   = toNumberArray(jparse('{{ in_out_values_json|default:"[]"|escapejs }}', []));
+
+  renderCashflow(cfLinksRaw, donutLabels, donutData);
+  renderDonut(donutLabels, donutData);
+  renderInOut(inOutLabels, inOutData);
+}
+
+/* Cashflow : Sankey si dispo, sinon fallback barres horizontales par catégorie */
+function renderCashflow(cfLinksRaw, donutLabels, donutData){
+  const sankeyCanvas   = document.getElementById('cashflowSankey');
+  const fallbackCanvas = document.getElementById('cashflowFallback');
+  if (!sankeyCanvas || !fallbackCanvas) return;
+
+  const hasSankey = !!Chart.registry.controllers.get('sankey');
+
+  // Données Sankey
+  const sankeyData = (cfLinksRaw||[]).map(l => ({
+    from: (l.from ?? l.source ?? '').toString(),
+    to:   (l.to   ?? l.target ?? '').toString(),
+    flow: Number(l.flow ?? l.value ?? 0)
+  })).filter(x => x.from && x.to && x.flow > 0);
+
+  if (hasSankey && sankeyData.length){
+    fallbackCanvas.classList.add('d-none');
+    sankeyCanvas.classList.remove('d-none');
+    new Chart(sankeyCanvas, {
+      type: 'sankey',
+      data: { datasets: [{ data: sankeyData, colorFrom: 'source', colorTo: 'target', colorMode: 'gradient', borderWidth: 0 }] },
+      options: {
+        responsive: true, maintainAspectRatio: false, parsing: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: ({raw}) => `${raw.from} → ${raw.to}: ${Number(raw.flow).toLocaleString()} €` } } },
+        layout: { padding: 8 }
+      }
+    });
+    return;
+  }
+
+  // Fallback : barres horizontales “Dépenses par catégorie” (utilise les données du donut)
+  const total = (donutData||[]).reduce((a,b)=>a+b,0);
+  if (!donutLabels.length || total<=0) { showEmpty('cashflowEmpty'); return; }
+
+  sankeyCanvas.classList.add('d-none');
+  fallbackCanvas.classList.remove('d-none');
+
+  new Chart(fallbackCanvas, {
+    type: 'bar',
+    data: {
+      labels: donutLabels,
+      datasets: [{ data: donutData, borderWidth: 1 }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `${(ctx.parsed?.x ?? ctx.raw)?.toLocaleString?.() ?? ctx.raw} €` } }
+      },
+      scales: {
+        x: { beginAtZero: true, ticks: { callback: v => `${v} €` } }
+      }
+    }
+  });
+}
+
+function renderDonut(labels, values){
+  const canvas = document.getElementById('expenseDonut');
+  if (!canvas) return;
+  const total = (values||[]).reduce((a,b)=>a+b,0);
+  if (!labels.length || total<=0) { showEmpty('donutEmpty'); return; }
+
+  new Chart(canvas, {
+    type: 'doughnut',
+    data: { labels, datasets: [{ data: values }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom' },
+        tooltip: { callbacks: { label: (ctx) => {
+          const val = Number(ctx.parsed); const pct = total? (100*val/total):0;
+          return `${ctx.label}: ${val.toLocaleString()} € (${pct.toFixed(1)}%)`;
+        }}}
+      },
+      cutout: '60%'
+    }
+  });
+}
+
+function renderInOut(labels, values){
+  const canvas = document.getElementById('inoutBar');
+  if (!canvas) return;
+  const total = (values||[]).reduce((a,b)=>a+b,0);
+  if (!labels.length || total<=0) { showEmpty('inoutEmpty'); return; }
+
+  new Chart(canvas, {
+    type: 'bar',
+    data: { labels, datasets: [{ data: values, borderWidth: 1 }] },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => `${(ctx.parsed?.y ?? ctx.raw)?.toLocaleString?.() ?? ctx.raw} €` } }
+      },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => `${v} €` } } }
+    }
+  });
+}
+</script>
+{% endblock %}

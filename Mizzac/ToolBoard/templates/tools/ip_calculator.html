@@ -1,0 +1,33 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="display-4">Calculatrice IP</h1>
+    <p>Calculez les sous-réseaux et informations IP.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="ip_address">Adresse IP</label>
+            <input type="text" class="form-control" id="ip_address" name="ip_address" placeholder="192.168.1.0">
+        </div>
+        <div class="form-group">
+            <label for="subnet_mask">Masque de sous-réseau (CIDR ou décimal)</label>
+            <input type="text" class="form-control" id="subnet_mask" name="subnet_mask" placeholder="24 ou 255.255.255.0">
+        </div>
+        <button type="submit" class="btn btn-primary">Calculer</button>
+    </form>
+    {% if result %}
+        {% if result.error %}
+            <div class="alert alert-danger mt-3">{{ result.error }}</div>
+        {% else %}
+            <hr>
+            <h3>Résultats</h3>
+            <p>Adresse réseau : {{ result.network_address }}</p>
+            <p>Adresse de broadcast : {{ result.broadcast_address }}</p>
+            <p>Nombre d'hôtes : {{ result.num_hosts }}</p>
+            <p>Masque inverse : {{ result.wildcard_mask }}</p>
+            <p>Bits du masque : {{ result.mask_bits }}</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

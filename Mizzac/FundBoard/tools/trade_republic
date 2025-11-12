@@ -1,0 +1,200 @@
+import os
+import json
+import asyncio
+import configparser
+import websockets
+import requests
+import pandas as pd
+from FundBoard.models import Transaction
+
+class TradeRepublic:
+    
+    
+    def __init__(self, phone_number, pin):
+        self.phone_number = phone_number
+        self.pin = pin
+        self.extract_details = True
+        self.output_format = "json"
+        self.session_token = None
+
+    def headers_to_dict(response):
+        """
+        Transforme les en-têtes de réponse HTTP en dictionnaire structuré.
+
+        :param response: Objet de réponse HTTP.
+        :return: Dictionnaire contenant les en-têtes structurés.
+        """
+        extracted_headers = {}
+        for header, header_value in response.headers.items():
+            parsed_dict = {}
+            entries = header_value.split(', ')
+            for entry in entries:
+                key_value = entry.split(';')[0]
+                if '=' in key_value:
+                    key, value = key_value.split('=', 1)
+                    parsed_dict[key.strip()] = value.strip()
+            extracted_headers[header] = parsed_dict if parsed_dict else header_value
+        return extracted_headers
+
+    async def fetch_transaction_details(websocket, transaction_id, token, message_id):
+        """
+        Récupère les détails d'une transaction spécifique via WebSocket.
+        
+        Cette fonction envoie une requête WebSocket pour récupérer les informations détaillées d'une transaction 
+        spécifique en utilisant son `transaction_id`. Elle récupère ensuite une réponse et extrait les informations 
+        demandées, notamment les éléments de la section "Transaction". Si une erreur ou un délai se produit, un message 
+        d'avertissement est imprimé. La fonction retourne un dictionnaire contenant les informations extraites de la transaction.
+        
+        :param websocket: L'objet WebSocket déjà connecté à l'API de TradeRepublic.
+        :param transaction_id: L'identifiant unique de la transaction pour laquelle les détails doivent être récupérés.
+        :param token: Le token de session utilisé pour l'authentification.
+        :param message_id: L'identifiant du message qui est incrémenté à chaque requête pour éviter les conflits dans les abonnements.
+
+        :return: Un tuple contenant deux éléments :
+            - `transaction_data`: Un dictionnaire avec les informations extraites de la transaction.
+            - `message_id`: L'ID du message incrémenté après chaque requête pour gérer l'abonnement/désabonnement.
+        """
+        
+        payload = {"type": "timelineDetailV2", "id": transaction_id, "token": token}
+        message_id += 1
+        await websocket.send(f"sub {message_id} {json.dumps(payload)}")
+        response = await websocket.recv()
+        await websocket.send(f"unsub {message_id}")
+        await websocket.recv()
+
+        start_index = response.find('{')
+        end_index = response.rfind('}')
+        response_data = json.loads(response[start_index:end_index + 1] if start_index != -1 and end_index != -1 else "{}")
+
+        transaction_data = {}
+
+        for section in response_data.get("sections", []):
+            if section.get("title") == "Transaction":
+                for item in section.get("data", []):
+                    header = item.get("title")
+                    value = item.get("detail", {}).get("text")
+                    if header and value:
+                        transaction_data[header] = value
+
+        return transaction_data, message_id
+
+    async def fetch_all_transactions(self, user):
+        """
+        Fonction principale qui récupère toutes les transactions via WebSocket et les sauvegarde dans un fichier.
+        
+        Cette fonction se connecte à l'API WebSocket de TradeRepublic pour récupérer les informations 
+        relatives aux transactions de l'utilisateur, soit sous forme de JSON, soit sous forme de CSV. 
+        Si l'option `details` est activée, elle récupère les détails des transactions supplémentaires.
+        
+        Le processus implique l'abonnement à un flux de transactions, la gestion de la pagination, 
+        la collecte des données et leur sauvegarde dans un fichier à la fin.
+
+        :param token: Token de session pour l'authentification. Il est nécessaire pour valider les requêtes de l'API.
+        :param details: Booléen déterminant si des détails supplémentaires sur chaque transaction doivent être récupérés. 
+                        Si `True`, chaque transaction sera enrichie de données supplémentaires ; sinon, seules les transactions de base seront récupérées.
+        :return: Elle sauvegarde les données récupérées dans un fichier (soit JSON, soit CSV) dans le dossier spécifié.
+        """
+        
+        all_data = []
+        message_id = 0
+
+        async with websockets.connect("wss://api.traderepublic.com") as websocket:
+            locale_config = {
+                "locale": "fr",
+                "platformId": "webtrading",
+                "platformVersion": "safari - 18.3.0",
+                "clientId": "app.traderepublic.com",
+                "clientVersion": "3.151.3"
+            }
+            await websocket.send(f"connect 31 {json.dumps(locale_config)}")
+            await websocket.recv()
+
+            after_cursor = None
+            while True:
+                payload = {"type": "timelineTransactions", "token": self.session_token}
+                if after_cursor:
+                    payload["after"] = after_cursor
+
+                message_id += 1
+                await websocket.send(f"sub {message_id} {json.dumps(payload)}")
+                response = await websocket.recv()
+                await websocket.send(f"unsub {message_id}")
+                await websocket.recv()
+                start_index = response.find('{')
+                end_index = response.rfind('}')
+                response = response[start_index:end_index + 1] if start_index != -1 and end_index != -1 else "{}"
+                data = json.loads(response)
+
+                if not data.get("items"):
+                    break
+
+                if self.extract_details:
+                    for transaction in data["items"]:
+                        transaction_id = transaction.get("id")
+                        if transaction_id:
+                            details, message_id = await self.fetch_transaction_details(
+                                websocket, transaction_id, self.session_token, message_id
+                            )
+                            transaction.update(details)
+                        all_data.append(transaction)
+                else:
+                    all_data.extend(data["items"])
+
+                after_cursor = data.get("cursors", {}).get("after")
+                if not after_cursor:
+                    break
+
+        # Enregistrement en base de données
+        for transaction in all_data:
+            Transaction.objects.update_or_create(
+                user=user,
+                transaction_id=transaction.get("id"),
+                defaults={"data": transaction}
+            )
+        return len(all_data)  # ou retourne ce que tu veux
+    
+    def login(self, code_callback):
+        """
+        Authentifie l'utilisateur et récupère le token de session.
+        code_callback: fonction qui prend (countdown) et retourne le code 2FA saisi par l'utilisateur.
+        """
+        
+        response = requests.post(
+            "https://api.traderepublic.com/api/v1/auth/web/login",
+            json={"phoneNumber": self.phone_number, "pin": self.pin}
+        ).json()
+
+        process_id = response.get('processId')
+        countdown = response.get('countdownInSeconds')
+        if not process_id:
+            raise Exception("Échec de l'initialisation de la connexion. Vérifiez votre numéro de téléphone et PIN.")
+
+        code = code_callback(countdown)
+        if code == 'SMS':
+            requests.post(f"https://api.traderepublic.com/api/v1/auth/web/login/{process_id}/resend")
+            code = code_callback(countdown)
+
+        response = requests.post(f"https://api.traderepublic.com/api/v1/auth/web/login/{process_id}/{code}")
+        if response.status_code != 200:
+            raise Exception("Échec de la vérification de l'appareil. Vérifiez le code et réessayez.")
+
+        response_headers = self.headers_to_dict(response)
+        self.session_token = response_headers.get('Set-Cookie', {}).get('tr_session')
+        if not self.session_token:
+            raise Exception("Token de connexion introuvable.")
+    
+    
+    
+    
+#     # views.py
+# from .tools.trade_republic import TradeRepublic
+
+# def import_transactions(request):
+#     if request.user.is_authenticated:
+#         tr = TradeRepublic(phone_number, pin)
+#         # ... login etc ...
+#         asyncio.run(tr.fetch_all_transactions(request.user))  # <--- ici on passe l'utilisateur connecté
+
+# tr = TradeRepublic(phone_number, pin)
+# tr.login(code_callback)  # code_callback = fonction qui récupère le code 2FA de l'utilisateur
+# asyncio.run(tr.fetch_all_transactions(request.user))

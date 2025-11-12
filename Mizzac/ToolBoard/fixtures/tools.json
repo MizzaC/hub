@@ -1,0 +1,85 @@
+[
+    {
+        "model": "ToolBoard.category",
+        "pk": 1,
+        "fields": {
+            "name": "Réseau"
+        }
+    },
+    {
+        "model": "ToolBoard.category",
+        "pk": 2,
+        "fields": {
+            "name": "Finance"
+        }
+    },
+    {
+        "model": "ToolBoard.category",
+        "pk": 3,
+        "fields": {
+            "name": "Sécurité"
+        }
+    },
+    {
+        "model": "ToolBoard.category",
+        "pk": 4,
+        "fields": {
+            "name": "Outils en ligne"
+        }
+    },
+    {
+        "model": "ToolBoard.tool",
+        "pk": 1,
+        "fields": {
+            "name": "Calculatrice IP",
+            "slug": "ip-calculator",
+            "description": "Outil pour calculer les sous-réseaux IP.",
+            "category": 1,
+            "template_name": "tools/ip_calculator.html"
+        }
+    },
+    {
+        "model": "ToolBoard.tool",
+        "pk": 2,
+        "fields": {
+            "name": "Convertisseur de devises",
+            "slug": "currency-converter",
+            "description": "Convertissez des montants entre différentes devises.",
+            "category": 2,
+            "template_name": "tools/currency_converter.html"
+        }
+    },
+    {
+        "model": "ToolBoard.tool",
+        "pk": 3,
+        "fields": {
+            "name": "Calculatrice de TVA",
+            "slug": "vat-calculator",
+            "description": "Calculez la TVA sur un montant donné.",
+            "category": 2,
+            "template_name": "tools/vat_calculator.html"
+        }
+    },
+    {
+        "model": "ToolBoard.tool",
+        "pk": 4,
+        "fields": {
+            "name": "Générateur de mots de passe",
+            "slug": "password-generator",
+            "description": "Générez des mots de passe sécurisés.",
+            "category": 3,
+            "template_name": "tools/password_generator.html"
+        }
+    },
+    {
+        "model": "ToolBoard.tool",
+        "pk": 5,
+        "fields": {
+            "name": "Encodeur/Décodeur Base64",
+            "slug": "base64-converter",
+            "description": "Encodez ou décodez des chaînes en Base64.",
+            "category": 4,
+            "template_name": "tools/base64_converter.html"
+        }
+    }
+]

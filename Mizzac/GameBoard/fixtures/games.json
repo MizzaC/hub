@@ -1,0 +1,42 @@
+[
+    {
+        "model": "GameBoard.category",
+        "pk": 1,
+        "fields": {
+            "name": "Famillial"
+        }
+    },
+    {
+        "model": "GameBoard.category",
+        "pk": 2,
+        "fields": {
+            "name": "Stratégie"
+        }
+    },
+    {
+        "model": "GameBoard.category",
+        "pk": 3,
+        "fields": {
+            "name": "Carte"
+        }
+    },
+    {
+        "model": "GameBoard.category",
+        "pk": 4,
+        "fields": {
+            "name": "Compétitif"
+        }
+    },
+    {
+        "model": "GameBoard.game",
+        "pk": "SkyJo",
+        "fields": {
+            "description" : "Skyjo est un jeu de cartes amusant, facile à apprendre et idéal pour les soirées entre amis ou en famille. Le but du jeu est de terminer avec le moins de points possible en retournant, échangeant et défaussant des cartes.",
+            "rules" : {"objective": "Le joueur avec le moins de points à la fin de la partie remporte la victoire.", "materials": ["150 cartes numérotées de -2 à 12.", "Une feuille pour noter les scores."], "setup": ["Chaque joueur reçoit un tableau de 12 cartes disposées face cachée en une grille de 3x4.", "Chaque joueur retourne deux de ses cartes face visible.", "Les cartes restantes forment une pioche, et la première carte de la pioche est placée face visible pour démarrer la défausse."], "turn": ["Piocher une carte face visible : Remplacer une de ses cartes visibles ou cachées par la carte piochée et mettre la carte échangée dans la défausse.", "Piocher une carte face cachée : Garder cette carte ou l'échanger avec l'une de ses cartes visibles ou cachées. Si le joueur garde la carte, il doit défausser une carte de sa grille."], "end_of_round": "La manche se termine lorsqu'un joueur a révélé toutes ses cartes. Les autres joueurs jouent un dernier tour, puis les points sont comptabilisés.", "end_of_game": "La partie se termine lorsqu'un joueur atteint 100 points. Le joueur avec le score le plus bas gagne."},
+            "versions" : {"name": "Skyjo Action"},
+            "tips" : [{"title": "Optimisez vos échanges"}],
+            "categories" : [1, 2, 3, 4],
+            "cover" : "GameBoard/Games/Skyjo/Skyjo_Logo_2.jpg"
+            }
+    }
+]

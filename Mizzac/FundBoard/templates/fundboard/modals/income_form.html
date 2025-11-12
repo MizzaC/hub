@@ -1,0 +1,83 @@
+{% load static %}
+
+<form method="post"
+      action="{% if object %}{% url 'fundboard:edit_income_modal' object.pk %}{% else %}{% url 'fundboard:add_income_modal' %}{% endif %}">
+  {% csrf_token %}
+
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+
+      <div class="modal-header">
+        <h5 class="modal-title">{% if object %}Modifier le revenu{% else %}Ajouter un revenu{% endif %}</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+
+      <div class="modal-body">
+
+        <div class="form-check form-switch mb-3">
+          {{ form.is_recurring }} <label class="form-check-label" for="{{ form.is_recurring.id_for_label }}">Revenu récurrent</label>
+        </div>
+
+        <div class="mb-3">{{ form.name.label_tag }}{{ form.name }}</div>
+        <div class="mb-3">{{ form.amount.label_tag }}{{ form.amount }}</div>
+
+        <div class="row">
+          <div class="col-md-6 mb-3">
+            {{ form.start_date.label_tag }} {{ form.start_date }}
+          </div>
+          <div class="col-md-6 mb-3">
+            {{ form.end_date.label_tag }} {{ form.end_date }}
+          </div>
+        </div>
+
+        <div class="mb-3">
+          <label id="nextPaydayLabel" class="form-label" for="{{ form.next_payday.id_for_label }}">Date / prochain paiement</label>
+          {{ form.next_payday }}
+        </div>
+
+        <div id="recurrenceFields" class="border rounded-3 p-3 mb-3">
+          <div class="mb-3">{{ form.freq.label_tag }}{{ form.freq }}</div>
+          <div id="freqCustomGroup" class="mb-0">
+            {{ form.freq_custom.label_tag }}{{ form.freq_custom }}
+            <div class="form-text">Nombre de jours entre chaque paiement (si « Personnalisé »).</div>
+          </div>
+        </div>
+
+        <div class="mb-0">{{ form.notes.label_tag }}{{ form.notes }}</div>
+
+      </div>
+
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-success">{% if object %}Enregistrer{% else %}Ajouter{% endif %}</button>
+      </div>
+
+    </div>
+  </div>
+</form>
+
+<script>
+(() => {
+  const modal = document.currentScript.closest('.modal');
+  if (!modal) return;
+
+  const isRec   = modal.querySelector('input[name="is_recurring"]');
+  const freq    = modal.querySelector('select[name="freq"]');
+  const freqBox = modal.querySelector('#recurrenceFields');
+  const customG = modal.querySelector('#freqCustomGroup');
+  const nextLbl = modal.querySelector('#nextPaydayLabel');
+
+  function syncUI() {
+    const rec = isRec && isRec.checked;
+    if (freqBox)  freqBox.style.display = rec ? '' : 'none';
+    if (nextLbl)  nextLbl.textContent = rec ? 'Prochain paiement' : 'Date';
+    if (customG && freq) {
+      customG.style.display = (rec && freq.value === 'PERSONALIZED') ? '' : 'none';
+    }
+  }
+
+  if (isRec) isRec.addEventListener('change', syncUI);
+  if (freq)  freq.addEventListener('change', syncUI);
+  syncUI();
+})();
+</script>
