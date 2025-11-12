@@ -1,0 +1,29 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+
+<div class="container mt-4">
+    <h1 class="display-4">{{ tool.name }}</h1>
+    <p class="lead">{{ tool.description }}</p>
+    <!-- Contenu spécifique à l'utilisation de l'outil -->
+    <hr class="my-4">
+    <h3>Outils liés</h3>
+    <div class="row">
+        {% for related_tool in related_tools %}
+            <div class="col-md-4">
+                <div class="card mb-4">
+                    <!-- Ajoutez une image si disponible -->
+                    <div class="card-body">
+                        <h5 class="card-title">{{ related_tool.name }}</h5>
+                        <p class="card-text">{{ related_tool.description|truncatewords:20 }}</p>
+                        <a href="{% url 'toolboard:tool_detail' related_tool.pk %}" class="btn btn-primary">Voir l'outil</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <p>Aucun outil lié.</p>
+        {% endfor %}
+    </div>
+</div>
+
+{% endblock %}

@@ -1,2 +1,10 @@
 django==4.2.3
 jsonfield==3.1.0
+pandas==2.2.2
+python-dotenv==1.0.0
+requests==2.31.0
+pillow==11.0.0
+jsonfield==3.1.0
+numpy==2.1.2
+websockets==15.0.1
+python-binance==1.0.29

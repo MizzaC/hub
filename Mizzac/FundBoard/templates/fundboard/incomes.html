@@ -1,0 +1,354 @@
+{% extends "fundboard/base.html" %}
+{% load static %}
+
+{% block fb_content %}
+<div class="container-fluid py-4">
+
+  {# ── Header & actions ── #}
+  <div class="d-flex flex-wrap gap-2 justify-content-between align-items-center mb-3">
+    <div class="d-flex align-items-center gap-3">
+      <h2 class="mb-0">Revenus</h2>
+      <span class="badge bg-light text-dark border text-uppercase">
+        {{ income_period_label }}
+      </span>
+    </div>
+
+    <div class="d-flex flex-wrap gap-2 align-items-center">
+      {# Navigation mois #}
+      <div class="btn-group" role="group" aria-label="Mois">
+        <a class="btn btn-outline-secondary" href="{{ url_prev_month }}" title="Mois précédent">
+          <i class="bi bi-chevron-left"></i>
+        </a>
+        <input type="month"
+               class="form-control"
+               style="width: 170px;"
+               value="{{ ym_current }}"
+               id="monthPickerIncome">
+        <a class="btn btn-outline-secondary" href="{{ url_next_month }}" title="Mois suivant">
+          <i class="bi bi-chevron-right"></i>
+        </a>
+      </div>
+
+      {# Ajouts #}
+      <button class="btn btn-outline-primary d-flex align-items-center gap-1"
+              data-bs-toggle="dynamic-modal"
+              data-href="{% url 'fundboard:add_income_modal' %}?recurring=1">
+        <i class="bi bi-repeat"></i> Ajouter (récurrent)
+      </button>
+      <button class="btn btn-primary d-flex align-items-center gap-1"
+              data-bs-toggle="dynamic-modal"
+              data-href="{% url 'fundboard:add_income_modal' %}?recurring=0">
+        <i class="bi bi-plus-lg"></i> Ajouter (ponctuel)
+      </button>
+    </div>
+  </div>
+
+  {# ── Stat cards (mois sélectionné) ── #}
+  <div class="row gy-3 mb-4">
+    <div class="col-12 col-xl-4 col-lg-6">
+      <div class="card shadow-sm h-100 border-primary">
+        <div class="card-body text-center">
+          <small class="text-uppercase text-muted">Récurrents / mois (équiv.)</small>
+          <h3 class="fw-bold mb-0">{{ total_recurring_income_month|default:0|floatformat:2 }} €</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4 col-lg-6">
+      <div class="card shadow-sm h-100 border-success">
+        <div class="card-body text-center">
+          <small class="text-uppercase text-muted">Ponctuels (mois)</small>
+          <h3 class="fw-bold mb-0">{{ total_onetime_income_month|default:0|floatformat:2 }} €</h3>
+        </div>
+      </div>
+    </div>
+    <div class="col-12 col-xl-4 col-lg-12">
+      <div class="card shadow-sm h-100 border-info">
+        <div class="card-body text-center">
+          <small class="text-uppercase text-muted">Total revenus (mois)</small>
+          <h3 class="fw-bold mb-0">{{ total_income_month|default:0|floatformat:2 }} €</h3>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Charts row ── #}
+  <div class="row mb-4">
+    <div class="col-lg-8 mb-4 mb-lg-0">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">12 derniers mois (revenus)</h5>
+          <small class="text-muted">Récurrent (équiv. mensuelle) + Ponctuel</small>
+        </div>
+        <div class="card-body">
+          <canvas id="incomeBar12m" height="140"></canvas>
+        </div>
+      </div>
+    </div>
+    <div class="col-lg-4">
+      <div class="card shadow-sm rounded-4 h-100">
+        <div class="card-header bg-white border-0">
+          <h5 class="mb-0">Répartition par source ({{ income_period_label }})</h5>
+        </div>
+        <div class="card-body d-flex align-items-center">
+          <canvas id="incomeDonut" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {# ── Onglets: Derniers / Récurrents / Ponctuels ── #}
+  <ul class="nav nav-tabs mb-3" role="tablist">
+    <li class="nav-item" role="presentation">
+      <button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabLatestIncome" type="button" role="tab">
+        Derniers (chronologique)
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabRecurringIncome" type="button" role="tab">
+        Récurrents
+      </button>
+    </li>
+    <li class="nav-item" role="presentation">
+      <button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabOneTimeIncome" type="button" role="tab">
+        Ponctuels
+      </button>
+    </li>
+  </ul>
+
+  <div class="tab-content">
+    {# ───────────── Derniers revenus ───────────── #}
+    <div class="tab-pane fade show active" id="tabLatestIncome" role="tabpanel">
+      <div class="card shadow-sm rounded-4">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Prochaine date</th>
+                <th>Nom</th>
+                <th>Montant</th>
+                <th>Type</th>
+                <th>Période</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inc in latest_list %}
+              <tr>
+                <td>{{ inc.next_payday_display|date:"d/m/Y" }}</td>
+                <td>{{ inc.name }}</td>
+                <td>{{ inc.amount|floatformat:2 }} €</td>
+                <td>
+                  {% if inc.is_recurring %}
+                    <span class="badge bg-info">Récurrent</span>
+                  {% else %}
+                    <span class="badge bg-secondary">Ponctuel</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if inc.start_date %}{{ inc.start_date|date:"d/m/Y" }}{% endif %}
+                  {% if inc.end_date %} → {{ inc.end_date|date:"d/m/Y" }}{% endif %}
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-success"
+                          title="Marquer comme reçu"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:mark_income_modal' inc.pk %}">
+                    Marquer Reçu
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:edit_income_modal' inc.pk %}">
+                    Éditer
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:delete_income_modal' inc.pk %}">
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">Aucun revenu.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ───────────── Récurrents ───────────── #}
+    <div class="tab-pane fade" id="tabRecurringIncome" role="tabpanel">
+      <div class="card shadow-sm rounded-4">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Prochain paiement</th>
+                <th>Nom</th>
+                <th>Montant</th>
+                <th>Fréquence</th>
+                <th>Période</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inc in recurring_list %}
+              <tr>
+                <td>{{ inc.next_payday_display|date:"d/m/Y" }}</td>
+                <td>{{ inc.name }}</td>
+                <td>{{ inc.amount|floatformat:2 }} €</td>
+                <td>
+                  {% if inc.freq == 'PERSONALIZED' and inc.freq_custom %}
+                    Personnalisée ({{ inc.freq_custom }} j)
+                  {% else %}
+                    {{ inc.get_freq_display }}
+                  {% endif %}
+                </td>
+                <td>
+                  {% if inc.start_date %}{{ inc.start_date|date:"d/m/Y" }}{% endif %}
+                  {% if inc.end_date %} → {{ inc.end_date|date:"d/m/Y" }}{% endif %}
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-success"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:mark_income_modal' inc.pk %}">
+                    Marquer Reçu
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:edit_income_modal' inc.pk %}">
+                    Éditer
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:delete_income_modal' inc.pk %}">
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="6" class="text-center text-muted py-4">Aucun revenu récurrent.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {# ───────────── Ponctuels ───────────── #}
+    <div class="tab-pane fade" id="tabOneTimeIncome" role="tabpanel">
+      <div class="card shadow-sm rounded-4">
+        <div class="table-responsive">
+          <table class="table table-hover mb-0 align-middle">
+            <thead class="table-light">
+              <tr>
+                <th>Date</th>
+                <th>Nom</th>
+                <th>Montant</th>
+                <th>Période</th>
+                <th class="text-end">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for inc in one_time_list %}
+              <tr>
+                <td>{{ inc.next_payday_display|date:"d/m/Y" }}</td>
+                <td>{{ inc.name }}</td>
+                <td>{{ inc.amount|floatformat:2 }} €</td>
+                <td>
+                  {% if inc.start_date %}{{ inc.start_date|date:"d/m/Y" }}{% endif %}
+                  {% if inc.end_date %} → {{ inc.end_date|date:"d/m/Y" }}{% endif %}
+                </td>
+                <td class="text-end">
+                  <button class="btn btn-sm btn-outline-success"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:mark_income_modal' inc.pk %}">
+                    Marquer Reçu
+                  </button>
+                  <button class="btn btn-sm btn-outline-secondary"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:edit_income_modal' inc.pk %}">
+                    Éditer
+                  </button>
+                  <button class="btn btn-sm btn-outline-danger"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:delete_income_modal' inc.pk %}">
+                    Supprimer
+                  </button>
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="5" class="text-center text-muted py-4">Aucun revenu ponctuel.</td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div> {# /.tab-content #}
+</div>
+{% endblock fb_content %}
+
+{% block extra_js %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+/* --- Month picker navigation --- */
+(function(){
+  const picker = document.getElementById('monthPickerIncome');
+  if (!picker) return;
+  picker.addEventListener('change', () => {
+    const val = picker.value; // "YYYY-MM"
+    const url = new URL(window.location.href);
+    url.searchParams.set('ym', val);
+    window.location.href = url.toString();
+  });
+})();
+
+/* ---- Data from view (sérialisées en JSON côté serveur) ---- */
+const incomeDonutLabels = JSON.parse('{{ incomes_donut_labels_json|default:"[]"|escapejs }}');
+const incomeDonutData   = JSON.parse('{{ incomes_donut_data_json|default:"[]"|escapejs }}');
+
+const monthsLabels      = JSON.parse('{{ months_labels_json|default:"[]"|escapejs }}');
+const monthlyRecIncome  = JSON.parse('{{ monthly_rec_income_vals_json|default:"[]"|escapejs }}');
+const monthlyOneIncome  = JSON.parse('{{ monthly_one_income_vals_json|default:"[]"|escapejs }}');
+
+(function renderIncomeCharts(){
+  const donutEl = document.getElementById('incomeDonut');
+  if (donutEl) {
+    new Chart(donutEl, {
+      type: 'doughnut',
+      data: { labels: incomeDonutLabels, datasets: [{ data: incomeDonutData }] },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' } } }
+    });
+  }
+
+  const barEl = document.getElementById('incomeBar12m');
+  if (barEl && monthsLabels.length) {
+    new Chart(barEl, {
+      type: 'bar',
+      data: {
+        labels: monthsLabels,
+        datasets: [
+          { label: 'Récurrent (équiv.)', data: monthlyRecIncome, stack: 'x' },
+          { label: 'Ponctuel',           data: monthlyOneIncome, stack: 'x' }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        scales: { x: { stacked: true }, y: { stacked: true } },
+        plugins: { legend: { position: 'bottom' } }
+      }
+    });
+  }
+})();
+</script>
+{% endblock %}

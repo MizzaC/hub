@@ -1,0 +1,28 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="display-4">Encodeur/Décodeur Base64</h1>
+    <p>Encodez ou décodez des chaînes en Base64.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="text">Texte</label>
+            <textarea class="form-control" id="text" name="text" rows="3"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="action">Action</label>
+            <select class="form-control" id="action" name="action">
+                <option value="encode">Encoder</option>
+                <option value="decode">Décoder</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Convertir</button>
+    </form>
+    {% if result %}
+        <hr>
+        <h3>Résultat</h3>
+        <p>{{ result }}</p>
+    {% endif %}
+</div>
+{% endblock %}

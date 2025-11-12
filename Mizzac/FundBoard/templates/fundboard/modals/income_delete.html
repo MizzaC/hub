@@ -1,0 +1,18 @@
+<form method="post" action="{% url 'fundboard:delete_income_modal' object.pk %}">
+  {% csrf_token %}
+  <div class="modal-dialog modal-dialog-centered">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h5 class="modal-title text-danger">Supprimer ce revenu&nbsp;?</h5>
+        <button class="btn-close" data-bs-dismiss="modal"></button>
+      </div>
+      <div class="modal-body">
+        <p>Cette action est <strong>irréversible</strong>.<br>Confirmer la suppression de <strong>{{ object.name }}</strong> ?</p>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+        <button class="btn btn-danger" type="submit">Supprimer</button>
+      </div>
+    </div>
+  </div>
+</form>

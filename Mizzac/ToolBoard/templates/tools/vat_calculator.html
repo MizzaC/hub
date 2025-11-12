@@ -1,0 +1,30 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="display-4">Calculatrice de TVA</h1>
+    <p>Calculez la TVA sur un montant donné.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="amount">Montant HT</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" placeholder="100">
+        </div>
+        <div class="form-group">
+            <label for="vat_rate">Taux de TVA (%)</label>
+            <input type="number" step="0.01" class="form-control" id="vat_rate" name="vat_rate" placeholder="20">
+        </div>
+        <button type="submit" class="btn btn-primary">Calculer</button>
+    </form>
+    {% if result %}
+        {% if result.error %}
+            <div class="alert alert-danger mt-3">{{ result.error }}</div>
+        {% else %}
+            <hr>
+            <h3>Résultats</h3>
+            <p>Montant de la TVA : {{ result.vat_amount|floatformat:2 }} €</p>
+            <p>Montant TTC : {{ result.total_amount|floatformat:2 }} €</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}

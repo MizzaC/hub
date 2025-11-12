@@ -1,0 +1,43 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h1 class="display-4">Convertisseur de devises</h1>
+    <p>Convertissez des montants entre différentes devises.</p>
+    <form method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="amount">Montant</label>
+            <input type="number" step="0.01" class="form-control" id="amount" name="amount" placeholder="100">
+        </div>
+        <div class="form-group">
+            <label for="from_currency">De</label>
+            <select class="form-control" id="from_currency" name="from_currency">
+                <option value="EUR">Euro (EUR)</option>
+                <option value="USD">Dollar américain (USD)</option>
+                <option value="GBP">Livre sterling (GBP)</option>
+                <!-- Ajoutez d'autres devises si nécessaire -->
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="to_currency">À</label>
+            <select class="form-control" id="to_currency" name="to_currency">
+                <option value="USD">Dollar américain (USD)</option>
+                <option value="EUR">Euro (EUR)</option>
+                <option value="GBP">Livre sterling (GBP)</option>
+                <!-- Ajoutez d'autres devises si nécessaire -->
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">Convertir</button>
+    </form>
+    {% if result %}
+        {% if result.error %}
+            <div class="alert alert-danger mt-3">{{ result.error }}</div>
+        {% else %}
+            <hr>
+            <h3>Résultats</h3>
+            <p>{{ amount }} {{ from_currency }} = {{ result|floatformat:2 }} {{ to_currency }}</p>
+        {% endif %}
+    {% endif %}
+</div>
+{% endblock %}
