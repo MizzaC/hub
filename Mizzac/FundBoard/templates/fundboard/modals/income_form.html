@@ -42,7 +42,9 @@
             <div class="form-text">Nombre de jours entre chaque paiement (si « Personnalisé »).</div>
           </div>
         </div>
-
+        
+        <div class="mb-3">{{ form.default_account.label_tag }}{{ form.default_account }}</div>
+        <div class="mb-3">{{ form.tag.label_tag }}{{ form.tag }}</div>
         <div class="mb-0">{{ form.notes.label_tag }}{{ form.notes }}</div>
 
       </div>

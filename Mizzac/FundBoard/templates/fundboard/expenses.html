@@ -185,7 +185,7 @@
                   {% endif %}
                 </td>
                 <td>{{ e.tag|default:"—" }}</td>
-                <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
+                <td>{% if e.default_account %}{{ e.default_account.name }}{% else %}—{% endif %}</td>
                 <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
                 <td>
                   {% if e.start_date %}{{ e.start_date|date:"d/m/Y" }}{% endif %}
@@ -248,7 +248,7 @@
                   {% if e.start_date %}{{ e.start_date|date:"d/m/Y" }}{% endif %}
                   {% if e.end_date %} → {{ e.end_date|date:"d/m/Y" }}{% endif %}
                 </td>
-                <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
+                <td>{% if e.default_account %}{{ e.default_account.name }}{% else %}—{% endif %}</td>
                 <td class="text-nowrap">
                   <button class="btn btn-sm btn-outline-secondary"
                           data-bs-toggle="dynamic-modal"
@@ -296,7 +296,7 @@
                 <td class="text-end">{{ e.amount|floatformat:2 }} €</td>
                 <td>{{ e.next_due_display|date:"d/m/Y" }}</td>
                 <td>{{ e.tag|default:"—" }}</td>
-                <td>{% if e.account %}{{ e.account.name }}{% else %}—{% endif %}</td>
+                <td>{% if e.default_account %}{{ e.default_account.name }}{% else %}—{% endif %}</td>
                 <td>
                   {% if e.start_date %}{{ e.start_date|date:"d/m/Y" }}{% endif %}
                   {% if e.end_date %} → {{ e.end_date|date:"d/m/Y" }}{% endif %}

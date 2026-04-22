@@ -1,268 +1,141 @@
-# FundBoard/forms.py
+from __future__ import annotations
+
 from decimal import Decimal
+
 from django import forms
 from django.utils import timezone
 
-from .models import Expense, Income, Account, Transaction, Asset
+from .models import Account, Asset, CashflowRule, Transaction
 
 
-# ──────────────────────────────────────────────────────────────
-# Expense form (one-time or recurring)
-# ──────────────────────────────────────────────────────────────
-class ExpenseForm(forms.ModelForm):
+class CashflowRuleForm(forms.ModelForm):
     class Meta:
-        model  = Expense
+        model = CashflowRule
         fields = [
-            'is_recurring', 'name', 'amount', 'start_date', 'end_date', 'next_due',
-            'freq', 'freq_custom', 'account', 'tag', 'notes',
+            "is_recurring",
+            "name",
+            "amount",
+            "start_date",
+            "end_date",
+            "next_due",
+            "freq",
+            "freq_custom",
+            "default_account",
+            "tag",
+            "notes",
         ]
-        labels = {
-            'is_recurring': 'Dépense récurrente',
-            'name':        'Nom',
-            'amount':      'Montant',
-            'start_date':  'Date de début',
-            'end_date':    'Date de fin (optionnel)',
-            'next_due':    'Prochaine échéance',
-            'freq':        'Fréquence',
-            'freq_custom': 'Jours (si personnalisé)',
-            'account':     'Compte lié (optionnel)',
-            'tag':         'Catégorie / Tag (optionnel)',
-            'notes':       'Notes (optionnel)',
-        }
         widgets = {
-            'is_recurring': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'name':         forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex. Loyer, Netflix, Courses'}),
-            'amount':       forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0', 'inputmode': 'decimal'}),
-            'start_date':  forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'end_date':    forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'next_due':     forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'freq':         forms.Select(attrs={'class': 'form-select'}),
-            'freq_custom':  forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'account':      forms.Select(attrs={'class': 'form-select'}),
-            'tag':          forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex. Logement, Alimentaire'}),
-            'notes':        forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
+            "is_recurring": forms.CheckboxInput(attrs={"class": "form-check-input"}),
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "amount": forms.NumberInput(attrs={"class": "form-control", "step": "0.01", "min": "0"}),
+            "start_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "end_date": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "next_due": forms.DateInput(attrs={"type": "date", "class": "form-control"}),
+            "freq": forms.Select(attrs={"class": "form-select"}),
+            "freq_custom": forms.NumberInput(attrs={"class": "form-control", "min": 1}),
+            "default_account": forms.Select(attrs={"class": "form-select"}),
+            "tag": forms.TextInput(attrs={"class": "form-control"}),
+            "notes": forms.Textarea(attrs={"class": "form-control", "rows": 3}),
         }
 
-    def clean(self):
-        """Enforce recurrence fields only when is_recurring=True."""
-        cleaned = super().clean()
-        is_rec  = cleaned.get('is_recurring')
-        freq    = cleaned.get('freq')
-        custom  = cleaned.get('freq_custom')
-
-        if is_rec:
-            if not freq:
-                self.add_error('freq', "Veuillez sélectionner une fréquence.")
-            if freq == 'PERSONALIZED' and not custom:
-                self.add_error('freq_custom', "Veuillez saisir le nombre de jours.")
-            if freq != 'PERSONALIZED':
-                cleaned['freq_custom'] = None
-        else:
-            cleaned['freq'] = None
-            cleaned['freq_custom'] = None
-        return cleaned
-    
     def __init__(self, *args, **kwargs):
-        user = kwargs.pop('user', None)
+        user = kwargs.pop("user", None)
         super().__init__(*args, **kwargs)
         if user:
-            # Only show accounts owned by the current user
-            self.fields['account'].queryset = Account.objects.filter(user=user)
-
-
-# ──────────────────────────────────────────────────────────────
-# Income form (one-time or recurring)
-# ──────────────────────────────────────────────────────────────
-class IncomeForm(forms.ModelForm):
-    class Meta:
-        model  = Income
-        fields = [
-            'is_recurring', 'name', 'amount', 'start_date', 'end_date',
-            'next_payday', 'freq', 'freq_custom', 'notes'
-        ]
-        labels = {
-            'is_recurring': 'Revenu récurrent',
-            'name':        'Source',
-            'amount':      'Montant',
-            'start_date':  'Date de début',
-            'end_date':    'Date de fin (optionnel)',
-            'next_payday': 'Date / prochain paiement',
-            'freq':        'Fréquence',
-            'freq_custom': 'Jours (si personnalisé)',
-            'notes':       'Notes (optionnel)',
-        }
-        widgets = {
-            'is_recurring': forms.CheckboxInput(attrs={'class': 'form-check-input'}),
-            'name':         forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex. Salaire, Prime'}),
-            'amount':       forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
-            'start_date':  forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'end_date':    forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'next_payday':  forms.DateInput(attrs={'type': 'date', 'class': 'form-control'}),
-            'freq':         forms.Select(attrs={'class': 'form-select'}),
-            'freq_custom':  forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
-            'notes':        forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
-        }
+            self.fields["default_account"].queryset = Account.objects.filter(user=user).order_by("name")
 
     def clean(self):
-        """Enforce recurrence fields only when is_recurring=True."""
         cleaned = super().clean()
-        is_rec  = cleaned.get('is_recurring')
-        freq    = cleaned.get('freq')
-        custom  = cleaned.get('freq_custom')
-
+        is_rec = cleaned.get("is_recurring")
+        freq = cleaned.get("freq")
+        custom = cleaned.get("freq_custom")
         if is_rec:
             if not freq:
-                self.add_error('freq', "Veuillez sélectionner une fréquence.")
-            if freq == 'PERSONALIZED' and not custom:
-                self.add_error('freq_custom', "Veuillez saisir le nombre de jours.")
-            if freq != 'PERSONALIZED':
-                cleaned['freq_custom'] = None
+                self.add_error("freq", "Veuillez selectionner une frequence.")
+            if freq == "PERSONALIZED" and not custom:
+                self.add_error("freq_custom", "Veuillez saisir le nombre de jours.")
+            if freq != "PERSONALIZED":
+                cleaned["freq_custom"] = None
         else:
-            cleaned['freq'] = None
-            cleaned['freq_custom'] = None
+            cleaned["freq"] = None
+            cleaned["freq_custom"] = None
         return cleaned
 
 
-# ──────────────────────────────────────────────────────────────
-# Manual account form
-# ──────────────────────────────────────────────────────────────
+class ExpenseForm(CashflowRuleForm):
+    pass
+
+
+class IncomeForm(CashflowRuleForm):
+    pass
+
+
 class ManualAccountForm(forms.ModelForm):
     class Meta:
-        model  = Account
-        fields = ['name', 'category', 'balance']
+        model = Account
+        fields = ["name", "category", "base_currency"]
         labels = {
-            'name':     'Nom du compte',
-            'category': 'Type',
-            'balance':  'Solde initial (optionnel)',
+            "name": "Nom du compte",
+            "category": "Type",
+            "base_currency": "Devise",
         }
         widgets = {
-            'name':     forms.TextInput(attrs={'class': 'form-control', 'placeholder': 'ex. Compte courant SG'}),
-            'category': forms.Select(attrs={'class': 'form-select'}),
-            'balance':  forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'}),
+            "name": forms.TextInput(attrs={"class": "form-control"}),
+            "category": forms.Select(attrs={"class": "form-select"}),
+            "base_currency": forms.TextInput(attrs={"class": "form-control", "maxlength": 10}),
         }
 
 
-# ──────────────────────────────────────────────────────────────
-# Investment trade form (BUY / SELL) → creates a Transaction
-# ──────────────────────────────────────────────────────────────
-class InvestmentForm(forms.ModelForm):
-    """
-    Create a BUY/SELL trade; amount is computed from quantity, unit_price and optional fees.
-    The view must pass `user` to limit accounts to current user.
-    """
-    fees = forms.DecimalField(
-        label="Frais (optionnel)",
-        required=False,
-        min_value=Decimal('0'),
-        decimal_places=2,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'})
+class InvestmentForm(forms.Form):
+    account = forms.ModelChoiceField(queryset=Account.objects.none(), label="Compte")
+    asset = forms.ModelChoiceField(queryset=Asset.objects.all().order_by("ticker"), label="Actif")
+    cash_asset = forms.ModelChoiceField(queryset=Asset.objects.none(), label="Actif de tresorerie")
+    trx_type = forms.ChoiceField(choices=[("BUY", "Achat"), ("SELL", "Vente")], label="Type")
+    quantity = forms.DecimalField(min_value=Decimal("0.000000000001"), decimal_places=12)
+    unit_price_reference = forms.DecimalField(min_value=Decimal("0.00000001"), decimal_places=12)
+    fees = forms.DecimalField(required=False, min_value=Decimal("0"), decimal_places=12)
+    executed_at = forms.DateTimeField(
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"})
     )
-
-    class Meta:
-        model  = Transaction
-        fields = ['account', 'asset', 'trx_type', 'quantity', 'unit_price', 'date_trx', 'memo']
-        labels = {
-            'account':    'Compte',
-            'asset':      'Actif',
-            'trx_type':   'Type',
-            'quantity':   'Quantité',
-            'unit_price': 'Prix unitaire',
-            'date_trx':   'Date',
-            'memo':       'Note (optionnel)',
-        }
-        widgets = {
-            'account':    forms.Select(attrs={'class': 'form-select'}),
-            'asset':      forms.Select(attrs={'class': 'form-select'}),
-            'trx_type':   forms.Select(attrs={'class': 'form-select'}),
-            'quantity':   forms.NumberInput(attrs={'class': 'form-control', 'step': '0.00000001', 'min': '0'}),
-            'unit_price': forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01', 'min': '0'}),
-            'date_trx':   forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'}),
-            'memo':       forms.TextInput(attrs={'class': 'form-control'}),
-        }
+    description = forms.CharField(required=False)
 
     def __init__(self, user, *args, **kwargs):
-        """Limit choices to current user context & restrict type to BUY/SELL."""
         super().__init__(*args, **kwargs)
-        self.fields['account'].queryset = Account.objects.filter(user=user).order_by('name')
-        self.fields['trx_type'].choices = [('BUY', 'Achat'), ('SELL', 'Vente')]
-
-    def clean(self):
-        cleaned    = super().clean()
-        trx_type   = cleaned.get('trx_type')
-        quantity   = cleaned.get('quantity')   or Decimal('0')
-        unit_price = cleaned.get('unit_price') or Decimal('0')
-
-        if trx_type not in ('BUY', 'SELL'):
-            self.add_error('trx_type', "Type invalide.")
-        if quantity <= 0:
-            self.add_error('quantity', "Quantité invalide.")
-        if unit_price <= 0:
-            self.add_error('unit_price', "Prix unitaire invalide.")
-        return cleaned
-
-    def save(self, commit=True):
-        """
-        Compute amount sign convention:
-        - BUY  → negative (cash out)
-        - SELL → positive (cash in)
-        Save Transaction instance.
-        """
-        instance: Transaction = super().save(commit=False)
-        fees = self.cleaned_data.get('fees') or Decimal('0')
-        q    = self.cleaned_data['quantity']
-        p    = self.cleaned_data['unit_price']
-
-        if instance.trx_type == 'BUY':
-            cash = (q * p) + fees
-            instance.amount = -cash
-        else:  # SELL
-            cash = (q * p) - fees
-            instance.amount = cash
-
-        # Append fee info to memo for traceability
-        if fees and not (instance.memo or '').strip():
-            instance.memo = f"fees={fees}"
-        elif fees:
-            instance.memo = f"{instance.memo} | fees={fees}"
-
-        if commit:
-            instance.save()
-        return instance
+        accounts = Account.objects.filter(user=user).order_by("name")
+        self.fields["account"].queryset = accounts
+        self.fields["cash_asset"].queryset = Asset.objects.filter(asset_type="FIAT").order_by("ticker")
+        self.fields["executed_at"].initial = timezone.now()
 
 
-# ──────────────────────────────────────────────────────────────
-# Mark Income as received (creates a DEPOSIT on an account)
-# ──────────────────────────────────────────────────────────────
 class MarkIncomeForm(forms.Form):
-    """
-    Non-model form used to post an actual inflow for a planned Income
-    to a selected Account with an amount/date override if needed.
-    View should create a Transaction(DEPOSIT) based on this data.
-    """
-    account = forms.ModelChoiceField(
-        queryset=Account.objects.none(),
-        label="Compte"
-    )
+    account = forms.ModelChoiceField(queryset=Account.objects.none(), label="Compte")
     amount = forms.DecimalField(
-        label="Montant encaissé",
-        min_value=Decimal('0'),
+        label="Montant encaisse",
+        min_value=Decimal("0"),
         decimal_places=2,
-        widget=forms.NumberInput(attrs={'class': 'form-control', 'step': '0.01'})
+        widget=forms.NumberInput(attrs={"class": "form-control", "step": "0.01"}),
     )
     date_posted = forms.DateTimeField(
         label="Date de valeur",
-        widget=forms.DateTimeInput(attrs={'type': 'datetime-local', 'class': 'form-control'})
+        widget=forms.DateTimeInput(attrs={"type": "datetime-local", "class": "form-control"}),
     )
     memo = forms.CharField(
         label="Note (optionnel)",
         required=False,
-        widget=forms.TextInput(attrs={'class': 'form-control'})
+        widget=forms.TextInput(attrs={"class": "form-control"}),
     )
 
-    def __init__(self, user, income: Income | None = None, *args, **kwargs):
+    def __init__(self, user, income_rule: CashflowRule | None = None, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.fields['account'].queryset = Account.objects.filter(user=user).order_by('name')
-        # prefill from income if provided
-        if income is not None:
-            self.fields['amount'].initial = income.amount
-        self.fields['date_posted'].initial = timezone.now()
+        self.fields["account"].queryset = Account.objects.filter(user=user).order_by("name")
+        if income_rule is not None:
+            self.fields["amount"].initial = income_rule.amount
+            self.fields["account"].initial = income_rule.default_account
+        self.fields["date_posted"].initial = timezone.now()
+
+
+class TransactionFilterForm(forms.Form):
+    trx_type = forms.ChoiceField(
+        required=False,
+        choices=[("", "Tous")] + list(Transaction._meta.get_field("trx_type").choices),
+    )

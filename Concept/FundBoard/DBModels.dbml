@@ -1,0 +1,161 @@
+Project FundBoard {
+  database_type: "PostgreSQL"
+  note: "Ledger with Legs + Integrity Threshold + Adjustment Legs"
+}
+
+///////////////////////////////////////////////////////////////
+// AUTH USER (simplified)
+///////////////////////////////////////////////////////////////
+
+Table auth_user {
+  id int [pk]
+  username varchar
+  email varchar
+  password varchar
+  is_active boolean
+  date_joined datetime
+}
+
+///////////////////////////////////////////////////////////////
+// ACCOUNTS
+///////////////////////////////////////////////////////////////
+
+Table account {
+  id int [pk]
+  user_id int [not null, ref: > auth_user.id]
+  name varchar(255) [not null]
+  category varchar(20) [not null, default: 'CURRENT']
+  base_currency varchar(10) [not null, default: 'EUR']
+
+  created_at datetime
+  updated_at datetime
+
+  Indexes {
+    (user_id, name)
+  }
+}
+
+///////////////////////////////////////////////////////////////
+// ASSETS (fiat included as assets like EUR, USD, etc.)
+///////////////////////////////////////////////////////////////
+
+Table asset {
+  id int [pk]
+  name varchar(255) [not null]
+  ticker varchar(20) [not null, unique]
+  asset_type varchar(20) [not null] // STOCK, CRYPTO, ETF, FIAT...
+  precision int [not null, default: 8]
+  sector varchar(100)
+
+  created_at datetime
+}
+
+///////////////////////////////////////////////////////////////
+// PRICE HISTORY (optional analytics)
+///////////////////////////////////////////////////////////////
+
+Table price_history {
+  id int [pk]
+  asset_id int [not null, ref: > asset.id]
+  date date [not null]
+
+  open decimal(20,8)
+  high decimal(20,8)
+  low decimal(20,8)
+  close decimal(20,8)
+
+  reference_currency varchar(10) [not null, default: 'EUR']
+
+  Indexes {
+    (asset_id, date) [unique]
+  }
+}
+
+///////////////////////////////////////////////////////////////
+// TRANSACTION (Economic Event)
+///////////////////////////////////////////////////////////////
+
+Table transaction {
+  id int [pk]
+  user_id int [not null, ref: > auth_user.id]
+
+  trx_type varchar(30) [not null] 
+  // BUY, SELL, TRANSFER, CONVERSION, DEPOSIT, WITHDRAWAL, STAKING, etc.
+
+  executed_at datetime [not null]
+  description varchar(255)
+  external_reference varchar(255)
+
+  // Integrity control
+  integrity_delta decimal(20,8)
+  tolerance_applied decimal(20,8)
+  is_balanced boolean [not null, default: true]
+
+  created_at datetime
+  updated_at datetime
+
+  Indexes {
+    (user_id, executed_at)
+    (user_id, trx_type)
+  }
+}
+
+///////////////////////////////////////////////////////////////
+// LEG (Atomic Financial Impact)
+///////////////////////////////////////////////////////////////
+
+Table leg {
+  id int [pk]
+
+  transaction_id int [not null, ref: > transaction.id]
+  account_id int [not null, ref: > account.id]
+  asset_id int [not null, ref: > asset.id]
+
+  quantity decimal(30,12) [not null] 
+  // signed (+/-)
+
+  unit_price_reference decimal(30,12)
+  // price in reference currency at execution
+
+  value_reference decimal(30,12) [not null]
+  // total value in reference currency (signed)
+
+  reference_currency varchar(10) [not null, default: 'EUR']
+
+  // classification
+  is_fee boolean [not null, default: false]
+  is_adjustment boolean [not null, default: false]
+  adjustment_type varchar(30) 
+  // ROUNDING, FX_SLIPPAGE, SYSTEM_CORRECTION
+
+  created_at datetime
+
+  Indexes {
+    (transaction_id)
+    (account_id, asset_id)
+    (asset_id)
+  }
+}
+
+///////////////////////////////////////////////////////////////
+// HOLDINGS (Materialized View Style - Optional)
+///////////////////////////////////////////////////////////////
+
+Table holding {
+  id int [pk]
+
+  user_id int [not null, ref: > auth_user.id]
+  account_id int [not null, ref: > account.id]
+  asset_id int [not null, ref: > asset.id]
+
+  quantity decimal(30,12) [not null, default: 0]
+  avg_cost_reference decimal(30,12)
+
+  reference_currency varchar(10) [not null, default: 'EUR']
+
+  last_computed_at datetime
+
+  Indexes {
+    (user_id, account_id, asset_id) [unique]
+  }
+}
