@@ -1,0 +1,98 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Report collection</h1>
+    <p class="text-muted mb-0">Vue tabulaire complete reconstruite depuis les lots, les operations et les valorisations.</p>
+  </div>
+</div>
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <div class="col-md-3">{{ filter_form.series.label_tag }}{{ filter_form.series }}</div>
+      <div class="col-md-3">{{ filter_form.extension.label_tag }}{{ filter_form.extension }}</div>
+      <div class="col-md-2">{{ filter_form.kind.label_tag }}{{ filter_form.kind }}</div>
+      <div class="col-md-2">{{ filter_form.language.label_tag }}{{ filter_form.language }}</div>
+      <div class="col-md-2">{{ filter_form.platform.label_tag }}{{ filter_form.platform }}</div>
+      <div class="col-md-2">{{ filter_form.is_graded.label_tag }}{{ filter_form.is_graded }}</div>
+      <div class="col-md-2">{{ filter_form.grading_company.label_tag }}{{ filter_form.grading_company }}</div>
+      <div class="col-md-2">{{ filter_form.card_condition.label_tag }}{{ filter_form.card_condition }}</div>
+      <div class="col-md-3">{{ filter_form.sealed_condition.label_tag }}{{ filter_form.sealed_condition }}</div>
+      <div class="col-md-3">{{ filter_form.product_type.label_tag }}{{ filter_form.product_type }}</div>
+      <div class="col-md-3 d-flex align-items-end gap-2">
+        <button class="btn btn-primary" type="submit">Filtrer</button>
+        <a class="btn btn-outline-secondary" href="{% url 'pokeboard:report' %}">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table table-sm align-middle">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Type</th>
+            <th>Serie</th>
+            <th>Extension</th>
+            <th>Code extension</th>
+            <th>Langue</th>
+            <th>Etat carte</th>
+            <th>Gradee</th>
+            <th>Societe</th>
+            <th>Grade</th>
+            <th>Etat scellage</th>
+            <th>Description</th>
+            <th>Achat/Vente</th>
+            <th>Plateforme</th>
+            <th>Quantite</th>
+            <th>Prix unitaire</th>
+            <th>Total</th>
+            <th>Valeur actuelle unitaire</th>
+            <th>Date actualisation</th>
+            <th>PnL</th>
+            <th>Valeur actuelle</th>
+            <th>PnL realise</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for row in rows %}
+            <tr>
+              <td>{{ row.date }}</td>
+              <td>{{ row.item }}</td>
+              <td>{{ row.kind }}</td>
+              <td>{{ row.series }}</td>
+              <td>{{ row.extension }}</td>
+              <td>{{ row.extension_code }}</td>
+              <td>{{ row.language }}</td>
+              <td>{{ row.card_condition|default:'-' }}</td>
+              <td>{% if row.is_graded %}Oui{% else %}Non{% endif %}</td>
+              <td>{{ row.grading_company|default:'-' }}</td>
+              <td>{{ row.grading_grade|default:'-' }}</td>
+              <td>{{ row.sealed_condition|default:'-' }}</td>
+              <td>{{ row.description|default:'-' }}</td>
+              <td>{{ row.operation_label }}</td>
+              <td>{{ row.platform }}</td>
+              <td>{{ row.quantity }}</td>
+              <td>{{ row.unit_price|default_if_none:'-' }}</td>
+              <td>{{ row.total|default_if_none:'-' }}</td>
+              <td>{% if row.current_unit_value is None %}Inconnue{% else %}{{ row.current_unit_value }}{% endif %}</td>
+              <td>{{ row.valuation_date|default:'-' }}</td>
+              <td>{% if row.pnl is None %}Inconnu{% else %}{{ row.pnl }}{% endif %}</td>
+              <td>{% if row.current_value is None %}Inconnue{% else %}{{ row.current_value }}{% endif %}</td>
+              <td>{{ row.realized_pnl|default_if_none:'-' }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="23" class="text-muted">Aucune ligne pour ces filtres.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

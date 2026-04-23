@@ -1,0 +1,159 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h1 class="h4 mb-4">Ajouter a la collection</h1>
+    <form method="post" class="row g-3" id="collectionForm">
+      {% csrf_token %}
+      <input type="hidden" name="next_url" value="{{ return_url }}">
+
+      <div class="col-12"><h2 class="h6">Type d'item</h2></div>
+      <div class="col-md-4">{{ form.kind.label_tag }}{{ form.kind }}</div>
+      <div class="col-md-4">{{ form.language.label_tag }}{{ form.language }}</div>
+
+      <div class="col-12"><hr><h2 class="h6">Referentiel</h2></div>
+      <div class="col-md-4">{{ form.series.label_tag }}{{ form.series }}</div>
+      <div class="col-md-4">{{ form.extension.label_tag }}{{ form.extension }}</div>
+      <div class="col-md-4">{{ form.collectible_name.label_tag }}{{ form.collectible_name }}</div>
+      <div class="col-12">{{ form.collectible_description.label_tag }}{{ form.collectible_description }}</div>
+
+      <div class="col-12" data-kind-section="CARD"><hr><h2 class="h6">Details carte</h2></div>
+      <div class="col-md-3" data-kind-section="CARD">{{ form.card_number.label_tag }}{{ form.card_number }}</div>
+      <div class="col-md-3" data-kind-section="CARD">{{ form.rarity.label_tag }}{{ form.rarity }}</div>
+      <div class="col-md-3" data-kind-section="CARD">{{ form.variant.label_tag }}{{ form.variant }}</div>
+      <div class="col-md-3" data-kind-section="CARD" data-raw-card-only="true">{{ form.card_condition.label_tag }}{{ form.card_condition }}</div>
+      <div class="col-md-3" data-kind-section="CARD">
+        <div class="form-check mt-4">{{ form.is_graded }} {{ form.is_graded.label_tag }}</div>
+      </div>
+      <div class="col-md-3" data-graded-only="true">{{ form.grading_company.label_tag }}{{ form.grading_company }}</div>
+      <div class="col-md-3" data-graded-only="true">{{ form.grading_grade.label_tag }}{{ form.grading_grade }}</div>
+
+      <div class="col-12" data-kind-section="SEALED"><hr><h2 class="h6">Details scelles</h2></div>
+      <div class="col-md-4" data-kind-section="SEALED">{{ form.product_type.label_tag }}{{ form.product_type }}</div>
+      <div class="col-md-4" data-kind-section="SEALED">{{ form.sealed_condition.label_tag }}{{ form.sealed_condition }}</div>
+
+      <div class="col-12"><hr><h2 class="h6">Details de possession</h2></div>
+      <div class="col-md-6">{{ form.platform.label_tag }}{{ form.platform }}</div>
+      <div class="col-md-6">{{ form.custom_description.label_tag }}{{ form.custom_description }}</div>
+      <div class="col-12">{{ form.notes.label_tag }}{{ form.notes }}</div>
+
+      <div class="col-12"><hr><h2 class="h6">Entree en collection</h2></div>
+      <div class="col-md-3">{{ form.initial_operation_type.label_tag }}{{ form.initial_operation_type }}</div>
+      <div class="col-md-3">{{ form.initial_quantity.label_tag }}{{ form.initial_quantity }}</div>
+      <div class="col-md-2">{{ form.initial_unit_price.label_tag }}{{ form.initial_unit_price }}</div>
+      <div class="col-md-2">{{ form.initial_fees.label_tag }}{{ form.initial_fees }}</div>
+      <div class="col-md-2">{{ form.initial_operation_date.label_tag }}{{ form.initial_operation_date }}</div>
+
+      {% for field in form %}
+        {% if field.errors %}
+          <div class="col-12 text-danger small">{{ field.label }}: {{ field.errors|join:', ' }}</div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{{ return_url }}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block pb_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('collectionForm');
+  if (!form) return;
+  const kindSelect = form.querySelector('[data-pokeboard-kind="true"]');
+  const gradedCheckbox = form.querySelector('input[name="is_graded"]');
+  const extensionSelect = form.querySelector('[data-pokeboard-extension="true"]');
+  const productTypeSelect = form.querySelector('select[name="product_type"]');
+  const cardNumberInput = form.querySelector('input[name="card_number"]');
+  const collectibleNameInput = form.querySelector('[data-pokeboard-name="true"]');
+  const alwaysEnabled = new Set([
+    'kind',
+    'language',
+    'series',
+    'extension',
+    'collectible_name',
+    'collectible_description',
+    'platform',
+    'custom_description',
+    'notes',
+    'initial_operation_type',
+    'initial_quantity',
+    'initial_unit_price',
+    'initial_fees',
+    'initial_operation_date',
+    'next_url',
+  ]);
+  let nameTouched = false;
+
+  const buildName = () => {
+    const kind = kindSelect ? kindSelect.value : 'CARD';
+    const extensionCode = extensionSelect && extensionSelect.selectedOptions.length
+      ? extensionSelect.selectedOptions[0].textContent.split(' - ')[0].trim()
+      : 'EXT';
+
+    if (kind === 'SEALED') {
+      const productType = productTypeSelect && productTypeSelect.value ? productTypeSelect.value : 'ITEM';
+      return `${productType} ${extensionCode} <nom personnalise>`;
+    }
+
+    const cardNumber = cardNumberInput && cardNumberInput.value.trim() ? cardNumberInput.value.trim() : '000/000';
+    return `Carte ${extensionCode} <nom personnalise> ${cardNumber}`;
+  };
+
+  const syncName = () => {
+    if (!collectibleNameInput || nameTouched) return;
+    collectibleNameInput.value = buildName();
+  };
+
+  const setEnabled = (container, enabled) => {
+    container.querySelectorAll('input, select, textarea').forEach((field) => {
+      if (alwaysEnabled.has(field.name)) return;
+      field.disabled = !enabled;
+    });
+  };
+
+  const toggleGradedFields = () => {
+    const isCard = !kindSelect || kindSelect.value === 'CARD';
+    const showGraded = gradedCheckbox && gradedCheckbox.checked && isCard;
+    form.querySelectorAll('[data-raw-card-only="true"]').forEach((block) => {
+      const visible = isCard && !showGraded;
+      block.style.display = visible ? '' : 'none';
+      setEnabled(block, visible);
+    });
+    form.querySelectorAll('[data-graded-only="true"]').forEach((block) => {
+      block.style.display = showGraded ? '' : 'none';
+      setEnabled(block, showGraded);
+    });
+  };
+
+  const toggleKindSections = () => {
+    const kind = kindSelect ? kindSelect.value : 'CARD';
+    form.querySelectorAll('[data-kind-section]').forEach((block) => {
+      const visible = block.dataset.kindSection === kind;
+      block.style.display = visible ? '' : 'none';
+      setEnabled(block, visible);
+    });
+    toggleGradedFields();
+  };
+
+  if (kindSelect) kindSelect.addEventListener('change', toggleKindSections);
+  if (gradedCheckbox) gradedCheckbox.addEventListener('change', toggleGradedFields);
+  if (kindSelect) kindSelect.addEventListener('change', syncName);
+  if (extensionSelect) extensionSelect.addEventListener('change', syncName);
+  if (productTypeSelect) productTypeSelect.addEventListener('change', syncName);
+  if (cardNumberInput) cardNumberInput.addEventListener('input', syncName);
+  if (collectibleNameInput) {
+    collectibleNameInput.addEventListener('input', () => {
+      nameTouched = collectibleNameInput.value.trim() !== '';
+    });
+  }
+  toggleKindSections();
+  syncName();
+});
+</script>
+{% endblock %}

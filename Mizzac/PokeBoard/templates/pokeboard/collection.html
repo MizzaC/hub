@@ -1,0 +1,144 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Collection</h1>
+    <p class="text-muted mb-0">Vue simple de vos cartes et de vos items scelles, avec actions directes sur chaque ligne.</p>
+  </div>
+  {% if active_collection_tab == 'sealed' %}
+    <a class="btn btn-primary" href="{% url 'pokeboard:add_lot' %}?kind=SEALED">Ajouter a la collection</a>
+  {% else %}
+    <a class="btn btn-primary" href="{% url 'pokeboard:add_lot' %}?kind=CARD">Ajouter a la collection</a>
+  {% endif %}
+</div>
+
+{% include 'pokeboard/_collection_tabs.html' %}
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      <input type="hidden" name="tab" value="{{ active_collection_tab }}">
+      <div class="col-md-3">{{ filter_form.series.label_tag }}{{ filter_form.series }}</div>
+      <div class="col-md-3">{{ filter_form.extension.label_tag }}{{ filter_form.extension }}</div>
+      <div class="col-md-2">{{ filter_form.language.label_tag }}{{ filter_form.language }}</div>
+      <div class="col-md-2">{{ filter_form.is_graded.label_tag }}{{ filter_form.is_graded }}</div>
+      <div class="col-md-2">{{ filter_form.grading_company.label_tag }}{{ filter_form.grading_company }}</div>
+      {% if active_collection_tab == 'cards' %}
+        <div class="col-md-3">{{ filter_form.card_condition.label_tag }}{{ filter_form.card_condition }}</div>
+      {% else %}
+        <div class="col-md-3">{{ filter_form.product_type.label_tag }}{{ filter_form.product_type }}</div>
+        <div class="col-md-3">{{ filter_form.sealed_condition.label_tag }}{{ filter_form.sealed_condition }}</div>
+      {% endif %}
+      <div class="col-md-3 d-flex align-items-end gap-2">
+        <button class="btn btn-primary" type="submit">Filtrer</button>
+        <a class="btn btn-outline-secondary" href="{% url 'pokeboard:collection' %}?tab={{ active_collection_tab }}">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      {% if active_collection_tab == 'cards' %}
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Serie</th>
+              <th>Extension</th>
+              <th>Nom</th>
+              <th>Numero</th>
+              <th>Langue</th>
+              <th>Etat</th>
+              <th>Gradee ?</th>
+              <th>Societe</th>
+              <th>Grade</th>
+              <th>Quantite</th>
+              <th>Cout moyen</th>
+              <th>Derniere valo</th>
+              <th>Date valo</th>
+              <th>PnL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lot in lots %}
+              <tr>
+                <td>{{ lot.collectible.extension.series.name }}</td>
+                <td>{{ lot.collectible.extension.code }} - {{ lot.collectible.extension.name }}</td>
+                <td>{{ lot.collectible.name }}</td>
+                <td>{{ lot.collectible.card_details_safe.card_number|default:'-' }}</td>
+                <td>{{ lot.language_label }}</td>
+                <td>{{ lot.state_label }}</td>
+                <td>{% if lot.is_graded %}Oui{% else %}Non{% endif %}</td>
+                <td>{{ lot.grading_company|default:'-' }}</td>
+                <td>{{ lot.grading_grade|default:'-' }}</td>
+                <td>{{ lot.remaining_quantity }}</td>
+                <td>{{ lot.average_unit_cost|default_if_none:'-' }}</td>
+                <td>{% if lot.current_unit_value is None %}Inconnue{% else %}{{ lot.current_unit_value }}{% endif %}</td>
+                <td>{% if lot.latest_valuation %}{{ lot.latest_valuation.valued_at }}{% else %}Jamais{% endif %}</td>
+                <td>{% if lot.unrealized_pnl is None %}Inconnu{% else %}{{ lot.unrealized_pnl }}{% endif %}</td>
+                <td>
+                  <div class="d-grid gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'pokeboard:add_operation' %}?lot={{ lot.id }}&next={{ request.get_full_path|urlencode }}">Ajouter une operation</a>
+                    <a class="btn btn-sm btn-outline-success" href="{% url 'pokeboard:add_valuation' %}?lot={{ lot.id }}&next={{ request.get_full_path|urlencode }}">Ajouter une valorisation</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'pokeboard:operations' %}?lot={{ lot.id }}">Voir l'historique</a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="15" class="text-muted">Aucune carte pour ces filtres.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Serie</th>
+              <th>Extension</th>
+              <th>Type</th>
+              <th>Nom</th>
+              <th>Langue</th>
+              <th>Etat du scellage</th>
+              <th>Quantite</th>
+              <th>Cout moyen</th>
+              <th>Derniere valo</th>
+              <th>Date valo</th>
+              <th>PnL</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for lot in lots %}
+              <tr>
+                <td>{{ lot.collectible.extension.series.name }}</td>
+                <td>{{ lot.collectible.extension.code }} - {{ lot.collectible.extension.name }}</td>
+                <td>{{ lot.product_type_label }}</td>
+                <td>{{ lot.collectible.name }}</td>
+                <td>{{ lot.language_label }}</td>
+                <td>{{ lot.state_label }}</td>
+                <td>{{ lot.remaining_quantity }}</td>
+                <td>{{ lot.average_unit_cost|default_if_none:'-' }}</td>
+                <td>{% if lot.current_unit_value is None %}Inconnue{% else %}{{ lot.current_unit_value }}{% endif %}</td>
+                <td>{% if lot.latest_valuation %}{{ lot.latest_valuation.valued_at }}{% else %}Jamais{% endif %}</td>
+                <td>{% if lot.unrealized_pnl is None %}Inconnu{% else %}{{ lot.unrealized_pnl }}{% endif %}</td>
+                <td>
+                  <div class="d-grid gap-2">
+                    <a class="btn btn-sm btn-outline-primary" href="{% url 'pokeboard:add_operation' %}?lot={{ lot.id }}&next={{ request.get_full_path|urlencode }}">Ajouter une operation</a>
+                    <a class="btn btn-sm btn-outline-success" href="{% url 'pokeboard:add_valuation' %}?lot={{ lot.id }}&next={{ request.get_full_path|urlencode }}">Ajouter une valorisation</a>
+                    <a class="btn btn-sm btn-outline-secondary" href="{% url 'pokeboard:operations' %}?lot={{ lot.id }}">Voir l'historique</a>
+                  </div>
+                </td>
+              </tr>
+            {% empty %}
+              <tr><td colspan="12" class="text-muted">Aucun item scelle pour ces filtres.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

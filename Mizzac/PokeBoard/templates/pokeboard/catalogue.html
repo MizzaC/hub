@@ -1,0 +1,88 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Catalogue</h1>
+    <p class="text-muted mb-0">Referentiel des series, extensions et items catalogue disponibles.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'pokeboard:add_lot' %}">Ajouter a la collection</a>
+</div>
+
+<div class="row g-4">
+  <div class="col-xl-7">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5">Series et extensions</h2>
+        {% for series in series_list %}
+          <div class="mb-4">
+            <h3 class="h6">{{ series.name }}</h3>
+            <div class="table-responsive">
+              <table class="table table-sm">
+                <thead>
+                  <tr>
+                    <th>Code</th>
+                    <th>Extension</th>
+                    <th>Sortie</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {% for extension in series.extensions.all %}
+                    <tr>
+                      <td>{{ extension.code }}</td>
+                      <td>{{ extension.name }}</td>
+                      <td>{{ extension.release_date|default:'-' }}</td>
+                    </tr>
+                  {% empty %}
+                    <tr><td colspan="3" class="text-muted">Aucune extension.</td></tr>
+                  {% endfor %}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        {% empty %}
+          <p class="text-muted">Aucune serie importee. Lancez la commande <code>pokeboard_seed_extensions</code>.</p>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+
+  <div class="col-xl-5">
+    <div class="card shadow-sm">
+      <div class="card-body">
+        <h2 class="h5">Items catalogue</h2>
+        <div class="table-responsive">
+          <table class="table table-sm">
+            <thead>
+              <tr>
+                <th>Nom</th>
+                <th>Type</th>
+                <th>Detail</th>
+                <th>Extension</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for collectible in collectibles %}
+                <tr>
+                  <td>{{ collectible.display_name }}</td>
+                  <td>{{ collectible.get_kind_display }}</td>
+                  <td>
+                    {% if collectible.kind == 'CARD' %}
+                      {{ collectible.card_details_safe.rarity|default:'-' }}
+                    {% else %}
+                      {{ collectible.sealed_details_safe.get_product_type_display|default:'-' }}
+                    {% endif %}
+                  </td>
+                  <td>{{ collectible.extension.code }} - {{ collectible.extension.name }}</td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="4" class="text-muted">Aucun item catalogue.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

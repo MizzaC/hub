@@ -1,0 +1,40 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h1 class="h4 mb-2">Ajouter une operation</h1>
+    {% if target_lot %}
+      <p class="text-muted">Lot cible : {{ target_lot.display_name }} - {{ target_lot.variant_label }}</p>
+    {% endif %}
+    <form method="post" class="row g-3">
+      {% csrf_token %}
+      <input type="hidden" name="next_url" value="{{ return_url }}">
+      {% if request.GET.lot %}<input type="hidden" name="lot" value="{{ request.GET.lot }}">{% endif %}
+      {% if form.lot.is_hidden %}
+        {{ form.lot }}
+      {% else %}
+        <div class="col-md-6">{{ form.lot.label_tag }}{{ form.lot }}</div>
+      {% endif %}
+      <div class="col-md-3">{{ form.operation_type.label_tag }}{{ form.operation_type }}</div>
+      <div class="col-md-3">{{ form.operation_date.label_tag }}{{ form.operation_date }}</div>
+      <div class="col-md-3">{{ form.quantity.label_tag }}{{ form.quantity }}</div>
+      <div class="col-md-3">{{ form.unit_price.label_tag }}{{ form.unit_price }}</div>
+      <div class="col-md-3">{{ form.fees.label_tag }}{{ form.fees }}</div>
+      <div class="col-md-3">{{ form.platform.label_tag }}{{ form.platform }}</div>
+      <div class="col-12">{{ form.comment.label_tag }}{{ form.comment }}</div>
+
+      {% for field in form %}
+        {% if field.errors %}
+          <div class="col-12 text-danger small">{{ field.label }}: {{ field.errors|join:', ' }}</div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{{ return_url }}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}

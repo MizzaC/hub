@@ -5,7 +5,8 @@ import configparser
 import websockets
 import requests
 import pandas as pd
-from FundBoard.models import Transaction
+from FundBoard.models import Account, Asset
+from FundBoard.ledger.services import LegInput, post_transaction
 
 class TradeRepublic:
     
@@ -144,12 +145,42 @@ class TradeRepublic:
                 if not after_cursor:
                     break
 
-        # Enregistrement en base de données
+        # Enregistrement en base de donnees
+        cash_asset, _ = Asset.objects.get_or_create(
+            ticker="EUR",
+            defaults={"name": "Euro", "asset_type": "FIAT", "precision": 8},
+        )
+        account = Account.objects.filter(user=user).first()
+        if not account:
+            account = Account.objects.create(user=user, name="Trade Republic", category="CTO", base_currency="EUR")
+
         for transaction in all_data:
-            Transaction.objects.update_or_create(
-                user=user,
-                transaction_id=transaction.get("id"),
-                defaults={"data": transaction}
+            amount_txt = transaction.get("amount") or "0"
+            try:
+                amount = float(str(amount_txt).replace(",", "."))
+            except Exception:
+                amount = 0.0
+
+            if amount == 0:
+                continue
+
+            trx_type = "DEPOSIT" if amount > 0 else "WITHDRAWAL"
+            post_transaction(
+                payload={
+                    "user": user,
+                    "trx_type": trx_type,
+                    "description": "Trade Republic import",
+                    "external_reference": transaction.get("id"),
+                },
+                legs=[
+                    LegInput(
+                        account_id=account.id,
+                        asset_id=cash_asset.id,
+                        quantity=abs(amount),
+                        value_reference=amount,
+                        reference_currency="EUR",
+                    )
+                ],
             )
         return len(all_data)  # ou retourne ce que tu veux
     

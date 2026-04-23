@@ -1,0 +1,70 @@
+{% extends 'common/base.html' %}
+
+{% block content %}
+<div class="container-fluid py-4">
+  <div class="row g-4">
+    <div class="col-lg-3 col-xl-2">
+      {% include 'pokeboard/_sidebar.html' %}
+    </div>
+    <div class="col-lg-9 col-xl-10">
+      {% if messages %}
+        {% for message in messages %}
+          <div class="alert alert-{{ message.tags|default:'info' }}">{{ message }}</div>
+        {% endfor %}
+      {% endif %}
+      {% block pb_content %}{% endblock %}
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function initPokeboardSeriesExtension(root) {
+  const seriesSelect = root.querySelector('[data-pokeboard-series="true"]');
+  const extensionSelect = root.querySelector('[data-pokeboard-extension="true"]');
+  if (!seriesSelect || !extensionSelect) return;
+
+  const extensionOptions = Array.from(extensionSelect.options).map((option) => ({
+    value: option.value,
+    label: option.textContent,
+    seriesId: option.dataset.seriesId || '',
+    selected: option.selected,
+  }));
+
+  const rebuildExtensions = (selectedSeries, preserveValue) => {
+    const currentValue = preserveValue ?? extensionSelect.value;
+    extensionSelect.innerHTML = '';
+    extensionOptions.forEach((entry) => {
+      if (!entry.value || !selectedSeries || entry.seriesId === selectedSeries) {
+        const option = document.createElement('option');
+        option.value = entry.value;
+        option.textContent = entry.label;
+        if (entry.seriesId) option.dataset.seriesId = entry.seriesId;
+        if (entry.value === currentValue) option.selected = true;
+        extensionSelect.appendChild(option);
+      }
+    });
+  };
+
+  seriesSelect.addEventListener('change', () => {
+    rebuildExtensions(seriesSelect.value, '');
+  });
+
+  extensionSelect.addEventListener('change', () => {
+    const selected = extensionSelect.options[extensionSelect.selectedIndex];
+    if (selected && selected.dataset.seriesId) {
+      seriesSelect.value = selected.dataset.seriesId;
+      rebuildExtensions(seriesSelect.value, selected.value);
+    }
+  });
+
+  rebuildExtensions(seriesSelect.value, extensionSelect.value);
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('form').forEach((form) => initPokeboardSeriesExtension(form));
+});
+</script>
+{% block pb_extra_js %}{% endblock %}
+{% endblock %}

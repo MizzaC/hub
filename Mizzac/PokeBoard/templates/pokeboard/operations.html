@@ -1,0 +1,59 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Historique des operations</h1>
+    <p class="text-muted mb-0">
+      {% if target_lot %}
+        Historique cible pour {{ target_lot.display_name }} - {{ target_lot.variant_label }}.
+      {% else %}
+        Journal complet des achats, ventes, ajouts et corrections.
+      {% endif %}
+    </p>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Item</th>
+            <th>Langue</th>
+            <th>Etat</th>
+            <th>Type</th>
+            <th>Quantite</th>
+            <th>Prix unitaire</th>
+            <th>Frais</th>
+            <th>Total</th>
+            <th>Plateforme</th>
+            <th>PnL realise</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for operation in operations %}
+            <tr>
+              <td>{{ operation.operation_date }}</td>
+              <td>{{ operation.lot.collectible.display_name }}</td>
+              <td>{{ operation.lot.language_label }}</td>
+              <td>{{ operation.lot.state_label }}</td>
+              <td>{{ operation.get_operation_type_display }}</td>
+              <td>{{ operation.display_quantity }}</td>
+              <td>{{ operation.unit_price|default_if_none:'-' }}</td>
+              <td>{{ operation.fees }}</td>
+              <td>{{ operation.total_price|default_if_none:'-' }}</td>
+              <td>{{ operation.platform|default:operation.lot.platform|default:'-' }}</td>
+              <td>{{ operation.realized_pnl|default_if_none:'-' }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="11" class="text-muted">Aucune operation.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

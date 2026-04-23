@@ -1,0 +1,17 @@
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h5 class="card-title mb-3">PokeBoard</h5>
+    <div class="d-grid gap-2">
+      {% for route_name, label in pokeboard_nav %}
+        <a class="btn {% if request.resolver_match.view_name == route_name %}btn-primary{% else %}btn-outline-primary{% endif %}"
+           href="{% url route_name %}">
+          {{ label }}
+        </a>
+      {% endfor %}
+      <hr>
+      <a class="btn btn-success" href="{% url 'pokeboard:add_lot' %}">Ajouter a la collection</a>
+      <a class="btn btn-outline-success" href="{% url 'pokeboard:stale_valuations' %}">Mettre a jour les valorisations</a>
+    </div>
+  </div>
+</div>
+

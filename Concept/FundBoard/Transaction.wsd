@@ -1,0 +1,26 @@
+@startuml transaction integrity
+title Transaction Integrity Check with Threshold
+
+actor User
+participant "TransactionService" as TS
+participant "Database" as DB
+
+User -> TS : createTransaction(data)
+
+TS -> DB : save Transaction
+TS -> DB : save Legs
+
+TS -> TS : compute sum(value_reference)
+TS -> TS : delta = abs(sum)
+
+alt delta == 0
+    TS -> DB : set is_balanced = true
+else delta < tolerance
+    TS -> DB : create Leg(is_adjustment=true,\n adjustment_type="ROUNDING")
+    TS -> DB : set is_balanced = true
+else delta >= tolerance
+    TS -> DB : set is_balanced = false
+    TS --> User : IntegrityError
+end
+
+@enduml
