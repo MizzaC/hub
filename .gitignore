@@ -555,3 +555,6 @@ Mizzac/FundBoard/data/*
 Mizzac/DrunkBoard/data/*
 Mizzac/ToolBoard/data/*
 Mizzac/DashBoard/data/*
+
+Mizzac/test*.*
+
