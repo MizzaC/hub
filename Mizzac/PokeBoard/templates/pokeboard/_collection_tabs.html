@@ -1,0 +1,11 @@
+<ul class="nav nav-tabs mb-4">
+  <li class="nav-item">
+    <a class="nav-link {% if active_collection_tab == 'cards' %}active{% endif %}" href="{{ cards_tab_url }}">Cartes</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_collection_tab == 'sealed' %}active{% endif %}" href="{{ sealed_tab_url }}">Scelles</a>
+  </li>
+  <li class="nav-item">
+    <a class="nav-link {% if active_collection_tab == 'revalue' %}active{% endif %}" href="{{ revalue_tab_url }}">Valorisations a mettre a jour</a>
+  </li>
+</ul>

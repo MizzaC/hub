@@ -1,0 +1,198 @@
+{
+  "series": [
+    {
+      "name": "Wizards",
+      "era_order": 1,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "WIZ01", "name": "Set de base", "release_date": "1999-11-18"},
+        {"code": "WIZ02", "name": "Jungle", "release_date": "2000-07-01"},
+        {"code": "WIZ03", "name": "Fossile", "release_date": "2000-11-01"},
+        {"code": "WIZ04", "name": "Set de base 2", "release_date": "1999-11-18"},
+        {"code": "WIZ05", "name": "Team Rocket", "release_date": "2001-03-01"},
+        {"code": "WIZ06", "name": "Neo Genesis", "release_date": "2001-05-20"},
+        {"code": "WIZ07", "name": "Neo Discovery", "release_date": "2001-10-15"},
+        {"code": "WIZ08", "name": "Neo Revelation", "release_date": "2002-01-01"},
+        {"code": "WIZ09", "name": "Neo Destiny", "release_date": "2002-06-01"},
+        {"code": "WIZ10", "name": "Expedition", "release_date": "2003-03-09"},
+        {"code": "WIZ11", "name": "Aquapolis", "release_date": "2003-07-01"}
+      ]
+    },
+    {
+      "name": "EX",
+      "era_order": 2,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "EX01", "name": "Rubis & Saphir", "release_date": "2003-12-12"},
+        {"code": "EX03", "name": "Tempete de Sable", "release_date": "2004-03-12"},
+        {"code": "EX04", "name": "Dragon", "release_date": "2004-08-28"},
+        {"code": "EX08", "name": "Team Magma vs Team Aqua", "release_date": "2005-02-15"},
+        {"code": "EX09", "name": "Emeraude", "release_date": "2005-08-26"},
+        {"code": "EX10", "name": "Forces Cachees", "release_date": "2006-03-24"},
+        {"code": "EX11", "name": "Especes Delta", "release_date": "2006-06-09"},
+        {"code": "EX12", "name": "Createurs de Legendes", "release_date": "2006-09-01"},
+        {"code": "EX13", "name": "Fantomes Holon", "release_date": "2006-11-19"},
+        {"code": "EX14", "name": "Gardiens de Cristal", "release_date": "2007-02-09"},
+        {"code": "EX15", "name": "Iles des Dragons", "release_date": "2007-05-18"},
+        {"code": "EX16", "name": "Gardiens du Pouvoir", "release_date": "2008-08-24"}
+      ]
+    },
+    {
+      "name": "Diamant et Perle",
+      "era_order": 3,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "DP01", "name": "Diamant et Perle", "release_date": "2007-11-09"},
+        {"code": "DP01.5", "name": "Tresors Mysterieurx", "release_date": "2008-02-15"},
+        {"code": "DP02", "name": "Merveilles Secretes", "release_date": "2008-05-16"},
+        {"code": "DP03", "name": "Duels au Sommet", "release_date": "2008-08-29"},
+        {"code": "DP04", "name": "Aube Majestueuse", "release_date": "2008-11-07"},
+        {"code": "DP05", "name": "Eveil des Legendes", "release_date": "2009-02-10"},
+        {"code": "DP06", "name": "Tempete", "release_date": "2009-05-15"}
+      ]
+    },
+    {
+      "name": "Platine",
+      "era_order": 4,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "PT01", "name": "Platine", "release_date": "2009-08-18"},
+        {"code": "PT02", "name": "Rivaux Emergents", "release_date": "2009-11-06"},
+        {"code": "PT03", "name": "Vainqueurs Supremes", "release_date": "2010-02-11"}
+      ]
+    },
+    {
+      "name": "HeartGold SoulSilver",
+      "era_order": 5,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "HS01", "name": "HeartGold SoulSilver", "release_date": "2010-05-05"},
+        {"code": "HS01.5", "name": "Dechainement", "release_date": "2010-08-20"},
+        {"code": "HS02", "name": "Indomptable", "release_date": "2010-11-06"},
+        {"code": "HS03", "name": "Triomphe", "release_date": "2011-01-29"},
+        {"code": "HS04", "name": "L'Appel des Legendes", "release_date": "2011-03-26"}
+      ]
+    },
+    {
+      "name": "Noir et Blanc",
+      "era_order": 6,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "NB01", "name": "Noir & Blanc", "release_date": "2011-05-25"},
+        {"code": "NB02", "name": "Pouvoirs Emergents", "release_date": "2011-09-28"},
+        {"code": "NB04", "name": "Nobles Victoires", "release_date": "2012-01-14"},
+        {"code": "NB05", "name": "Destinees Futures", "release_date": "2012-03-24"},
+        {"code": "NB06", "name": "Explorateurs Obscurs", "release_date": "2012-08-25"},
+        {"code": "NB07", "name": "Dragons Exaltes", "release_date": "2012-11-10"},
+        {"code": "NB7.5", "name": "Coffre des Dragons", "release_date": "2012-09-29"},
+        {"code": "NB08", "name": "Frontieres Franchies", "release_date": "2013-02-16"},
+        {"code": "NB09", "name": "Tempete Plasma", "release_date": "2013-05-08"},
+        {"code": "NB10", "name": "Glaciation Plasma", "release_date": "2013-08-14"},
+        {"code": "NB11", "name": "Explosion Plasma", "release_date": "2013-11-06"}
+      ]
+    },
+    {
+      "name": "XY",
+      "era_order": 7,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "XY0", "name": "Bienvenue a Kalos", "release_date": "2013-11-08"},
+        {"code": "XY01", "name": "XY", "release_date": "2014-02-22"},
+        {"code": "XY02", "name": "Etincelles", "release_date": "2014-05-27"},
+        {"code": "XY03", "name": "Poings Furieux", "release_date": "2014-08-23"},
+        {"code": "XY04", "name": "Vigueur Spectrale", "release_date": "2014-11-08"},
+        {"code": "XY05", "name": "Primo Choc", "release_date": "2015-02-02"},
+        {"code": "XY5.5", "name": "Double Danger", "release_date": "2015-08-22"},
+        {"code": "XY06", "name": "Ciel Rugissant", "release_date": "2015-05-23"},
+        {"code": "XY07", "name": "Origines Antiques", "release_date": "2015-08-22"},
+        {"code": "XY08", "name": "Impulsion Turbo", "release_date": "2015-11-07"},
+        {"code": "XY09", "name": "Rupture Turbo", "release_date": "2016-02-06"},
+        {"code": "XY9.5", "name": "Generations", "release_date": "2016-03-19"},
+        {"code": "XY10", "name": "Impact des Destins", "release_date": "2016-05-07"},
+        {"code": "XY11", "name": "Offensive Vapeur", "release_date": "2016-08-16"},
+        {"code": "XY12", "name": "Evolutions", "release_date": "2016-09-16"}
+      ]
+    },
+    {
+      "name": "Soleil et Lune",
+      "era_order": 8,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "SL01", "name": "Soleil et Lune", "release_date": "2017-02-03"},
+        {"code": "SL1.5", "name": "Gardiens Ascendants", "release_date": "2017-05-13"},
+        {"code": "SL02", "name": "Ombres Ardentes", "release_date": "2017-08-19"},
+        {"code": "SL3.5", "name": "Legendes Brillantes", "release_date": "2017-10-20"},
+        {"code": "SL03", "name": "Invasion Carmin", "release_date": "2017-11-04"},
+        {"code": "SL04", "name": "Ultra Prisme", "release_date": "2018-02-02"},
+        {"code": "SL05", "name": "Lumiere Interdite", "release_date": "2018-05-04"},
+        {"code": "SL06", "name": "Tempete Celeste", "release_date": "2018-08-03"},
+        {"code": "SL6.5", "name": "Majeste des Dragons", "release_date": "2018-09-07"},
+        {"code": "SL07", "name": "Tonnerre Perdu", "release_date": "2018-11-02"},
+        {"code": "SL08", "name": "Duo de Choc", "release_date": "2019-02-01"},
+        {"code": "SL09", "name": "Alliance Infaillible", "release_date": "2019-05-03"},
+        {"code": "SL10", "name": "Harmonie des Esprits", "release_date": "2019-08-02"},
+        {"code": "SL11", "name": "Destinees Occultes", "release_date": "2019-08-23"},
+        {"code": "SL12", "name": "Eclipse Cosmique", "release_date": "2019-11-01"}
+      ]
+    },
+    {
+      "name": "Epee et Bouclier",
+      "era_order": 9,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "EB01", "name": "Epee et Bouclier", "release_date": "2020-02-07"},
+        {"code": "EB02", "name": "Clash des Rebelles", "release_date": "2020-05-01"},
+        {"code": "EB03", "name": "Tenebres Embrasees", "release_date": "2020-08-14"},
+        {"code": "EB3.5", "name": "La Voie du Maitre", "release_date": "2020-09-25"},
+        {"code": "EB04", "name": "Voltage Eclatant", "release_date": "2020-11-13"},
+        {"code": "EB4.5", "name": "Destinees Radieuses", "release_date": "2021-02-21"},
+        {"code": "EB05", "name": "Styles de Combat", "release_date": "2021-03-19"},
+        {"code": "EB06", "name": "Regne de Glace", "release_date": "2021-06-18"},
+        {"code": "EB07", "name": "Evolution Celeste", "release_date": "2021-08-27"},
+        {"code": "EB7.5", "name": "Celebrations", "release_date": "2021-10-08"},
+        {"code": "EB08", "name": "Poing de Fusion", "release_date": "2021-11-12"},
+        {"code": "EB09", "name": "Stars Etincelantes", "release_date": "2022-02-25"},
+        {"code": "EB10", "name": "Astres Radieux", "release_date": "2022-05-27"},
+        {"code": "EB10.5", "name": "Pokemon GO", "release_date": "2022-07-01"},
+        {"code": "EB11", "name": "Origine Perdue", "release_date": "2022-09-09"},
+        {"code": "EB12", "name": "Tempete Argentee", "release_date": "2022-11-11"},
+        {"code": "EB12.5", "name": "Zenith Supreme", "release_date": "2023-02-27"}
+      ]
+    },
+    {
+      "name": "Ecarlate et Violet",
+      "era_order": 10,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "EV01", "name": "Ecarlate et Violet", "release_date": "2023-03-31"},
+        {"code": "EV02", "name": "Evolutions a Paldea", "release_date": "2023-06-09"},
+        {"code": "EV03", "name": "Flammes Obsidiennes", "release_date": "2023-08-11"},
+        {"code": "EV3.5", "name": "151", "release_date": "2023-09-22"},
+        {"code": "EV04", "name": "Faille Paradoxe", "release_date": "2023-11-03"},
+        {"code": "EV4.5", "name": "Destinees de Paldea", "release_date": "2024-01-26"},
+        {"code": "EV05", "name": "Forces Temporelles", "release_date": "2024-03-22"},
+        {"code": "EV06", "name": "Mascarade Crepusculaire", "release_date": "2024-05-24"},
+        {"code": "EV6.5", "name": "Fable Nebuleuse", "release_date": "2024-08-02"},
+        {"code": "EV07", "name": "Couronne Stellaire", "release_date": "2024-09-13"},
+        {"code": "EV08", "name": "Etincelles Deferlantes", "release_date": "2024-11-08"},
+        {"code": "EV8.5", "name": "Evolutions Prismatiques", "release_date": "2025-01-17"},
+        {"code": "EV09", "name": "Aventures Ensemble", "release_date": "2025-03-28"},
+        {"code": "EV10", "name": "Rivalites Destinees", "release_date": "2025-05-30"},
+        {"code": "EV10.5A", "name": "Foudre Noire", "release_date": "2025-07-18"},
+        {"code": "EV10.5B", "name": "Flamme Blanche", "release_date": "2025-07-18"}
+      ]
+    },
+    {
+      "name": "Mega Evolution",
+      "era_order": 11,
+      "source_url": "https://pokegourou.com/toute-lactualite-pokemon/liste-de-toutes-les-extensions-de-cartes-du-jcc-pokemon/",
+      "extensions": [
+        {"code": "ME01", "name": "Mega-Evolution", "release_date": "2025-09-26"},
+        {"code": "ME02", "name": "Flammes Fantasmagoriques", "release_date": "2025-11-14"},
+        {"code": "ME2.5", "name": "Heros Transcendants", "release_date": "2026-01-30"},
+        {"code": "ME03", "name": "Equilibre Parfait", "release_date": "2026-03-27"},
+        {"code": "ME04", "name": "Chaos Ascendant", "release_date": "2026-05-22"}
+      ]
+    }
+  ]
+}

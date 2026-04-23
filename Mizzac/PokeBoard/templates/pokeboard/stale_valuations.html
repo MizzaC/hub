@@ -1,0 +1,91 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Mettre a jour les valorisations</h1>
+    <p class="text-muted mb-0">Saisissez rapidement les nouvelles valeurs des items possedes sans valorisation recente.</p>
+  </div>
+  <div class="d-flex gap-2">
+    <a class="btn {% if not include_fresh %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'pokeboard:stale_valuations' %}">Plus de 3 mois</a>
+    <a class="btn {% if include_fresh %}btn-primary{% else %}btn-outline-primary{% endif %}" href="{% url 'pokeboard:stale_valuations' %}?scope=all">Tout afficher</a>
+  </div>
+</div>
+
+{% include 'pokeboard/_collection_tabs.html' %}
+
+<div class="card shadow-sm mb-4">
+  <div class="card-body">
+    <form method="get" class="row g-3">
+      {% if include_fresh %}<input type="hidden" name="scope" value="all">{% endif %}
+      <div class="col-md-3">{{ filter_form.series.label_tag }}{{ filter_form.series }}</div>
+      <div class="col-md-3">{{ filter_form.extension.label_tag }}{{ filter_form.extension }}</div>
+      <div class="col-md-2">{{ filter_form.language.label_tag }}{{ filter_form.language }}</div>
+      <div class="col-md-2">{{ filter_form.is_graded.label_tag }}{{ filter_form.is_graded }}</div>
+      <div class="col-md-2">{{ filter_form.grading_company.label_tag }}{{ filter_form.grading_company }}</div>
+      <div class="col-md-3">{{ filter_form.card_condition.label_tag }}{{ filter_form.card_condition }}</div>
+      <div class="col-md-3">{{ filter_form.sealed_condition.label_tag }}{{ filter_form.sealed_condition }}</div>
+      <div class="col-md-3">{{ filter_form.product_type.label_tag }}{{ filter_form.product_type }}</div>
+      <div class="col-md-3 d-flex align-items-end gap-2">
+        <button class="btn btn-primary" type="submit">Filtrer</button>
+        <a class="btn btn-outline-secondary" href="{% url 'pokeboard:stale_valuations' %}{% if include_fresh %}?scope=all{% endif %}">Reset</a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <form method="post">
+      {% csrf_token %}
+      {{ formset.management_form }}
+      <div class="table-responsive">
+        <table class="table align-middle">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Type</th>
+              <th>Serie</th>
+              <th>Extension</th>
+              <th>Langue</th>
+              <th>Etat</th>
+              <th>Derniere valo</th>
+              <th>Date derniere valo</th>
+              <th>Nouvelle valo</th>
+              <th>Date de mise a jour</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for form in formset.forms %}
+              <tr>
+                {{ form.lot_id }}
+                <td>{{ form.lot.collectible.display_name }}</td>
+                <td>{{ form.lot.collectible.get_kind_display }}</td>
+                <td>{{ form.lot.collectible.extension.series.name }}</td>
+                <td>{{ form.lot.collectible.extension.code }} - {{ form.lot.collectible.extension.name }}</td>
+                <td>{{ form.lot.language_label }}</td>
+                <td>{{ form.lot.state_label }}</td>
+                <td>{% if form.lot.current_unit_value is None %}Inconnue{% else %}{{ form.lot.current_unit_value }}{% endif %}</td>
+                <td>{% if form.lot.latest_valuation %}{{ form.lot.latest_valuation.valued_at }}{% else %}Jamais{% endif %}</td>
+                <td>{{ form.unit_value }}</td>
+                <td>{{ form.valued_at }}</td>
+              </tr>
+              {% if form.errors %}
+                <tr><td colspan="10" class="text-danger small">{{ form.errors }}</td></tr>
+              {% endif %}
+            {% empty %}
+              <tr><td colspan="10" class="text-muted">Aucun item a valoriser avec ces filtres.</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if formset.forms %}
+        <div class="mt-3 d-flex gap-2">
+          <button class="btn btn-primary" type="submit">Enregistrer les valorisations saisies</button>
+          <a class="btn btn-outline-secondary" href="{% url 'pokeboard:collection' %}?tab=cards">Retour collection</a>
+        </div>
+      {% endif %}
+    </form>
+  </div>
+</div>
+{% endblock %}

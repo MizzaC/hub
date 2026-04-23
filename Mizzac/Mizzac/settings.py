@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'DrunkBoard',
     'DashBoard',
     'ToolBoard',
+    'PokeBoard',
 ]
 
 MIDDLEWARE = [
@@ -85,8 +86,8 @@ WSGI_APPLICATION = 'Mizzac.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.postgresql'),
-        'NAME': os.getenv('DB_NAME', 'mizzac'),
+        'ENGINE': os.getenv('DB_ENGINE', 'django.db.backends.sqlite3'),
+        'NAME': os.getenv('DB_NAME', str(BASE_DIR / 'db.sqlite3')),
         'USER': os.getenv('DB_USER', 'postgres'),
         'PASSWORD': os.getenv('DB_PASSWORD', ''),
         'HOST': os.getenv('DB_HOST', '127.0.0.1'),

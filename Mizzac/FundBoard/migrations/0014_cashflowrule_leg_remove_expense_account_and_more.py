@@ -534,7 +534,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='cashflowrule',
-            constraint=models.CheckConstraint(condition=models.Q(models.Q(('freq__isnull', True), ('freq_custom__isnull', True), ('is_recurring', False)), models.Q(('freq__isnull', False), ('is_recurring', True)), _connector='OR'), name='fundboard_cashflowrule_recurring_freq_consistency'),
+            constraint=models.CheckConstraint(check=models.Q(models.Q(('freq__isnull', True), ('freq_custom__isnull', True), ('is_recurring', False)), models.Q(('freq__isnull', False), ('is_recurring', True)), _connector='OR'), name='fundboard_cashflowrule_recurring_freq_consistency'),
         ),
         migrations.AddIndex(
             model_name='leg',
@@ -550,6 +550,6 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name='leg',
-            constraint=models.CheckConstraint(condition=models.Q(models.Q(('adjustment_type__isnull', True), ('is_adjustment', False)), models.Q(('adjustment_type__isnull', False), ('is_adjustment', True)), _connector='OR'), name='fundboard_leg_adjustment_type_consistency'),
+            constraint=models.CheckConstraint(check=models.Q(models.Q(('adjustment_type__isnull', True), ('is_adjustment', False)), models.Q(('adjustment_type__isnull', False), ('is_adjustment', True)), _connector='OR'), name='fundboard_leg_adjustment_type_consistency'),
         ),
     ]

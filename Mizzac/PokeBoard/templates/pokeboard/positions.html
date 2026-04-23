@@ -1,0 +1,65 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+  <div>
+    <h1 class="h3 mb-1">Positions</h1>
+    <p class="text-muted mb-0">Stock actuellement detenu avec cout moyen et valorisation la plus recente.</p>
+  </div>
+  <a class="btn btn-primary" href="{% url 'pokeboard:add_operation' %}">Ajouter une operation</a>
+</div>
+
+<div class="card shadow-sm">
+  <div class="card-body">
+    <div class="table-responsive">
+      <table class="table align-middle">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Serie</th>
+            <th>Extension</th>
+            <th>Etat</th>
+            <th>Plateforme</th>
+            <th>Quantite</th>
+            <th>Cout moyen</th>
+            <th>Valeur actuelle</th>
+            <th>PnL latent</th>
+            <th>PnL realise</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lot in lots %}
+            <tr>
+              <td>{{ lot.collectible.display_name }}</td>
+              <td>{{ lot.collectible.extension.series.name }}</td>
+              <td>{{ lot.collectible.extension.code }} - {{ lot.collectible.extension.name }}</td>
+              <td>{{ lot.get_condition_display }}</td>
+              <td>{{ lot.platform|default:'-' }}</td>
+              <td>{{ lot.remaining_quantity }}</td>
+              <td>{{ lot.average_unit_cost|default:'-' }}</td>
+              <td>
+                {% if lot.current_total_value is None %}
+                  Inconnue
+                {% else %}
+                  {{ lot.current_total_value }}
+                {% endif %}
+              </td>
+              <td>
+                {% if lot.unrealized_pnl is None %}
+                  Inconnu
+                {% else %}
+                  {{ lot.unrealized_pnl }}
+                {% endif %}
+              </td>
+              <td>{{ lot.realized_pnl_total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="10" class="text-muted">Aucune position ouverte.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+

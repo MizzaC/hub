@@ -1,0 +1,80 @@
+{% extends 'pokeboard/base.html' %}
+
+{% block pb_content %}
+<div class="card shadow-sm">
+  <div class="card-body">
+    <h1 class="h4 mb-2">Ajouter une valorisation</h1>
+    {% if target_lot %}
+      <p class="text-muted">Variante cible : {{ target_lot.display_name }} - {{ target_lot.variant_label }}</p>
+    {% endif %}
+    <form method="post" class="row g-3" id="valuationForm">
+      {% csrf_token %}
+      <input type="hidden" name="next_url" value="{{ return_url }}">
+      {% if request.GET.lot %}<input type="hidden" name="lot" value="{{ request.GET.lot }}">{% endif %}
+
+      {% if form.collectible.is_hidden %}
+        {{ form.collectible }}{{ form.kind }}{{ form.language }}{{ form.is_graded }}{{ form.card_condition }}{{ form.grading_company }}{{ form.grading_grade }}{{ form.sealed_condition }}
+      {% else %}
+        <div class="col-md-6">{{ form.collectible.label_tag }}{{ form.collectible }}</div>
+        <div class="col-md-2">{{ form.kind.label_tag }}{{ form.kind }}</div>
+        <div class="col-md-2">{{ form.language.label_tag }}{{ form.language }}</div>
+        <div class="col-md-2">
+          <div class="form-check mt-4">{{ form.is_graded }} {{ form.is_graded.label_tag }}</div>
+        </div>
+        <div class="col-md-3" data-card-variant="true">{{ form.card_condition.label_tag }}{{ form.card_condition }}</div>
+        <div class="col-md-3" data-graded-variant="true">{{ form.grading_company.label_tag }}{{ form.grading_company }}</div>
+        <div class="col-md-3" data-graded-variant="true">{{ form.grading_grade.label_tag }}{{ form.grading_grade }}</div>
+        <div class="col-md-3" data-sealed-variant="true">{{ form.sealed_condition.label_tag }}{{ form.sealed_condition }}</div>
+      {% endif %}
+
+      <div class="col-md-3">{{ form.unit_value.label_tag }}{{ form.unit_value }}</div>
+      <div class="col-md-3">{{ form.valued_at.label_tag }}{{ form.valued_at }}</div>
+      <div class="col-md-3">{{ form.source_type.label_tag }}{{ form.source_type }}</div>
+      <div class="col-12">{{ form.notes.label_tag }}{{ form.notes }}</div>
+
+      {% for field in form %}
+        {% if field.errors %}
+          <div class="col-12 text-danger small">{{ field.label }}: {{ field.errors|join:', ' }}</div>
+        {% endif %}
+      {% endfor %}
+
+      <div class="col-12 d-flex gap-2">
+        <button class="btn btn-primary" type="submit">Enregistrer</button>
+        <a class="btn btn-outline-secondary" href="{{ return_url }}">Annuler</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block pb_extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  const form = document.getElementById('valuationForm');
+  if (!form) return;
+  const kindSelect = form.querySelector('select[name="kind"]');
+  const gradedCheckbox = form.querySelector('input[name="is_graded"]');
+
+  const toggleGroup = (selector, visible) => {
+    form.querySelectorAll(selector).forEach((block) => {
+      block.style.display = visible ? '' : 'none';
+      block.querySelectorAll('input, select, textarea').forEach((field) => {
+        field.disabled = !visible;
+      });
+    });
+  };
+
+  const toggleVariantFields = () => {
+    const kind = kindSelect ? kindSelect.value : 'CARD';
+    const graded = gradedCheckbox && gradedCheckbox.checked;
+    toggleGroup('[data-card-variant="true"]', kind === 'CARD' && !graded);
+    toggleGroup('[data-graded-variant="true"]', kind === 'CARD' && graded);
+    toggleGroup('[data-sealed-variant="true"]', kind === 'SEALED');
+  };
+
+  if (kindSelect) kindSelect.addEventListener('change', toggleVariantFields);
+  if (gradedCheckbox) gradedCheckbox.addEventListener('change', toggleVariantFields);
+  toggleVariantFields();
+});
+</script>
+{% endblock %}
