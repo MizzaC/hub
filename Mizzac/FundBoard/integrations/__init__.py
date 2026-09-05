@@ -1,0 +1,1 @@
+"""External, replaceable FundBoard integrations."""

@@ -1,0 +1,32 @@
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "Mizzac.settings_test"
+pythonpath = ["Mizzac"]
+python_files = ["test_*.py", "*_tests.py"]
+addopts = "-ra --strict-config --strict-markers"
+
+[tool.coverage.run]
+branch = true
+source = ["Mizzac"]
+omit = [
+  "*/migrations/*",
+  "*/settings_test.py",
+  "*/wsgi.py",
+  "*/asgi.py",
+]
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 55
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+exclude = ["Mizzac/*/migrations"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+"**/__init__.py" = ["F401"]
+

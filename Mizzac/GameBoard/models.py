@@ -1,5 +1,5 @@
+from django.conf import settings
 from django.db import models
-from django.contrib.auth.models import User
 from django.utils.text import slugify
 
 
@@ -32,7 +32,9 @@ class Game(models.Model):
         return self.name
 
 class UserProfile(models.Model):
-    user = models.OneToOneField(User, on_delete=models.CASCADE, null=True, blank=True)
+    user = models.OneToOneField(
+        settings.AUTH_USER_MODEL, on_delete=models.CASCADE, null=True, blank=True
+    )
     guest_name = models.CharField(max_length=100, blank=True, null=True)
 
     def __str__(self):

@@ -1,19 +1,99 @@
-{% extends 'common/base.html' %}
+{% extends "core/base.html" %}
+
+{% block title %}Accueil — Mizzac{% endblock %}
+
+{% block page_header %}
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">Vue d’ensemble</div>
+          <h1 class="page-title">Bonjour {{ user.username }}</h1>
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
 {% block content %}
-
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="jumbotron">
-                <h1 class="display-4">Bienvenue sur Dashboard</h1>
-                <p class="lead">Bonjour {{ user.username }}.</p>
-                <hr class="my-4">
-                <!-- Ajoutez ici le contenu spécifique de votre HUB -->
-            </div>
+  <div class="container-xl">
+    <section class="card mizzac-hero border-0 shadow-sm mb-4" aria-labelledby="welcome-title">
+      <div class="card-body p-4 p-md-5 position-relative">
+        <div class="row align-items-center">
+          <div class="col-lg-8">
+            <div class="text-uppercase fw-semibold small opacity-75 mb-2">Votre hub personnel</div>
+            <h2 id="welcome-title" class="display-6 fw-bold text-white mb-3">
+              Toutes vos activités, un seul point de départ.
+            </h2>
+            <p class="lead mb-0 opacity-75">
+              Accédez rapidement à vos finances, vos jeux et vos outils du quotidien.
+            </p>
+          </div>
         </div>
-    </div>
-    <!-- Autres sections ou contenu peuvent être ajoutés ici -->
-</div>
+      </div>
+    </section>
 
+    <section aria-labelledby="applications-title">
+      <div class="d-flex align-items-center justify-content-between mb-3">
+        <h2 id="applications-title" class="h3 mb-0">Applications</h2>
+        <span class="text-secondary small">4 espaces disponibles</span>
+      </div>
+
+      <div class="row row-cards">
+        <div class="col-sm-6 col-xl-3">
+          <article class="card card-sm h-100 mizzac-app-card">
+            <div class="card-body">
+              <span class="mizzac-stat-icon bg-primary-lt text-primary mb-3" aria-hidden="true">
+                {% include "core/icons/wallet.html" %}
+              </span>
+              <h3 class="card-title">FundBoard</h3>
+              <p class="text-secondary">Comptes, transactions et dépenses récurrentes.</p>
+              <a class="stretched-link" href="{% url 'fundboard:fundboard' %}">
+                Ouvrir FundBoard<span class="visually-hidden">, gestion financière</span>
+              </a>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+          <article class="card card-sm h-100 mizzac-app-card">
+            <div class="card-body">
+              <span class="mizzac-stat-icon bg-purple-lt text-purple mb-3" aria-hidden="true">
+                {% include "core/icons/device-gamepad-2.html" %}
+              </span>
+              <h3 class="card-title">GameBoard</h3>
+              <p class="text-secondary">Catalogue, règles et sauvegardes de parties.</p>
+              <a class="stretched-link" href="{% url 'gameboard:gameboard' %}">Ouvrir GameBoard</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+          <article class="card card-sm h-100 mizzac-app-card">
+            <div class="card-body">
+              <span class="mizzac-stat-icon bg-green-lt text-green mb-3" aria-hidden="true">
+                {% include "core/icons/calculator.html" %}
+              </span>
+              <h3 class="card-title">ToolBoard</h3>
+              <p class="text-secondary">Calculateurs et utilitaires accessibles rapidement.</p>
+              <a class="stretched-link" href="{% url 'toolboard:toolboard' %}">Ouvrir ToolBoard</a>
+            </div>
+          </article>
+        </div>
+
+        <div class="col-sm-6 col-xl-3">
+          <article class="card card-sm h-100 mizzac-app-card">
+            <div class="card-body">
+              <span class="mizzac-stat-icon bg-orange-lt text-orange mb-3" aria-hidden="true">
+                {% include "core/icons/apps.html" %}
+              </span>
+              <h3 class="card-title">DrunkBoard</h3>
+              <p class="text-secondary">Un espace prêt à accueillir vos prochaines activités.</p>
+              <a class="stretched-link" href="{% url 'drunkboard:drunkboard' %}">Ouvrir DrunkBoard</a>
+            </div>
+          </article>
+        </div>
+      </div>
+    </section>
+  </div>
 {% endblock %}

@@ -1,0 +1,12 @@
+[Unit]
+Description=Run Mizzac FundBoard maintenance hourly
+
+[Timer]
+OnCalendar=hourly
+Persistent=true
+RandomizedDelaySec=300
+Unit=mizzac-maintenance.service
+
+[Install]
+WantedBy=timers.target
+

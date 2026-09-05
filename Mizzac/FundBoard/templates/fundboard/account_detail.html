@@ -1,0 +1,64 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}{{ account.name }} — FundBoard{% endblock %}
+{% block fb_page_title %}{{ account.name }}{% endblock %}
+{% block fb_page_subtitle %}{{ account.get_category_display }} · {{ account.get_source_display }}{% endblock %}
+{% block fb_page_actions %}{% include "fundboard/_currency_controls.html" %}{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards mb-4">
+    <div class="col-md-4"><section class="card h-100"><div class="card-body">
+      <div class="text-secondary">Trésorerie</div>
+      <div class="h2 mt-1">{{ account.balance|floatformat:2 }} {{ account.currency }}</div>
+    </div></section></div>
+    <div class="col-md-4"><section class="card h-100"><div class="card-body">
+      <div class="text-secondary">Quote-part</div><div class="h2 mt-1">{{ account.ownership_share }} %</div>
+    </div></section></div>
+    <div class="col-md-4"><section class="card h-100"><div class="card-body">
+      <div class="text-secondary">Dernière modification</div>
+      <div class="h3 mt-1">{{ account.updated_at|date:"d/m/Y H:i" }}</div>
+    </div></section></div>
+  </div>
+  <div class="row row-cards">
+    <div class="col-xl-7">
+      <section class="card h-100">
+        <div class="card-header"><h2 class="card-title">Positions</h2></div>
+        <div class="table-responsive"><table class="table table-vcenter card-table">
+          <thead><tr><th>Instrument</th><th>Source</th><th class="text-end">Valeur</th></tr></thead>
+          <tbody>{% for position in positions %}<tr>
+            <td><a href="{% url 'fundboard:instrument_detail' position.instrument.pk %}">{{ position.instrument.name }}</a></td>
+            <td>{{ position.get_source_display }}{% if position.valued_at %}<div class="small text-secondary">{{ position.valued_at|date:"d/m/Y H:i" }}</div>{% endif %}</td>
+            <td class="text-end">{% if position.market_display %}{% include "fundboard/_currency_value.html" with display=position.market_display %}{% else %}—{% endif %}</td>
+          </tr>{% empty %}<tr><td colspan="3" class="empty-state">Aucune position.</td></tr>{% endfor %}</tbody>
+        </table></div>
+      </section>
+    </div>
+    <div class="col-xl-5">
+      <section class="card h-100">
+        <div class="card-header"><h2 class="card-title">Historique du compte</h2></div>
+        <div class="card-body">
+          {% if snapshot_values %}<div id="accountHistoryChart" role="img" aria-label="Historique de valorisation du compte"></div>
+          {% else %}<div class="empty-state">Aucun snapshot de compte.</div>{% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  {{ snapshot_labels|json_script:"account-snapshot-labels" }}
+  {{ snapshot_values|json_script:"account-snapshot-values" }}
+  <script>
+  (() => {
+    const target = document.getElementById('accountHistoryChart');
+    if (!target) return;
+    MizzacCharts.mount(target, {
+      chart: { type: 'line', height: 300 },
+      series: [{ name: 'Valeur', data: JSON.parse(document.getElementById('account-snapshot-values').textContent).map(Number) }],
+      xaxis: { categories: JSON.parse(document.getElementById('account-snapshot-labels').textContent), type: 'datetime' },
+      stroke: { curve: 'smooth', width: 2 },
+    });
+  })();
+  </script>
+{% endblock %}

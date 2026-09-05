@@ -1,119 +1,172 @@
 {% extends "fundboard/base.html" %}
-{% load static %}
+
+{% block title %}FundBoard — Mizzac{% endblock %}
+{% block fb_page_title %}Patrimoine{% endblock %}
+{% block fb_page_subtitle %}
+  Synthèse en {{ preference.reporting_currency }}, construite uniquement depuis les dernières données enregistrées.
+{% endblock %}
+{% block fb_page_actions %}
+  <div class="btn-list">
+    <a class="btn" href="{% url 'fundboard:market_settings' %}">Préférences</a>
+    <form method="post" action="{% url 'fundboard:refresh_fx' %}">
+      {% csrf_token %}<button class="btn" type="submit">Actualiser EUR/USD</button>
+    </form>
+    <form method="post" action="{% url 'fundboard:create_snapshot' %}">
+      {% csrf_token %}<button class="btn btn-primary" type="submit">Créer le snapshot du jour</button>
+    </form>
+  </div>
+{% endblock %}
 
 {% block fb_content %}
-<div class="container-fluid py-4">
-
-  {# ---------- Header ---------- #}
-  <div class="row mb-4">
-    <div class="col-12">
-      <div class="card bg-dark text-white shadow-lg rounded-4 p-4">
-        <h1 class="fw-bold mb-1">Bonjour {{ user.username }}</h1>
-        <p class="lead mb-3">Voici une vue d’ensemble de votre patrimoine.</p>
-        <h3 class="m-0">
-          Solde global&nbsp;:
-          <span class="text-warning">{{ total_balance|default:"0"|floatformat:2 }} €</span>
-        </h3>
-      </div>
+  {% if valuation.issues %}
+    <div class="alert alert-warning" role="alert">
+      <h2 class="h4">Valorisation partielle</h2>
+      <p class="mb-2">Les éléments sans cours ou taux ne sont pas additionnés.</p>
+      <ul class="mb-0">{% for issue in valuation.issues %}<li>{{ issue }}</li>{% endfor %}</ul>
     </div>
-  </div>
+  {% endif %}
 
-  {# ---------- Quick-stats cards ---------- #}
-  <div class="row gy-3">
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-primary rounded-4 h-100">
-        <div class="card-body d-flex flex-column">
-          <small class="text-uppercase text-muted mb-1">Comptes bancaires</small>
-          <h2 class="fw-bold mb-auto">{{ accounts_count }}</h2>
-          <a href="{% url 'fundboard:accounts' %}" class="btn btn-sm btn-primary w-100">Voir détails</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-info rounded-4 h-100">
-        <div class="card-body d-flex flex-column">
-          <small class="text-uppercase text-muted mb-1">Comptes d’investissement</small>
-          <h2 class="fw-bold mb-auto">{{ investment_accounts_count }}</h2>
-          <a href="{% url 'fundboard:portfolio' %}" class="btn btn-sm btn-info w-100">Voir détails</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-success rounded-4 h-100">
-        <div class="card-body d-flex flex-column">
-          <small class="text-uppercase text-muted mb-1">Transactions</small>
-          <h2 class="fw-bold mb-auto">{{ transactions_count }}</h2>
-          <a href="{% url 'fundboard:transactions' %}" class="btn btn-sm btn-success w-100">Historique</a>
-        </div>
-      </div>
-    </div>
-
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-warning rounded-4 h-100">
-        <div class="card-body d-flex flex-column">
-          <small class="text-uppercase text-muted mb-1">Abonnements actifs</small>
-          <h2 class="fw-bold mb-auto">{{ subscriptions_count }}</h2>
-          <a href="{% url 'fundboard:subscriptions' %}" class="btn btn-sm btn-warning w-100">Gérer</a>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {# ---------- Charts placeholders ---------- #}
-  <div class="row mt-5">
-    <div class="col-lg-8 mb-4">
-      <div class="card shadow-sm rounded-4">
-        <div class="card-header bg-white border-0"><h5>Évolution du patrimoine</h5></div>
-        <div class="card-body"><canvas id="balanceChart" height="120"></canvas></div>
-      </div>
-    </div>
-    <div class="col-lg-4 mb-4">
-      <div class="card shadow-sm rounded-4 h-100">
-        <div class="card-header bg-white border-0"><h5>Répartition par catégorie</h5></div>
-        <div class="card-body d-flex align-items-center">
-          <canvas id="allocationChart" height="220"></canvas>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {# ---------- Recent transactions ---------- #}
-  <div class="row">
-    <div class="col-12">
-      <div class="card shadow-sm rounded-4">
-        <div class="card-header bg-white border-0 d-flex justify-content-between align-items-center">
-          <h5 class="m-0">Dernières transactions</h5>
-          <a href="{% url 'fundboard:transactions' %}" class="btn btn-sm btn-outline-secondary">Tout voir</a>
-        </div>
-        <div class="card-body p-0">
-          <div class="table-responsive">
-            <table class="table table-hover mb-0">
-              <thead class="table-light">
-                <tr><th>Date</th><th>Type</th><th>Montant</th><th>Compte</th></tr>
-              </thead>
-              <tbody>
-              {% for tx in recent_transactions %}
-                <tr>
-                  <td>{{ tx.date_trx|date:"d/m/Y H:i" }}</td>
-                  <td>{{ tx.get_trx_type_display }}</td>
-                  <td>{{ tx.amount|floatformat:2 }} €</td>
-                  <td>{{ tx.account.name }}</td>
-                </tr>
-              {% empty %}
-                <tr><td colspan="4" class="text-center py-4 text-muted">Aucune transaction récente.</td></tr>
-              {% endfor %}
-              </tbody>
-            </table>
+  <section class="card mizzac-hero border-0 shadow-sm mb-4" aria-labelledby="net-worth-title">
+    <div class="card-body p-4 position-relative">
+      <div class="row align-items-center g-3">
+        <div class="col">
+          <div class="text-uppercase fw-semibold small opacity-75 mb-1">Patrimoine net{% if not valuation.complete %} partiel{% endif %}</div>
+          <h2 id="net-worth-title" class="display-6 text-white mb-2">
+            {{ valuation.net_worth|floatformat:2 }} {{ valuation.currency }}
+          </h2>
+          <div class="text-white opacity-75">
+            {% if valuation.valued_at %}Dernière donnée : {{ valuation.valued_at|date:"d/m/Y H:i" }}{% else %}Aucune donnée valorisée{% endif %}
           </div>
         </div>
+        <div class="col-auto text-end">
+          {% if fx_rate %}
+            <div class="badge bg-white text-primary">1 EUR = {{ fx_rate.rate|floatformat:4 }} USD</div>
+            <div class="small text-white opacity-75 mt-1">Frankfurter/ECB · {{ fx_rate.rate_date|date:"d/m/Y" }} · {{ fx_rate.quality }}</div>
+          {% else %}
+            <div class="badge bg-yellow-lt text-yellow">Taux EUR/USD non chargé</div>
+          {% endif %}
+        </div>
       </div>
+    </div>
+  </section>
+
+  <section class="row row-cards mb-4" aria-label="Indicateurs patrimoniaux">
+    <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body">
+      <div class="text-secondary">Actifs</div><div class="h2 mt-1 mb-0">{{ valuation.assets|floatformat:2 }} {{ valuation.currency }}</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body">
+      <div class="text-secondary">Passifs</div><div class="h2 mt-1 mb-0">{{ valuation.liabilities|floatformat:2 }} {{ valuation.currency }}</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body">
+      <div class="text-secondary">Trésorerie</div><div class="h2 mt-1 mb-0">{{ valuation.cash|floatformat:2 }} {{ valuation.currency }}</div>
+    </div></div></div>
+    <div class="col-sm-6 col-xl-3"><div class="card h-100"><div class="card-body">
+      <div class="text-secondary">Investissements</div><div class="h2 mt-1 mb-0">{{ valuation.investments|floatformat:2 }} {{ valuation.currency }}</div>
+    </div></div></div>
+  </section>
+
+  <div class="row row-cards mb-4">
+    <div class="col-xl-5">
+      <section class="card h-100" aria-labelledby="allocation-title">
+        <div class="card-header"><h2 id="allocation-title" class="card-title">Allocation des actifs</h2></div>
+        <div class="card-body">
+          {% if allocation_values %}<div id="allocationChart" role="img" aria-label="Allocation du patrimoine par classe d’actif"></div>
+          {% else %}<div class="empty-state">Aucun actif valorisé.</div>{% endif %}
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-7">
+      <section class="card h-100" aria-labelledby="history-title">
+        <div class="card-header"><h2 id="history-title" class="card-title">Historique du patrimoine net</h2></div>
+        <div class="card-body">
+          {% if history_values %}<div id="netWorthChart" role="img" aria-label="Historique du patrimoine net"></div>
+          {% else %}<div class="empty-state">Créez un premier snapshot pour démarrer l’historique.</div>{% endif %}
+        </div>
+      </section>
     </div>
   </div>
 
-</div>
+  <div class="row row-cards mb-4">
+    <div class="col-xl-5">
+      <section class="card h-100">
+        <div class="card-header">
+          <h2 class="card-title">Performance</h2>
+          <div class="card-actions">
+            <form method="post" action="{% url 'fundboard:refresh_benchmark' %}">
+              {% csrf_token %}<button class="btn btn-sm" type="submit">Actualiser {{ preference.benchmark_symbol }}</button>
+            </form>
+          </div>
+        </div>
+        <div class="card-body">
+          {% if performance.portfolio %}
+            <div class="row g-3">
+              <div class="col-6"><div class="text-secondary">Portefeuille</div><div class="h2">{{ performance.portfolio_percent|floatformat:2 }} %</div></div>
+              <div class="col-6"><div class="text-secondary">{{ preference.benchmark_symbol }}</div><div class="h2">{% if performance.benchmark_percent is not None %}{{ performance.benchmark_percent|floatformat:2 }} %{% else %}—{% endif %}</div></div>
+            </div>
+            <div class="small text-secondary">Modified Dietz, du {{ performance.start_date|date:"d/m/Y" }} au {{ performance.end_date|date:"d/m/Y" }}.</div>
+          {% else %}
+            <div class="empty-state px-0">{{ performance.issue }}</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-7">
+      <section class="card h-100">
+        <div class="card-header"><h2 class="card-title">Qualité des données</h2></div>
+        <div class="card-body">
+          <div class="row g-3">
+            <div class="col-sm-4"><div class="text-secondary">Connexions à vérifier</div><div class="h2">{{ connections_requiring_attention }}</div></div>
+            <div class="col-sm-4"><div class="text-secondary">Cours à vérifier</div><div class="h2">{{ market_attention_count }}</div></div>
+            <div class="col-sm-4"><div class="text-secondary">Éléments incomplets</div><div class="h2">{{ valuation.issues|length }}</div></div>
+          </div>
+          {% for status in market_statuses %}
+            <div class="d-flex justify-content-between border-top pt-2 mt-2">
+              <a href="{% url 'fundboard:instrument_detail' status.instrument.pk %}">{{ status.instrument.name }}</a>
+              <span class="badge {% if status.effective_state == 'FRESH' %}bg-green-lt{% elif status.effective_state == 'STALE' %}bg-yellow-lt{% else %}bg-red-lt{% endif %}">{{ status.effective_state }}</span>
+            </div>
+          {% empty %}<p class="text-secondary mb-0 mt-3">Aucune actualisation de marché lancée.</p>{% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="{% static 'fundboard/js/dashboard_charts.js' %}"></script>
-{% endblock fb_content %}
+  <section class="card" aria-labelledby="recent-transactions-title">
+    <div class="card-header"><h2 id="recent-transactions-title" class="card-title">Dernières transactions</h2><div class="card-actions"><a href="{% url 'fundboard:transactions' %}">Tout voir</a></div></div>
+    <div class="table-responsive"><table class="table table-vcenter card-table">
+      <thead><tr><th>Date</th><th>Type</th><th>Compte</th><th class="text-end">Montant</th></tr></thead>
+      <tbody>{% for tx in recent_transactions %}<tr>
+        <td class="text-secondary">{{ tx.executed_at|date:"d/m/Y H:i" }}</td><td>{{ tx.get_transaction_type_display }}</td><td>{{ tx.account.name }}</td>
+        <td class="text-end fundboard-amount">{{ tx.net_amount|floatformat:2 }} {{ tx.currency }}</td>
+      </tr>{% empty %}<tr><td colspan="4" class="empty-state">Aucune transaction récente.</td></tr>{% endfor %}</tbody>
+    </table></div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  {{ allocation_labels|json_script:"allocation-labels" }}
+  {{ allocation_values|json_script:"allocation-values" }}
+  {{ history_labels|json_script:"net-worth-labels" }}
+  {{ history_values|json_script:"net-worth-values" }}
+  <script>
+  (() => {
+    const allocation = document.getElementById('allocationChart');
+    if (allocation) MizzacCharts.mount(allocation, {
+      chart: { type: 'donut', height: 310 },
+      labels: JSON.parse(document.getElementById('allocation-labels').textContent),
+      series: JSON.parse(document.getElementById('allocation-values').textContent).map(Number),
+      stroke: { width: 0 },
+      tooltip: { y: { formatter: (value) => MizzacCharts.formatNumber(value, { style: 'currency', currency: '{{ valuation.currency }}' }) } },
+    });
+    const history = document.getElementById('netWorthChart');
+    if (history) MizzacCharts.mount(history, {
+      chart: { type: 'area', height: 310, zoom: { enabled: false } },
+      series: [{ name: 'Patrimoine net', data: JSON.parse(document.getElementById('net-worth-values').textContent).map(Number) }],
+      xaxis: { categories: JSON.parse(document.getElementById('net-worth-labels').textContent), type: 'datetime' },
+      stroke: { curve: 'smooth', width: 2 },
+      fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
+      tooltip: { y: { formatter: (value) => MizzacCharts.formatNumber(value, { style: 'currency', currency: '{{ valuation.currency }}' }) } },
+    });
+  })();
+  </script>
+{% endblock %}

@@ -1,16 +1,18 @@
 # ToolBoard/views.py
 
-from django.urls import reverse_lazy
-from django.views.generic import TemplateView, DetailView, ListView
-from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Tool, Category
-from django.db.models import Q
-from django.shortcuts import render
+import base64
 import ipaddress
-import requests
 import random
 import string
-import base64
+
+from django.contrib.auth.mixins import LoginRequiredMixin
+from django.db.models import Q
+from django.urls import reverse_lazy
+from django.views.generic import DetailView, ListView, TemplateView
+
+from .models import Category, Tool
+from .services.currency import CurrencyConversionError, convert_currency
+
 
 class ToolBoardView(LoginRequiredMixin, ListView):
     template_name = 'pages/toolboard.html'
@@ -86,13 +88,8 @@ class CurrencyConverterView(LoginRequiredMixin, TemplateView):
         result = None
         if amount and from_currency and to_currency:
             try:
-                amount = float(amount)
-                # Utilisez une API tierce pour obtenir les taux de change
-                response = requests.get(f'https://api.exchangerate-api.com/v4/latest/{from_currency}')
-                data = response.json()
-                rate = data['rates'][to_currency]
-                result = amount * rate
-            except Exception as e:
+                result = convert_currency(amount, from_currency, to_currency)
+            except CurrencyConversionError:
                 result = {'error': 'Erreur lors de la conversion'}
         return self.render_to_response({'result': result, 'amount': amount, 'from_currency': from_currency, 'to_currency': to_currency})
 

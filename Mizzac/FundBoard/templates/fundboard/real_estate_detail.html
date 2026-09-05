@@ -1,0 +1,37 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}{{ property.name }} — FundBoard{% endblock %}
+{% block fb_page_title %}{{ property.name }}{% endblock %}
+{% block fb_page_subtitle %}{{ property.get_property_type_display }} · valorisation au {{ property.valuation_date|date:"d/m/Y" }}{% endblock %}
+{% block fb_page_actions %}
+  <div class="btn-list">
+    <button class="btn btn-primary" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_real_estate_valuation' property.pk %}">Ajouter une valorisation</button>
+    <button class="btn" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_real_estate_modal' property.pk %}">Modifier</button>
+  </div>
+{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards mb-4">
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Valeur détenue</div><div class="h2">{{ metrics.gross_value|floatformat:2 }} {{ property.currency }}</div><div class="small text-secondary">Quote-part {{ property.ownership_share|floatformat:2 }} %</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Valeur nette</div><div class="h2">{% if metrics.net_value is not None %}{{ metrics.net_value|floatformat:2 }} {{ property.currency }}{% else %}—{% endif %}</div><div class="small text-secondary">Dette {% if metrics.remaining_debt is not None %}{{ metrics.remaining_debt|floatformat:2 }}{% else %}dans une autre devise{% endif %}</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Rendement brut</div><div class="h2">{% if metrics.gross_yield_percent is not None %}{{ metrics.gross_yield_percent|floatformat:2 }} %{% else %}—{% endif %}</div><div class="small text-secondary">Sur coût total d’acquisition</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Rendement net indicatif</div><div class="h2">{% if metrics.net_yield_percent is not None %}{{ metrics.net_yield_percent|floatformat:2 }} %{% else %}—{% endif %}</div><div class="small text-secondary">Après vacance et coûts saisis</div></div></section></div>
+  </div>
+  <div class="row row-cards">
+    <div class="col-xl-7"><section class="card h-100"><div class="card-header"><h2 class="card-title">Historique des valorisations</h2></div><div class="card-body">{% if chart_values %}<div id="realEstateHistoryChart" role="img" aria-label="Historique de valorisation immobilière"></div>{% else %}<div class="empty-state">Aucune valorisation.</div>{% endif %}</div></section></div>
+    <div class="col-xl-5"><section class="card h-100"><div class="card-header"><h2 class="card-title">Détail annuel</h2></div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-7 text-secondary fw-normal">Coût d’acquisition détenu</dt><dd class="col-5 text-end">{{ metrics.acquisition_cost|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Plus-value latente</dt><dd class="col-5 text-end">{{ metrics.unrealized_gain|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Loyers bruts</dt><dd class="col-5 text-end">{{ metrics.annual_gross_rent|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Vacance estimée</dt><dd class="col-5 text-end">− {{ metrics.annual_vacancy_loss|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Charges, taxe et assurance</dt><dd class="col-5 text-end">− {{ metrics.annual_costs|floatformat:2 }}</dd>
+      <dt class="col-7">Revenu net indicatif</dt><dd class="col-5 text-end fw-bold">{{ metrics.annual_net_income|floatformat:2 }} {{ property.currency }}</dd>
+    </dl>{% if property.address %}<hr><div class="text-secondary small">Adresse privée</div><div>{{ property.address|linebreaksbr }}</div>{% endif %}{% if property.linked_loan %}<hr><a href="{% url 'fundboard:loan_detail' property.linked_loan.pk %}">Voir le prêt lié : {{ property.linked_loan.name }}</a>{% endif %}</div></section></div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+  {{ chart_labels|json_script:"real-estate-history-labels" }}
+  {{ chart_values|json_script:"real-estate-history-values" }}
+  <script>(() => { const target = document.getElementById('realEstateHistoryChart'); if (!target) return; MizzacCharts.mount(target, { chart: { type: 'area', height: 320 }, series: [{ name: 'Valeur', data: JSON.parse(document.getElementById('real-estate-history-values').textContent).map(Number) }], xaxis: { categories: JSON.parse(document.getElementById('real-estate-history-labels').textContent), type: 'datetime' }, stroke: { curve: 'smooth', width: 2 } }); })();</script>
+{% endblock %}

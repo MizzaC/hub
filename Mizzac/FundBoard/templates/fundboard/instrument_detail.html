@@ -1,0 +1,111 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}{{ instrument.name }} — FundBoard{% endblock %}
+{% block fb_page_title %}{{ instrument.name }}{% endblock %}
+{% block fb_page_subtitle %}
+  {{ instrument.get_instrument_type_display }}{% if instrument.ticker %} · {{ instrument.ticker }}{% endif %}
+{% endblock %}
+{% block fb_page_actions %}
+  <div class="btn-list">
+    {% include "fundboard/_currency_controls.html" %}
+    <form method="post" action="{% url 'fundboard:refresh_instrument' instrument.pk %}">
+      {% csrf_token %}
+      <button class="btn btn-primary" type="submit">Actualiser le cours</button>
+    </form>
+  </div>
+{% endblock %}
+
+{% block fb_content %}
+  {% if market_status and market_status.state == "ERROR" %}
+    <div class="alert alert-warning" role="alert">
+      La dernière actualisation a échoué. Le dernier cours connu reste affiché.
+    </div>
+  {% endif %}
+  <div class="row row-cards mb-4">
+    <div class="col-md-4">
+      <section class="card h-100"><div class="card-body">
+        <div class="text-secondary">Dernier cours connu</div>
+        {% if latest_price %}
+          <div class="h2 mt-1">{{ latest_price.close_price|floatformat:4 }} {{ latest_price.currency }}</div>
+          <div class="small text-secondary">
+            Observé le {{ latest_price.observed_at|date:"d/m/Y H:i" }}
+            {% if latest_price.market_timezone %}({{ latest_price.market_timezone }}){% endif %}
+          </div>
+          <div class="small text-secondary">État du marché : {{ latest_price.get_market_state_display }}</div>
+        {% else %}<div class="empty-state px-0">Aucun cours enregistré.</div>{% endif %}
+      </div></section>
+    </div>
+    <div class="col-md-4">
+      <section class="card h-100"><div class="card-body">
+        <div class="text-secondary">Source et fraîcheur</div>
+        <div class="h3 mt-1">{% if latest_price %}{{ latest_price.source }}{% else %}{{ provider_name }}{% endif %}</div>
+        <span class="badge {% if effective_state == 'FRESH' %}bg-green-lt{% elif effective_state == 'STALE' %}bg-yellow-lt{% else %}bg-red-lt{% endif %}">
+          {% if effective_state == "FRESH" %}À jour{% elif effective_state == "STALE" %}Périmé{% else %}Indisponible{% endif %}
+        </span>
+        {% if latest_price.is_delayed %}<span class="badge bg-secondary-lt">Différé / non garanti</span>{% endif %}
+        {% if latest_price.source == "coingecko" %}
+          <div class="small text-secondary mt-2">
+            Données fournies par
+            <a href="https://www.coingecko.com/" rel="noopener noreferrer">CoinGecko</a>.
+          </div>
+        {% endif %}
+      </div></section>
+    </div>
+    <div class="col-md-4">
+      <section class="card h-100"><div class="card-body">
+        <div class="text-secondary">Taux rapide</div>
+        {% if fx_rate %}
+          <div class="h3 mt-1">1 EUR = {{ fx_rate.rate|floatformat:4 }} USD</div>
+          <div class="small text-secondary">Frankfurter/ECB · {{ fx_rate.rate_date|date:"d/m/Y" }}</div>
+        {% else %}<div class="text-warning mt-2">Taux EUR/USD non chargé.</div>{% endif %}
+      </div></section>
+    </div>
+  </div>
+
+  <div class="row row-cards">
+    <div class="col-xl-8">
+      <section class="card h-100" aria-labelledby="price-history-title">
+        <div class="card-header"><h2 id="price-history-title" class="card-title">Historique</h2></div>
+        <div class="card-body">
+          {% if price_chart_values %}<div id="instrumentPriceChart" role="img" aria-label="Historique du cours"></div>
+          {% else %}<div class="empty-state">Actualisez l’instrument pour charger son historique.</div>{% endif %}
+        </div>
+      </section>
+    </div>
+    <div class="col-xl-4">
+      <section class="card h-100">
+        <div class="card-header"><h2 class="card-title">Positions détenues</h2></div>
+        <div class="list-group list-group-flush">
+          {% for position in positions %}
+            <div class="list-group-item">
+              <div class="fw-semibold">{{ position.account.name }}</div>
+              <div class="text-secondary">{{ position.quantity }} unité(s)</div>
+              {% if position.market_display %}
+                <div class="mt-1">{% include "fundboard/_currency_value.html" with display=position.market_display %}</div>
+              {% else %}<div class="text-warning">Non valorisée</div>{% endif %}
+            </div>
+          {% empty %}<div class="empty-state">Aucune position.</div>{% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  {{ price_chart_labels|json_script:"instrument-price-labels" }}
+  {{ price_chart_values|json_script:"instrument-price-values" }}
+  <script>
+  (() => {
+    const target = document.getElementById('instrumentPriceChart');
+    if (!target) return;
+    MizzacCharts.mount(target, {
+      chart: { type: 'area', height: 320, zoom: { enabled: false } },
+      series: [{ name: 'Cours', data: JSON.parse(document.getElementById('instrument-price-values').textContent).map(Number) }],
+      xaxis: { categories: JSON.parse(document.getElementById('instrument-price-labels').textContent), type: 'datetime' },
+      stroke: { curve: 'smooth', width: 2 },
+      fill: { type: 'gradient', gradient: { opacityFrom: 0.35, opacityTo: 0.05 } },
+    });
+  })();
+  </script>
+{% endblock %}

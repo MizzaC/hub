@@ -1,0 +1,32 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}{{ scenario.name }} — Intérêts composés{% endblock %}
+{% block fb_page_title %}{{ scenario.name }}{% endblock %}
+{% block fb_page_subtitle %}Projection d'intérêts composés · aucun effet sur les données réelles{% endblock %}
+{% block fb_page_actions %}<div class="btn-list"><a class="btn" href="{% url 'fundboard:compound_simulation_export' scenario.pk 'json' %}">JSON</a><a class="btn" href="{% url 'fundboard:compound_simulation_export' scenario.pk 'xlsx' %}">Excel</a><button class="btn" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_compound_simulation' scenario.pk %}">Modifier</button><button class="btn btn-outline-warning" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:archive_compound_simulation' scenario.pk %}">Archiver</button></div>{% endblock %}
+
+{% block fb_content %}
+  <div class="alert alert-info">Projection non garantie · rendement nominal constant, frais mensuels, inflation et fiscalité simplifiée selon les hypothèses saisies.</div>
+  <div class="row row-cards mb-4">
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Valeur nominale nette</div><div class="h2">{{ result.final_nominal_value|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">Après fiscalité simulée</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Valeur réelle</div><div class="h2">{{ result.final_real_value|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">Corrigée de l'inflation</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Total versé</div><div class="h2">{{ result.total_contributed|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">Capital et versements</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Gains nets</div><div class="h2">{{ result.net_gains|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">Après frais et fiscalité</div></div></section></div>
+  </div>
+  <div class="row row-cards mb-4">
+    <div class="col-xl-8"><section class="card h-100"><div class="card-header"><h2 class="card-title">Valeur nominale et réelle</h2></div><div class="card-body"><div id="compoundSimulationChart" role="img" aria-label="Projection des intérêts composés"></div></div></section></div>
+    <div class="col-xl-4"><section class="card h-100"><div class="card-header"><h2 class="card-title">Hypothèses et coûts</h2></div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-7 text-secondary fw-normal">Rendement nominal</dt><dd class="col-5 text-end">{{ scenario.annual_return|floatformat:2 }} %</dd>
+      <dt class="col-7 text-secondary fw-normal">Frais annuels</dt><dd class="col-5 text-end">{{ scenario.annual_fees|floatformat:2 }} %</dd>
+      <dt class="col-7 text-secondary fw-normal">Inflation</dt><dd class="col-5 text-end">{{ scenario.annual_inflation|floatformat:2 }} %</dd>
+      <dt class="col-7 text-secondary fw-normal">Frais estimés</dt><dd class="col-5 text-end">{{ result.estimated_fees|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Impôt estimé</dt><dd class="col-5 text-end">{{ result.estimated_tax|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Fiscalité</dt><dd class="col-5 text-end">{{ scenario.get_tax_mode_display }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Versement</dt><dd class="col-5 text-end">{{ scenario.periodic_contribution|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Calendrier</dt><dd class="col-5 text-end">{{ scenario.get_contribution_frequency_display }} · {{ scenario.get_contribution_timing_display }}</dd>
+    </dl></div></section></div>
+  </div>
+  <section class="card"><div class="card-header"><h2 class="card-title">Série temporelle mensuelle</h2></div><div class="table-responsive"><table class="table table-sm table-vcenter card-table"><thead><tr><th>Mois</th><th>Date</th><th class="text-end">Versement</th><th class="text-end">Rendement</th><th class="text-end">Frais</th><th class="text-end">Fiscalité</th><th class="text-end">Valeur nominale</th><th class="text-end">Valeur réelle</th></tr></thead><tbody>{% for row in result.timeline %}<tr><td>{{ row.month }}</td><td>{{ row.period_date|date:"d/m/Y" }}</td><td class="text-end">{{ row.contribution|floatformat:2 }}</td><td class="text-end">{{ row.gross_return|floatformat:2 }}</td><td class="text-end">{{ row.fees|floatformat:2 }}</td><td class="text-end">{{ row.tax|floatformat:2 }}</td><td class="text-end fw-semibold">{{ row.closing_value|floatformat:2 }}</td><td class="text-end">{{ row.real_value|floatformat:2 }}</td></tr>{% endfor %}</tbody></table></div></section>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}{{ chart_labels|json_script:"compound-labels" }}{{ chart_nominal|json_script:"compound-nominal" }}{{ chart_real|json_script:"compound-real" }}<script>(() => { const target = document.getElementById('compoundSimulationChart'); if (!target) return; MizzacCharts.mount(target, { chart: { type: 'line', height: 340 }, series: [{ name: 'Valeur nominale', data: JSON.parse(document.getElementById('compound-nominal').textContent).map(Number) }, { name: 'Valeur réelle', data: JSON.parse(document.getElementById('compound-real').textContent).map(Number) }], xaxis: { categories: JSON.parse(document.getElementById('compound-labels').textContent), type: 'datetime' }, yaxis: { labels: { formatter: value => MizzacCharts.formatNumber(value, { maximumFractionDigits: 0 }) } }, stroke: { curve: 'smooth', width: 2 } }); })();</script>{% endblock %}

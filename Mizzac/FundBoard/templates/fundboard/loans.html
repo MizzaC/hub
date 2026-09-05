@@ -1,0 +1,29 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Prêts — FundBoard{% endblock %}
+{% block fb_page_title %}Prêts et passifs{% endblock %}
+{% block fb_page_subtitle %}Capital initial, restant dû, taux, assurance et échéances.{% endblock %}
+{% block fb_page_actions %}<button class="btn btn-primary" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_loan_modal' %}">Ajouter un prêt</button>{% endblock %}
+
+{% block fb_content %}
+  <section class="card">
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table">
+        <thead><tr><th>Prêt</th><th>Type</th><th>Capital initial</th><th>Restant dû</th><th>Taux</th><th>Échéance</th><th></th></tr></thead>
+        <tbody>
+          {% for loan in loans %}
+            <tr class="{% if loan.archived %}opacity-75{% endif %}">
+              <td><a href="{% url 'fundboard:loan_detail' loan.pk %}">{{ loan.name }}</a>{% if loan.archived %}<span class="badge bg-secondary-lt ms-2">Archivé</span>{% endif %}<div class="small text-secondary">Solde au {{ loan.balance_date|date:"d/m/Y" }}</div></td>
+              <td>{{ loan.get_loan_type_display }}</td>
+              <td class="fundboard-amount">{{ loan.original_principal|floatformat:2 }} {{ loan.currency }}</td>
+              <td class="fundboard-amount fw-bold">{{ loan.outstanding_principal|floatformat:2 }} {{ loan.currency }}</td>
+              <td>{{ loan.nominal_rate|floatformat:3 }} %</td>
+              <td>{% if loan.payment_amount %}{{ loan.payment_amount|floatformat:2 }} {{ loan.currency }}{% else %}—{% endif %}</td>
+              <td class="text-end"><a class="btn btn-sm btn-primary" href="{% url 'fundboard:loan_detail' loan.pk %}">Détails</a> <button class="btn btn-sm" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_loan_modal' loan.pk %}">Modifier</button>{% if not loan.archived %}<button class="btn btn-sm btn-outline-warning" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:archive_loan_modal' loan.pk %}">Archiver</button>{% endif %}</td>
+            </tr>
+          {% empty %}<tr><td colspan="7" class="empty-state">Aucun prêt.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

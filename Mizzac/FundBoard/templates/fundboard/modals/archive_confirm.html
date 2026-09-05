@@ -1,0 +1,18 @@
+<form method="post" action="{{ request.path }}">
+  {% csrf_token %}
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h2 class="modal-title h3">{{ modal_title }}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        <p class="mb-0">Confirmer cette action pour « {{ object }} » ? Les données resteront conservées.</p>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-warning">Confirmer</button>
+      </div>
+    </div>
+  </div>
+</form>

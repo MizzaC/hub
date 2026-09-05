@@ -1,0 +1,15 @@
+[Unit]
+Description=Verified Mizzac database backup
+
+[Service]
+Type=oneshot
+User=mizzac
+Group=mizzac
+WorkingDirectory=/opt/mizzac/Mizzac
+EnvironmentFile=/etc/mizzac/mizzac.env
+ExecStart=/opt/mizzac/.venv/bin/python manage.py backup_fundboard --destination /var/backups/mizzac
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/backups/mizzac /var/lib/mizzac

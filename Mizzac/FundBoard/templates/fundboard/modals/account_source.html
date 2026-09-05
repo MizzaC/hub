@@ -2,28 +2,27 @@
 <div class="modal-dialog modal-dialog-centered">
   <div class="modal-content border-0">
     <div class="modal-header">
-      <h5 class="modal-title">Ajouter un compte</h5>
-      <button class="btn-close" data-bs-dismiss="modal"></button>
+      <h2 class="modal-title h3">Ajouter un compte</h2>
+      <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Fermer"></button>
     </div>
 
     <div class="modal-body p-0">
       <div class="list-group">
 
-        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" disabled>
-          <span><img src="{% static 'fundboard/img/binance.svg' %}" width="24" class="me-2"> Binance</span>
-          <span class="badge bg-secondary">Bientôt</span>
-        </button>
-
-        <button class="list-group-item list-group-item-action d-flex justify-content-between align-items-center" disabled>
-          <span><img src="{% static 'fundboard/img/tr.svg' %}" width="24" class="me-2"> Trade Republic</span>
-          <span class="badge bg-secondary">Bientôt</span>
-        </button>
+        <a class="list-group-item list-group-item-action d-flex justify-content-between align-items-center"
+           href="{% url 'fundboard:connections' %}">
+          <span>Banque, Binance, Ledger ou Trade Republic</span>
+          <span class="badge bg-primary-lt">Lecture seule</span>
+        </a>
 
         <button class="list-group-item list-group-item-action d-flex align-items-center"
                 data-bs-toggle="dynamic-modal"
                 data-href="{% url 'fundboard:add_account_modal' %}"
                 data-bs-dismiss="modal">
-          <i class="bi bi-pencil-square me-2"></i> Ajout manuel
+          <span aria-hidden="true" class="mizzac-nav-icon me-2">
+            {% include "core/icons/wallet.html" %}
+          </span>
+          Ajout manuel
         </button>
 
       </div>

@@ -1,0 +1,17 @@
+[Unit]
+Description=Mizzac FundBoard maintenance
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=oneshot
+User=mizzac
+Group=mizzac
+WorkingDirectory=/opt/mizzac/Mizzac
+EnvironmentFile=/etc/mizzac/mizzac.env
+ExecStart=/opt/mizzac/.venv/bin/python manage.py run_fundboard_maintenance --with-network --fail-on-partial
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/mizzac /opt/mizzac/Mizzac/media

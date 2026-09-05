@@ -1,0 +1,22 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Portefeuilles virtuels — FundBoard{% endblock %}
+{% block fb_page_title %}Portefeuilles virtuels{% endblock %}
+{% block fb_page_subtitle %}Paper trading totalement séparé de vos comptes et ordres réels.{% endblock %}
+{% block fb_page_actions %}<button class="btn btn-primary" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_virtual_portfolio' %}">Créer un portefeuille virtuel</button>{% endblock %}
+
+{% block fb_content %}
+  <div class="alert alert-warning" role="status"><strong>Simulation uniquement.</strong> Aucun ordre de cette section ne peut être transmis à une banque, un courtier ou une plateforme crypto.</div>
+  <div class="row row-cards">
+    {% for portfolio in portfolios %}
+      <div class="col-md-6"><article class="card h-100">
+        <div class="card-body">
+          <div class="d-flex justify-content-between gap-3"><div><span class="badge bg-orange-lt mb-2">PORTEFEUILLE VIRTUEL</span><h2 class="h3"><a href="{% url 'fundboard:virtual_portfolio_detail' portfolio.pk %}">{{ portfolio.name }}</a></h2></div><div class="text-end"><div class="h2 mb-0">{{ portfolio.valuation.total_value|floatformat:2 }}</div><div class="text-secondary">{{ portfolio.base_currency }}</div></div></div>
+          <dl class="row mb-0 mt-3"><dt class="col-7 text-secondary fw-normal">Cash virtuel</dt><dd class="col-5 text-end">{{ portfolio.valuation.cash_value|floatformat:2 }}</dd><dt class="col-7 text-secondary fw-normal">Positions</dt><dd class="col-5 text-end">{{ portfolio.valuation.positions_value|floatformat:2 }}</dd><dt class="col-7">Performance</dt><dd class="col-5 text-end fw-bold {% if portfolio.valuation.absolute_gain < 0 %}text-danger{% else %}text-success{% endif %}">{{ portfolio.valuation.absolute_gain|floatformat:2 }} · {{ portfolio.valuation.return_percent|floatformat:2 }} %</dd></dl>
+          {% if portfolio.valuation.has_missing_prices %}<div class="alert alert-warning py-2 mt-3 mb-0">Valorisation incomplète : cours manquant.</div>{% elif portfolio.valuation.has_delayed_prices %}<div class="alert alert-info py-2 mt-3 mb-0">Au moins un cours est signalé différé.</div>{% endif %}
+        </div>
+        <div class="card-footer"><a class="btn btn-sm btn-primary" href="{% url 'fundboard:virtual_portfolio_detail' portfolio.pk %}">Ouvrir le registre virtuel</a></div>
+      </article></div>
+    {% empty %}<div class="col-12"><div class="card empty-state"><span class="badge bg-orange-lt mb-3">VIRTUEL</span><h2 class="h3">Aucun portefeuille virtuel</h2><p class="mb-0">Créez un capital fictif sans toucher à votre patrimoine.</p></div></div>{% endfor %}
+  </div>
+{% endblock %}

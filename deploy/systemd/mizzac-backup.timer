@@ -1,0 +1,12 @@
+[Unit]
+Description=Create a verified Mizzac backup daily
+
+[Timer]
+OnCalendar=daily
+Persistent=true
+RandomizedDelaySec=900
+Unit=mizzac-backup.service
+
+[Install]
+WantedBy=timers.target
+

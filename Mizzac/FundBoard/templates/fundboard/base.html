@@ -1,42 +1,117 @@
-{% extends 'common/base.html' %}{% load static %}
+{% extends "core/base.html" %}
+{% load static %}
+
+{% block extra_css %}
+  {{ block.super }}
+  <link rel="stylesheet" href="{% static 'FundBoard/style.css' %}">
+{% endblock %}
+
+{% block page_header %}
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="row g-2 align-items-center">
+        <div class="col">
+          <div class="page-pretitle">FundBoard</div>
+          <h1 class="page-title">{% block fb_page_title %}Vue d’ensemble{% endblock %}</h1>
+          <div class="text-secondary mt-1">{% block fb_page_subtitle %}{% endblock %}</div>
+        </div>
+        <div class="col-auto ms-auto d-print-none">
+          {% block fb_page_actions %}{% endblock %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}
 
 {% block content %}
-    {% include 'fundboard/_sidebar.html' %}
+  <div class="container-xl">
+    <div class="row g-4">
+      <div class="col-12 d-lg-none">
+        <button class="btn w-100" type="button" data-bs-toggle="collapse"
+                data-bs-target="#fundboard-navigation" aria-expanded="false"
+                aria-controls="fundboard-navigation">
+          <span aria-hidden="true" class="mizzac-nav-icon me-2">
+            {% include "core/icons/menu-2.html" %}
+          </span>
+          Navigation FundBoard
+        </button>
+      </div>
 
-    <div id="fbContentWrapper" class="p-4">
-        {% block fb_content %}{% endblock fb_content %}
+      <aside class="col-lg-3 col-xl-2">
+        <div id="fundboard-navigation" class="collapse d-lg-block fundboard-nav card card-body">
+          {% include "fundboard/_sidebar_links.html" %}
+        </div>
+      </aside>
+
+      <div class="col-lg-9 col-xl-10">
+        {% block fb_content %}{% endblock %}
+      </div>
     </div>
+  </div>
 
-    {# ------------ conteneur modal dynamique (obligatoire) -------- #}
-    <div id="fbDynamicModal" class="modal fade" tabindex="-1"></div>
+  <div id="fbDynamicModal" class="modal fade" tabindex="-1"
+       aria-label="Formulaire FundBoard"></div>
 {% endblock %}
 
 {% block extra_js %}
-<script>
-document.addEventListener('click', async (e) => {
-  const btn = e.target.closest('[data-bs-toggle="dynamic-modal"]');
-  if (!btn) return;
+  {{ block.super }}
+  <script>
+  (() => {
+    const modalElement = document.getElementById('fbDynamicModal');
 
-  e.preventDefault();
-  const url = btn.dataset.href;
+    async function loadModal(url) {
+      try {
+        const response = await fetch(url, {
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        modalElement.innerHTML = await response.text();
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+      } catch (error) {
+        modalElement.innerHTML = [
+          '<div class="modal-dialog"><div class="modal-content">',
+          '<div class="modal-body text-danger">Impossible de charger ce formulaire.</div>',
+          '</div></div>',
+        ].join('');
+        bootstrap.Modal.getOrCreateInstance(modalElement).show();
+        console.error('FundBoard modal loading failed', error);
+      }
+    }
 
-  // — récupère ou crée le conteneur modal —
-  let modalEl = document.getElementById('fbDynamicModal');
-  if (!modalEl) {
-      modalEl = document.createElement('div');
-      modalEl.id = 'fbDynamicModal';
-      modalEl.className = 'modal fade';
-      document.body.appendChild(modalEl);
-  }
+    document.addEventListener('click', (event) => {
+      const trigger = event.target.closest('[data-bs-toggle="dynamic-modal"]');
+      if (!trigger) return;
+      event.preventDefault();
+      loadModal(trigger.dataset.href);
+    });
 
-  // — charge le fragment HTML —
-  const html = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
-                     .then(r => r.text());
-  modalEl.innerHTML = html;
-
-  // — ouvre la modale —
-  new bootstrap.Modal(modalEl).show();
-});
-</script>
+    modalElement.addEventListener('submit', async (event) => {
+      const form = event.target.closest('form');
+      if (!form) return;
+      event.preventDefault();
+      try {
+        const response = await fetch(form.action, {
+          method: form.method || 'POST',
+          body: new FormData(form),
+          credentials: 'same-origin',
+          headers: { 'X-Requested-With': 'XMLHttpRequest' },
+        });
+        if (response.redirected) {
+          window.location.assign(response.url);
+          return;
+        }
+        if (!response.ok) throw new Error(`HTTP ${response.status}`);
+        modalElement.innerHTML = await response.text();
+      } catch (error) {
+        const feedback = document.createElement('div');
+        feedback.className = 'alert alert-danger m-3';
+        feedback.setAttribute('role', 'alert');
+        feedback.textContent = 'Enregistrement impossible. Réessayez.';
+        modalElement.querySelector('.modal-content')?.prepend(feedback);
+        console.error('FundBoard modal submission failed', error);
+      }
+    });
+  })();
+  </script>
 {% endblock %}
-

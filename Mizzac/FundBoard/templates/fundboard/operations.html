@@ -1,0 +1,43 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Exploitation — FundBoard{% endblock %}
+{% block fb_page_title %}Exploitation{% endblock %}
+{% block fb_page_subtitle %}État local, automatisation et journaux expurgés{% endblock %}
+{% block fb_page_actions %}
+  <form method="post" action="{% url 'fundboard:run_local_maintenance' %}">
+    {% csrf_token %}
+    <button class="btn btn-primary" type="submit">Lancer la maintenance locale</button>
+  </form>
+{% endblock %}
+
+{% block fb_content %}
+  <div class="alert {% if health.status == 'OK' %}alert-success{% elif health.status == 'WARNING' %}alert-warning{% else %}alert-danger{% endif %}" role="status">
+    <strong>État {{ health.status }}</strong>
+    {% if health.messages %}<ul class="mb-0 mt-2">{% for message in health.messages %}<li>{{ message }}</li>{% endfor %}</ul>{% else %}<span> — aucun problème opérationnel détecté.</span>{% endif %}
+  </div>
+
+  <div class="row row-cards mb-4">
+    <div class="col-sm-6 col-xl-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Migrations en attente</div><div class="h2">{{ health.pending_migration_count }}</div></div></section></div>
+    <div class="col-sm-6 col-xl-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Connexions à contrôler</div><div class="h2">{{ health.connection_attention_count }}</div></div></section></div>
+    <div class="col-sm-6 col-xl-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Échéances dépassées</div><div class="h2">{{ health.overdue_connection_count }}</div></div></section></div>
+    <div class="col-sm-6 col-xl-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Ordres virtuels ouverts</div><div class="h2">{{ health.open_virtual_order_count }}</div></div></section></div>
+  </div>
+
+  <div class="alert alert-info"><strong>Réseau désactivé ici.</strong> Ce bouton traite les snapshots et ordres virtuels depuis les seules données locales. Les connecteurs distants restent déclenchés explicitement depuis leur page ou par la commande planifiée avec <code>--with-network</code>.</div>
+
+  <section class="card mb-4">
+    <div class="card-header"><h2 class="card-title">Maintenances</h2></div>
+    <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Début</th><th>Origine</th><th>Statut</th><th>Snapshots</th><th>Ordres</th><th>Marché / change</th><th>Connecteurs</th><th>Corrélation</th></tr></thead><tbody>
+      {% for run in maintenance_runs %}<tr><td>{{ run.started_at|date:"d/m/Y H:i:s" }}</td><td>{{ run.get_trigger_display }}</td><td><span class="badge {% if run.status == 'SUCCEEDED' %}bg-green-lt{% elif run.status == 'PARTIAL' %}bg-yellow-lt{% elif run.status == 'FAILED' %}bg-red-lt{% else %}bg-blue-lt{% endif %}">{{ run.get_status_display }}</span><div class="small text-secondary">{{ run.public_message }}</div></td><td>{{ run.snapshot_created_count }} créés<br><span class="small text-secondary">{{ run.snapshot_existing_count }} existants</span></td><td>{{ run.virtual_order_executed_count }} exécutés<br><span class="small text-secondary">{{ run.virtual_order_rejected_count }} rejetés</span></td><td>{{ run.market_refresh_count }} actualisés<br><span class="small text-secondary">{{ run.market_failure_count }} échecs · FX {% if run.fx_refresh_succeeded %}OK{% else %}—{% endif %}</span></td><td>{{ run.connector_run_count }} réussis<br><span class="small text-secondary">{{ run.connector_failure_count }} à contrôler</span></td><td><code>{{ run.correlation_id }}</code></td></tr>
+      {% empty %}<tr><td colspan="8" class="text-center text-secondary py-4">Aucune maintenance enregistrée.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h2 class="card-title">Dernières synchronisations de connecteurs</h2></div>
+    <div class="table-responsive"><table class="table table-vcenter card-table"><thead><tr><th>Début</th><th>Connexion</th><th>Origine</th><th>Statut</th><th>Créés / mis à jour / rejetés</th><th>Corrélation</th></tr></thead><tbody>
+      {% for run in connector_runs %}<tr><td>{{ run.started_at|date:"d/m/Y H:i:s" }}</td><td>{{ run.connection.display_name }}</td><td>{{ run.get_trigger_display }}</td><td>{{ run.get_status_display }}<div class="small text-secondary">{{ run.public_message }}</div></td><td>{{ run.created_count }} / {{ run.updated_count }} / {{ run.rejected_count }}</td><td><code>{{ run.correlation_id }}</code></td></tr>
+      {% empty %}<tr><td colspan="6" class="text-center text-secondary py-4">Aucune synchronisation enregistrée.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+{% endblock %}

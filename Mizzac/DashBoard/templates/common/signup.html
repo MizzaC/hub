@@ -1,37 +1,47 @@
-{% extends 'base.html' %}
+{% extends "core/base.html" %}
+
+{% block title %}Inscription — Mizzac{% endblock %}
+{% block body_class %}d-flex flex-column{% endblock %}
 
 {% block content %}
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Inscription</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {% for field in form %}
-                            <div class="form-group">
-                                {{ field.label_tag }}
-                                {{ field }}
-                                {% if field.errors %}
-                                    <div class="alert alert-danger mt-2">
-                                        {% for error in field.errors %}
-                                            <p class="mb-0">{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        {% endfor %}
-                        <button type="submit" class="btn btn-primary">S'inscrire</button>
-                    </form>
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{% url 'dashboard:login' %}" class="btn btn-link">Déjà inscrit ?</a>
-                </div>
-            </div>
+  <div class="container-xl py-5">
+    <div class="mizzac-auth-card">
+      <div class="text-center mb-4">
+        <span class="mizzac-brand-mark mb-3" aria-hidden="true">M</span>
+        <h1 class="h2 mb-1">Inscription</h1>
+        <p class="text-secondary">Créez votre espace personnel Mizzac.</p>
+      </div>
+
+      <div class="card card-md shadow-sm">
+        <div class="card-body">
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% for field in form %}
+              <div class="mb-3">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}
+                  <span class="helptext">{{ field.help_text|safe }}</span>
+                {% endif %}
+                {% for error in field.errors %}
+                  <div class="invalid-feedback d-block">{{ error }}</div>
+                {% endfor %}
+              </div>
+            {% endfor %}
+
+            <button type="submit" class="btn btn-primary w-100">
+              <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                {% include "core/icons/user-plus.html" %}
+              </span>
+              Créer mon compte
+            </button>
+          </form>
         </div>
+      </div>
+
+      <div class="text-center text-secondary mt-3">
+        Déjà inscrit ? <a href="{% url 'dashboard:login' %}">Se connecter</a>
+      </div>
     </div>
-</div>
+  </div>
 {% endblock %}

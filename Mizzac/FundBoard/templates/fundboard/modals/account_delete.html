@@ -5,15 +5,16 @@
   <div class="modal-dialog modal-dialog-centered">
     <div class="modal-content border-0">
       <div class="modal-header">
-        <h5 class="modal-title text-danger">Supprimer le compte ?</h5>
-        <button class="btn-close" data-bs-dismiss="modal"></button>
+        <h2 class="modal-title h3">Archiver le compte ?</h2>
+        <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
       <div class="modal-body">
-        <p>Supprimer <strong>{{ object.name }}</strong>&nbsp;? Cette action est <strong>irréversible</strong>.</p>
+        <p>Archiver <strong>{{ object.name }}</strong> ?</p>
+        <p class="text-secondary mb-0">Ses données et son historique seront conservés.</p>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="submit" class="btn btn-danger">Supprimer</button>
+        <button type="submit" class="btn btn-warning">Archiver</button>
       </div>
     </div>
   </div>

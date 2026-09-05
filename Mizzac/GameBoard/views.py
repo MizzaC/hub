@@ -1,12 +1,13 @@
 # Mizzac/GameBoard/views.py
 
-from django.urls import reverse_lazy
-from django.views.generic import TemplateView, DetailView
 from django.contrib.auth.mixins import LoginRequiredMixin
-from .models import Game, Category
 from django.shortcuts import get_object_or_404, render
+from django.urls import reverse_lazy
 from django.views import View
-from .models import Game, SkyJoSave, NavalBattleSave, TicTacToeSave, ChessSave
+from django.views.generic import DetailView, TemplateView
+
+from .models import Category, ChessSave, Game, NavalBattleSave, SkyJoSave, TicTacToeSave
+
 
 # GameBoard view
 class GameBoardView(LoginRequiredMixin, TemplateView):
@@ -15,7 +16,7 @@ class GameBoardView(LoginRequiredMixin, TemplateView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
-        context['games'] = Game.objects.all()  # Retrieve all games
+        context['games'] = Game.objects.prefetch_related("categories").order_by("name")
         context['categories'] = Category.objects.all()  # Retrieve all categories
         return context
 

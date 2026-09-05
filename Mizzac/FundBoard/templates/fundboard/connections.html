@@ -1,0 +1,81 @@
+{% extends "fundboard/base.html" %}
+
+{% block fb_page_title %}Connexions{% endblock %}
+{% block fb_page_subtitle %}Accès en lecture seule et imports locaux{% endblock %}
+
+{% block fb_content %}
+  <div class="row g-4">
+    <div class="col-xl-7">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Sources configurées</h2></div>
+        <div class="list-group list-group-flush">
+          {% for connection in connections %}
+            <a class="list-group-item list-group-item-action" href="{% url 'fundboard:connection_detail' connection.pk %}">
+              <div class="d-flex justify-content-between gap-3">
+                <div>
+                  <div class="fw-semibold">{{ connection.display_name }}</div>
+                  <div class="text-secondary small">{{ connection.institution.name }} · {{ connection.provider }}</div>
+                </div>
+                <span class="badge {% if connection.status == 'ACTIVE' %}bg-success-lt{% elif connection.status == 'ERROR' %}bg-danger-lt{% else %}bg-secondary-lt{% endif %}">
+                  {{ connection.get_status_display }}
+                </span>
+              </div>
+            </a>
+          {% empty %}
+            <div class="list-group-item text-secondary">Aucune connexion configurée.</div>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+
+    <div class="col-xl-5">
+      <form class="card" method="post">
+        {% csrf_token %}
+        <div class="card-header"><h2 class="card-title">Ajouter une source</h2></div>
+        <div class="card-body">
+          {% if form.non_field_errors %}<div class="alert alert-danger">{{ form.non_field_errors }}</div>{% endif %}
+          <div class="mb-3">{{ form.provider.label_tag }}{{ form.provider }}{{ form.provider.errors }}</div>
+          <div class="mb-3">{{ form.display_name.label_tag }}{{ form.display_name }}{{ form.display_name.errors }}</div>
+          <div data-provider-fields="enable_banking">
+            <div class="alert alert-info">Recommandé pour un usage personnel : mode restreint à vos propres comptes, selon les conditions Enable Banking.</div>
+            <div class="mb-3">{{ form.bank_name.label_tag }}{{ form.bank_name }}<div class="form-hint">{{ form.bank_name.help_text }}</div>{{ form.bank_name.errors }}</div>
+            <div class="row"><div class="col mb-3">{{ form.country.label_tag }}{{ form.country }}</div><div class="col mb-3">{{ form.consent_days.label_tag }}{{ form.consent_days }}</div></div>
+          </div>
+          <div data-provider-fields="trade_republic_psd2" hidden>
+            <div class="alert alert-info">
+              Connexion officielle PSD2 via Enable Banking, limitée au compte courant Trade Republic : solde et mouvements de cash. Elle ne donne pas accès aux positions CTO/PEA.
+            </div>
+            <div class="form-hint mb-3">Le compte courant Trade Republic doit être activé. Le consentement est renouvelable au plus tard après 180 jours.</div>
+          </div>
+          <div data-provider-fields="binance" hidden>
+            <div class="alert alert-warning">La clé API doit interdire le trading et les retraits. Le test la refusera sinon.</div>
+            <div class="mb-3">{{ form.symbols.label_tag }}{{ form.symbols }}<div class="form-hint">{{ form.symbols.help_text }}</div>{{ form.symbols.errors }}</div>
+          </div>
+          <div data-provider-fields="ledger_live" hidden>
+            <div class="alert alert-warning">Import CSV local uniquement. Ne saisissez jamais de seed, de phrase de récupération ni de clé privée. Une adresse publique révèle votre historique sur la chaîne.</div>
+          </div>
+          <div data-provider-fields="trade_republic" hidden>
+            <div class="alert alert-warning">Import JSON/CSV expérimental uniquement : aucun PIN, code 2FA ou cookie de session n'est demandé ni stocké.</div>
+            <label class="form-check">{{ form.experimental_accepted }} <span class="form-check-label">{{ form.experimental_accepted.label }}</span></label>
+            {{ form.experimental_accepted.errors }}
+          </div>
+        </div>
+        <div class="card-footer text-end"><button class="btn btn-primary" type="submit">Créer</button></div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  <script>
+  (() => {
+    const select = document.getElementById('id_provider');
+    const refresh = () => document.querySelectorAll('[data-provider-fields]').forEach((item) => {
+      item.hidden = item.dataset.providerFields !== select.value;
+    });
+    select?.addEventListener('change', refresh);
+    refresh();
+  })();
+  </script>
+{% endblock %}

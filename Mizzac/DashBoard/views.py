@@ -1,8 +1,9 @@
 # Mizzac/Dashboard/views.py
 
-from django.urls import reverse_lazy
-from django.views.generic import TemplateView, CreateView
 from django.contrib.auth.mixins import LoginRequiredMixin
+from django.urls import reverse_lazy
+from django.views.generic import CreateView, TemplateView
+
 from .forms import CustomUserCreationForm
 
 

@@ -1,6 +1,7 @@
-import logging, os
-
+import logging
+import os
 from logging.handlers import RotatingFileHandler
+
 
 class Logger:
     """
@@ -37,7 +38,7 @@ class Logger:
         if not isinstance(level, int):
             raise ValueError(f"Log level must be an integer, not {type(level)}.")
 
-        if not logging.getLevelName(level) in logging._nameToLevel:
+        if logging.getLevelName(level) not in logging._nameToLevel:
             raise ValueError(f"Invalid log level: {level}")
 
         # Configure logger to write to the specified log file

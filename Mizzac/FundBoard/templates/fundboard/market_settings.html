@@ -1,0 +1,57 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Préférences de marché — FundBoard{% endblock %}
+{% block fb_page_title %}Préférences de marché{% endblock %}
+{% block fb_page_subtitle %}Devises d’affichage et benchmark de comparaison.{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards">
+    <div class="col-xl-8">
+      <form method="post" class="card">
+        {% csrf_token %}
+        <div class="card-header"><h2 class="card-title">Affichage patrimonial</h2></div>
+        <div class="card-body">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+          {% endif %}
+          <div class="row g-3">
+            {% for field in form %}
+              <div class="col-md-6">
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+                {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+                {{ field.errors }}
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        <div class="card-footer text-end">
+          <button class="btn btn-primary" type="submit">Enregistrer</button>
+        </div>
+      </form>
+    </div>
+    <div class="col-xl-4">
+      <section class="card h-100" aria-labelledby="provider-title">
+        <div class="card-header"><h2 id="provider-title" class="card-title">Fournisseurs actifs</h2></div>
+        <div class="list-group list-group-flush">
+          <div class="list-group-item">
+            <div class="fw-semibold">Actions, ETF et indices</div>
+            <div class="text-secondary">Yahoo via yfinance · cours différés / non garantis</div>
+          </div>
+          <div class="list-group-item">
+            <div class="fw-semibold">Cryptomonnaies</div>
+            <div class="text-secondary">CoinGecko · identifiant explicite requis</div>
+          </div>
+          <div class="list-group-item">
+            <div class="fw-semibold">Change EUR/USD</div>
+            <div class="text-secondary">Frankfurter v2 · source BCE · taux de référence daté</div>
+          </div>
+        </div>
+        <div class="card-footer text-secondary small">
+          Les pages utilisent exclusivement le cache local. Une actualisation n’est lancée
+          qu’après une action explicite.
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}

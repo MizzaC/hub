@@ -1,0 +1,27 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Lot d’import — FundBoard{% endblock %}
+{% block fb_page_title %}Lot d’import {{ batch.pk }}{% endblock %}
+{% block fb_page_subtitle %}{{ batch.file_name }} · SHA-256 {{ batch.file_sha256|slice:":12" }}…{% endblock %}
+
+{% block fb_page_actions %}
+  {% if batch.status != 'ROLLED_BACK' %}
+    <form method="post" action="{% url 'fundboard:rollback_import' batch.pk %}">{% csrf_token %}<button class="btn btn-outline-warning" type="submit">Annuler ce lot</button></form>
+  {% endif %}
+{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards mb-4">
+    <div class="col-6 col-lg"><div class="card card-body text-center"><div class="h2">{{ batch.total_rows }}</div><div class="text-secondary">lignes</div></div></div>
+    <div class="col-6 col-lg"><div class="card card-body text-center"><div class="h2 text-success">{{ batch.created_rows }}</div><div class="text-secondary">créations</div></div></div>
+    <div class="col-6 col-lg"><div class="card card-body text-center"><div class="h2">{{ batch.updated_rows }}</div><div class="text-secondary">mises à jour</div></div></div>
+    <div class="col-6 col-lg"><div class="card card-body text-center"><div class="h2">{{ batch.skipped_rows }}</div><div class="text-secondary">doublons</div></div></div>
+    <div class="col-6 col-lg"><div class="card card-body text-center"><div class="h2 text-danger">{{ batch.invalid_rows }}</div><div class="text-secondary">ignorées</div></div></div>
+  </div>
+  <section class="card">
+    <div class="card-header"><h2 class="card-title">Erreurs</h2>{% if batch.issues.all %}<a class="btn btn-sm ms-auto" href="{% url 'fundboard:import_issues_csv' batch.pk %}">Télécharger le CSV</a>{% endif %}</div>
+    <div class="table-responsive"><table class="table card-table"><thead><tr><th>Feuille</th><th>Ligne</th><th>Colonne</th><th>Code</th><th>Message</th></tr></thead><tbody>
+      {% for issue in batch.issues.all %}<tr><td>{{ issue.sheet }}</td><td>{{ issue.row_number }}</td><td>{{ issue.column|default:"—" }}</td><td><code>{{ issue.code }}</code></td><td>{{ issue.message }}</td></tr>{% empty %}<tr><td colspan="5" class="empty-state">Aucune ligne invalide.</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+{% endblock %}

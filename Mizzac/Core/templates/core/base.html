@@ -1,0 +1,162 @@
+{% load static %}
+<!doctype html>
+<html lang="fr" data-bs-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <title>{% block title %}Mizzac{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'core/vendor/tabler/tabler.min.css' %}">
+  <link rel="stylesheet" href="{% static 'core/css/app.css' %}">
+  <script src="{% static 'core/js/theme.js' %}"></script>
+  {% block extra_css %}{% endblock %}
+</head>
+<body class="{% block body_class %}{% endblock %}">
+  <a class="btn btn-primary skip-link" href="#main-content">Aller au contenu</a>
+
+  <div class="page">
+    <header class="navbar navbar-expand-md d-print-none" aria-label="Navigation principale">
+      <div class="container-xl">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse"
+                data-bs-target="#main-navigation" aria-controls="main-navigation"
+                aria-expanded="false" aria-label="Afficher la navigation">
+          <span aria-hidden="true" class="mizzac-nav-icon">
+            {% include "core/icons/menu-2.html" %}
+          </span>
+        </button>
+
+        <a class="navbar-brand navbar-brand-autodark me-3" href="{% url 'dashboard:dashboard' %}">
+          <span class="mizzac-brand-mark me-2" aria-hidden="true">M</span>
+          <span>Mizzac</span>
+        </a>
+
+        <div class="navbar-nav flex-row order-md-last">
+          <div class="nav-item d-flex align-items-center me-2">
+            <button id="themeToggle" class="btn btn-icon btn-ghost-secondary" type="button"
+                    aria-label="Activer le thème sombre" aria-pressed="false">
+              <span data-theme-dark aria-hidden="true" class="mizzac-nav-icon">
+                {% include "core/icons/moon.html" %}
+              </span>
+              <span data-theme-light hidden aria-hidden="true" class="mizzac-nav-icon">
+                {% include "core/icons/sun.html" %}
+              </span>
+            </button>
+          </div>
+
+          {% if user.is_authenticated %}
+            <div class="nav-item dropdown">
+              <button class="nav-link d-flex lh-1 text-reset p-0 border-0 bg-transparent"
+                      type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                <span class="avatar avatar-sm bg-primary-lt" aria-hidden="true">
+                  {{ user.username|first|upper }}
+                </span>
+                <span class="d-none d-xl-block ps-2 text-start">
+                  <span class="fw-semibold">{{ user.username }}</span>
+                  <span class="d-block mt-1 small text-secondary">Compte Mizzac</span>
+                </span>
+                <span aria-hidden="true" class="mizzac-nav-icon ms-1 d-none d-xl-inline-flex">
+                  {% include "core/icons/chevron-down.html" %}
+                </span>
+              </button>
+              <div class="dropdown-menu dropdown-menu-end dropdown-menu-arrow">
+                <form method="post" action="{% url 'dashboard:logout' %}">
+                  {% csrf_token %}
+                  <button class="dropdown-item" type="submit">
+                    <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                      {% include "core/icons/logout.html" %}
+                    </span>
+                    Déconnexion
+                  </button>
+                </form>
+              </div>
+            </div>
+          {% else %}
+            <div class="nav-item">
+              <a class="btn btn-primary" href="{% url 'dashboard:login' %}">Connexion</a>
+            </div>
+          {% endif %}
+        </div>
+
+        <div class="collapse navbar-collapse" id="main-navigation">
+          {% with current_app=request.resolver_match.app_name %}
+            <ul class="navbar-nav">
+              <li class="nav-item">
+                <a class="nav-link {% if current_app == 'dashboard' %}active{% endif %}"
+                   href="{% url 'dashboard:dashboard' %}"
+                   {% if current_app == 'dashboard' %}aria-current="page"{% endif %}>
+                  <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                    {% include "core/icons/home.html" %}
+                  </span>
+                  Accueil
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if current_app == 'fundboard' %}active{% endif %}"
+                   href="{% url 'fundboard:fundboard' %}"
+                   {% if current_app == 'fundboard' %}aria-current="page"{% endif %}>
+                  <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                    {% include "core/icons/wallet.html" %}
+                  </span>
+                  FundBoard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if current_app == 'gameboard' %}active{% endif %}"
+                   href="{% url 'gameboard:gameboard' %}"
+                   {% if current_app == 'gameboard' %}aria-current="page"{% endif %}>
+                  <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                    {% include "core/icons/device-gamepad-2.html" %}
+                  </span>
+                  GameBoard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if current_app == 'toolboard' %}active{% endif %}"
+                   href="{% url 'toolboard:toolboard' %}"
+                   {% if current_app == 'toolboard' %}aria-current="page"{% endif %}>
+                  <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                    {% include "core/icons/calculator.html" %}
+                  </span>
+                  ToolBoard
+                </a>
+              </li>
+              <li class="nav-item">
+                <a class="nav-link {% if current_app == 'drunkboard' %}active{% endif %}"
+                   href="{% url 'drunkboard:drunkboard' %}"
+                   {% if current_app == 'drunkboard' %}aria-current="page"{% endif %}>
+                  <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                    {% include "core/icons/apps.html" %}
+                  </span>
+                  DrunkBoard
+                </a>
+              </li>
+            </ul>
+          {% endwith %}
+        </div>
+      </div>
+    </header>
+
+    <div class="page-wrapper">
+      {% include "core/partials/messages.html" %}
+      {% block page_header %}{% endblock %}
+      <main id="main-content" class="page-body" tabindex="-1">
+        {% block content %}{% endblock %}
+      </main>
+
+      <footer class="footer footer-transparent d-print-none">
+        <div class="container-xl">
+          <div class="text-center text-secondary">
+            Mizzac · Tableau de bord personnel
+          </div>
+        </div>
+      </footer>
+    </div>
+  </div>
+
+  <script src="{% static 'core/vendor/tabler/tabler.min.js' %}"></script>
+  <script src="{% static 'core/vendor/apexcharts/apexcharts.min.js' %}"></script>
+  <script src="{% static 'core/js/charts.js' %}"></script>
+  <script src="{% static 'core/js/currency.js' %}"></script>
+  {% block extra_js %}{% endblock %}
+</body>
+</html>

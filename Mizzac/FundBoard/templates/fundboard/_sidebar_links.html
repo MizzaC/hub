@@ -1,23 +1,132 @@
-<ul class="nav nav-pills flex-column">
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:fundboard' %}">
-        <i class="bi bi-pie-chart-fill me-2"></i> Tableau de bord
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:accounts' %}">
-        <i class="bi bi-plug-fill me-2"></i> Connecter un compte
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:transactions' %}">
-        <i class="bi bi-bar-chart-fill me-2"></i> Actifs
-      </a>
-    </li>
-    <li class="nav-item">
-      <a class="nav-link text-white" href="{% url 'fundboard:subscriptions' %}">
-        <i class="bi bi-credit-card-2-back-fill me-2"></i> Dépenses
-      </a>
-    </li>
-  </ul>
-  
+{% with current_route=request.resolver_match.url_name %}
+  <nav class="nav nav-pills flex-column gap-1" aria-label="Navigation FundBoard">
+    <a class="nav-link {% if current_route == 'fundboard' %}active{% endif %}"
+       href="{% url 'fundboard:fundboard' %}"
+       {% if current_route == 'fundboard' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/home.html" %}
+      </span>
+      Vue d’ensemble
+    </a>
+    <a class="nav-link {% if current_route == 'portfolio' %}active{% endif %}"
+       href="{% url 'fundboard:portfolio' %}"
+       {% if current_route == 'portfolio' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/chart-pie.html" %}
+      </span>
+      Portefeuille
+    </a>
+    <a class="nav-link {% if current_route == 'instruments' or current_route == 'instrument_detail' or current_route == 'refresh_instrument' %}active{% endif %}"
+       href="{% url 'fundboard:instruments' %}"
+       {% if current_route == 'instruments' or current_route == 'instrument_detail' or current_route == 'refresh_instrument' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/apps.html" %}
+      </span>
+      Instruments
+    </a>
+    <a class="nav-link {% if current_route == 'accounts' or current_route == 'account_detail' %}active{% endif %}"
+       href="{% url 'fundboard:accounts' %}"
+       {% if current_route == 'accounts' or current_route == 'account_detail' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/wallet.html" %}
+      </span>
+      Comptes
+    </a>
+    <a class="nav-link {% if current_route == 'connections' or current_route == 'connection_detail' %}active{% endif %}"
+       href="{% url 'fundboard:connections' %}"
+       {% if current_route == 'connections' or current_route == 'connection_detail' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/apps.html" %}
+      </span>
+      Connexions
+    </a>
+    <a class="nav-link {% if current_route == 'transactions' %}active{% endif %}"
+       href="{% url 'fundboard:transactions' %}"
+       {% if current_route == 'transactions' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/coin.html" %}
+      </span>
+      Transactions
+    </a>
+    <a class="nav-link {% if current_route == 'real_estate' or current_route == 'real_estate_detail' %}active{% endif %}"
+       href="{% url 'fundboard:real_estate' %}"
+       {% if current_route == 'real_estate' or current_route == 'real_estate_detail' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/home.html" %}
+      </span>
+      Immobilier
+    </a>
+    <a class="nav-link {% if current_route == 'private_equity' or current_route == 'private_equity_detail' %}active{% endif %}"
+       href="{% url 'fundboard:private_equity' %}"
+       {% if current_route == 'private_equity' or current_route == 'private_equity_detail' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/chart-pie.html" %}
+      </span>
+      Private equity
+    </a>
+    <a class="nav-link {% if current_route == 'loans' or current_route == 'loan_detail' %}active{% endif %}"
+       href="{% url 'fundboard:loans' %}"
+       {% if current_route == 'loans' or current_route == 'loan_detail' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/calculator.html" %}
+      </span>
+      Prêts
+    </a>
+    <a class="nav-link {% if current_route == 'simulations' or current_route == 'loan_simulation_detail' or current_route == 'loan_simulation_compare' or current_route == 'compound_simulation_detail' or current_route == 'compound_simulation_compare' %}active{% endif %}"
+       href="{% url 'fundboard:simulations' %}"
+       {% if current_route == 'simulations' or current_route == 'loan_simulation_detail' or current_route == 'loan_simulation_compare' or current_route == 'compound_simulation_detail' or current_route == 'compound_simulation_compare' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/calculator.html" %}
+      </span>
+      Simulations
+    </a>
+    <a class="nav-link {% if current_route == 'virtual_portfolios' or current_route == 'virtual_portfolio_detail' %}active{% endif %}"
+       href="{% url 'fundboard:virtual_portfolios' %}"
+       {% if current_route == 'virtual_portfolios' or current_route == 'virtual_portfolio_detail' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/chart-pie.html" %}
+      </span>
+      Portefeuilles virtuels
+    </a>
+    <a class="nav-link {% if current_route == 'subscriptions' %}active{% endif %}"
+       href="{% url 'fundboard:subscriptions' %}"
+       {% if current_route == 'subscriptions' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/pig-money.html" %}
+      </span>
+      Dépenses
+    </a>
+    <a class="nav-link {% if current_route == 'revenues' %}active{% endif %}"
+       href="{% url 'fundboard:revenues' %}"
+       {% if current_route == 'revenues' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/coin.html" %}
+      </span>
+      Revenus
+    </a>
+    <a class="nav-link {% if current_route == 'import_export' or current_route == 'import_batch' %}active{% endif %}"
+       href="{% url 'fundboard:import_export' %}"
+       {% if current_route == 'import_export' or current_route == 'import_batch' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/apps.html" %}
+      </span>
+      Imports / exports
+    </a>
+    <a class="nav-link {% if current_route == 'market_settings' %}active{% endif %}"
+       href="{% url 'fundboard:market_settings' %}"
+       {% if current_route == 'market_settings' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/calculator.html" %}
+      </span>
+      Marché et devises
+    </a>
+    <a class="nav-link {% if current_route == 'operations' %}active{% endif %}"
+       href="{% url 'fundboard:operations' %}"
+       {% if current_route == 'operations' %}aria-current="page"{% endif %}>
+      <span aria-hidden="true" class="mizzac-nav-icon">
+        {% include "core/icons/apps.html" %}
+      </span>
+      Exploitation
+    </a>
+  </nav>
+{% endwith %}

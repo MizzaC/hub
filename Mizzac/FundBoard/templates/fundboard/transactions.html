@@ -1,104 +1,116 @@
 {% extends "fundboard/base.html" %}
-{% load static %}
+
+{% block title %}Transactions — FundBoard{% endblock %}
+{% block fb_page_title %}Transactions{% endblock %}
+{% block fb_page_subtitle %}Historique filtrable de vos mouvements.{% endblock %}
+{% block fb_page_actions %}
+  <button class="btn btn-primary" type="button" data-bs-toggle="dynamic-modal"
+          data-href="{% url 'fundboard:add_transaction_modal' %}">Ajouter une transaction</button>
+{% endblock %}
 
 {% block fb_content %}
-<div class="container-fluid py-4">
-
-  {# ───── Titre, filtres & recherche ───── #}
-  <div class="d-lg-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-3 mb-lg-0">Historique des transactions</h2>
-
-    <div class="d-flex flex-wrap gap-2">
-
-      {# Filtre Compte #}
-      <select id="filterAccount" class="form-select" style="width:180px;">
-        <option value="">Tous les comptes</option>
-        {% for acct in accounts %}
-          <option value="{{ acct.id }}">{{ acct.name }}</option>
-        {% endfor %}
-      </select>
-
-      {# Filtre Type #}
-      <select id="filterType" class="form-select" style="width:160px;">
-        <option value="">Tous les types</option>
-        {% for code, label in transaction_choices %}
-          <option value="{{ code }}">{{ label }}</option>
-        {% endfor %}
-      </select>
-
-      {# Recherche texte #}
-      <input id="searchInput" type="search" class="form-control"
-             placeholder="Rechercher…" style="width:200px;">
-
+  <section class="card" aria-labelledby="transactions-table-title">
+    <div class="card-header d-block">
+      <div class="row g-2 align-items-end">
+        <div class="col-12 col-md">
+          <h2 id="transactions-table-title" class="card-title mb-0">Historique</h2>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <label class="form-label" for="filterAccount">Compte</label>
+          <select id="filterAccount" class="form-select">
+            <option value="">Tous les comptes</option>
+            {% for account in accounts %}
+              <option value="{{ account.id }}">{{ account.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-sm-6 col-md-3">
+          <label class="form-label" for="filterType">Type</label>
+          <select id="filterType" class="form-select">
+            <option value="">Tous les types</option>
+            {% for code, label in transaction_choices %}
+              <option value="{{ code }}">{{ label }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="col-12 col-md-3">
+          <label class="form-label" for="searchInput">Recherche</label>
+          <input id="searchInput" type="search" class="form-control"
+                 placeholder="Compte, actif, type…">
+        </div>
+      </div>
     </div>
-  </div>
 
-  {# ───── Tableau ───── #}
-  <div class="card shadow-sm rounded-4">
     <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle" id="trxTable">
-        <thead class="table-light">
+      <table class="table table-vcenter card-table table-hover" id="trxTable">
+        <thead>
           <tr>
-            <th class="text-nowrap">Date</th>
-            <th class="text-nowrap">Type</th>
-            <th class="text-nowrap">Compte</th>
-            <th class="text-nowrap">Actif</th>
-            <th class="text-end">Qté</th>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Compte</th>
+            <th>Actif</th>
+            <th class="text-end">Quantité</th>
             <th class="text-end">Montant</th>
+            <th><span class="visually-hidden">Actions</span></th>
           </tr>
         </thead>
         <tbody>
-            {% for t in transactions %}
-              <tr data-account="{{ t.account.id }}" data-type="{{ t.trx_type }}">
-                <td>{{ t.date_trx|date:"d/m/Y H:i" }}</td>
-                <td>{{ t.get_trx_type_display }}</td>
-                <td>{{ t.account.name }}</td>
-                <td>
-                  {% if t.asset %}
-                      {{ t.asset.ticker }}
-                  {% else %}
-                      –
-                  {% endif %}
-                </td>
-                <td class="text-end">{{ t.quantity|default:"-" }}</td>
-                <td class="text-end {% if t.amount < 0 %}text-danger{% else %}text-success{% endif %}">
-                  {{ t.amount|floatformat:2 }} €
-                </td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="6" class="text-center py-4 text-muted">Aucune transaction.</td>
-              </tr>
-            {% endfor %}
-        </tbody>                
+          {% for transaction in transactions %}
+            <tr data-account="{{ transaction.account.id }}" data-type="{{ transaction.transaction_type }}">
+              <td class="text-secondary">{{ transaction.executed_at|date:"d/m/Y H:i" }}</td>
+              <td><span class="badge bg-azure-lt">{{ transaction.get_transaction_type_display }}</span></td>
+              <td>{{ transaction.account.name }}</td>
+              <td>{% if transaction.instrument %}{{ transaction.instrument.ticker|default:transaction.instrument.name }}{% else %}—{% endif %}</td>
+              <td class="text-end fundboard-amount">{{ transaction.quantity|default:"—" }}</td>
+              <td class="text-end fundboard-amount {% if transaction.net_amount < 0 %}text-danger{% else %}text-success{% endif %}">
+                {{ transaction.net_amount|floatformat:2 }} {{ transaction.currency }}
+              </td>
+              <td class="text-end text-nowrap">
+                <button class="btn btn-sm" type="button" data-bs-toggle="dynamic-modal"
+                        data-href="{% url 'fundboard:edit_transaction_modal' transaction.pk %}">Modifier</button>
+                {% if transaction.status != 'CANCELLED' %}
+                  <button class="btn btn-sm btn-outline-warning" type="button"
+                          data-bs-toggle="dynamic-modal"
+                          data-href="{% url 'fundboard:cancel_transaction_modal' transaction.pk %}">Annuler</button>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="7" class="empty-state">Aucune transaction.</td></tr>
+          {% endfor %}
+        </tbody>
       </table>
     </div>
-  </div>
-
-</div>
-{% endblock fb_content %}
+    <div id="noTransactionResult" class="empty-state d-none" role="status">
+      Aucune transaction ne correspond à ces filtres.
+    </div>
+  </section>
+{% endblock %}
 
 {% block extra_js %}
-{{ block.super }}
-<script>
-/* ====  Filtres (compte, type, recherche)  ==== */
-const accountSel = document.getElementById('filterAccount');
-const typeSel    = document.getElementById('filterType');
-const searchIn   = document.getElementById('searchInput');
-const rows       = document.querySelectorAll('#trxTable tbody tr');
+  {{ block.super }}
+  <script>
+  (() => {
+    const account = document.getElementById('filterAccount');
+    const type = document.getElementById('filterType');
+    const search = document.getElementById('searchInput');
+    const rows = [...document.querySelectorAll('#trxTable tbody tr[data-account]')];
+    const noResult = document.getElementById('noTransactionResult');
 
-function applyFilters(){
-  const acc = accountSel.value;
-  const typ = typeSel.value;
-  const q   = searchIn.value.trim().toLowerCase();
+    function applyFilters() {
+      const query = search.value.trim().toLocaleLowerCase('fr');
+      let visible = 0;
+      rows.forEach((row) => {
+        const matches = (!account.value || row.dataset.account === account.value)
+          && (!type.value || row.dataset.type === type.value)
+          && (!query || row.textContent.toLocaleLowerCase('fr').includes(query));
+        row.hidden = !matches;
+        if (matches) visible += 1;
+      });
+      noResult.classList.toggle('d-none', visible > 0 || rows.length === 0);
+    }
 
-  rows.forEach(tr=>{
-    const matchAcc = !acc || tr.dataset.account === acc;
-    const matchTyp = !typ || tr.dataset.type === typ;
-    const matchTxt = !q || tr.textContent.toLowerCase().includes(q);
-    tr.style.display = (matchAcc && matchTyp && matchTxt) ? '' : 'none';
-  });
-}
-[accountSel, typeSel, searchIn].forEach(el=>el.addEventListener('input', applyFilters));
-</script>
+    [account, type, search].forEach((control) => control.addEventListener('input', applyFilters));
+  })();
+  </script>
 {% endblock %}

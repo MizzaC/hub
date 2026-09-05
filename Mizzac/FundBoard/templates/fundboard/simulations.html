@@ -1,0 +1,68 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Simulations — FundBoard{% endblock %}
+{% block fb_page_title %}Simulations{% endblock %}
+{% block fb_page_subtitle %}Scénarios hypothétiques, sans effet sur votre patrimoine réel.{% endblock %}
+{% block fb_page_actions %}
+  <div class="btn-list">
+    <button class="btn btn-primary" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_loan_simulation' %}">Nouveau prêt</button>
+    <button class="btn" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_compound_simulation' %}">Nouveaux intérêts composés</button>
+  </div>
+{% endblock %}
+
+{% block fb_content %}
+  <div class="alert alert-info" role="status">
+    Ces résultats sont des simulations : ils ne créent ni prêt, ni compte, ni transaction réelle.
+    Les montants sont arrondis au centime après chaque opération mensuelle.
+  </div>
+
+  <section class="card mb-4">
+    <div class="card-header"><h2 class="card-title">Prêts amortissables à taux fixe</h2></div>
+    <form method="get" action="{% url 'fundboard:loan_simulation_compare' %}">
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th class="w-1">Comparer</th><th>Scénario</th><th>Capital</th><th>Mensualité</th><th>Durée</th><th>Coût total</th><th></th></tr></thead>
+          <tbody>
+            {% for scenario in loan_scenarios %}
+              <tr>
+                <td><input class="form-check-input" type="checkbox" name="ids" value="{{ scenario.pk }}" aria-label="Comparer {{ scenario.name }}"></td>
+                <td><a class="fw-semibold" href="{% url 'fundboard:loan_simulation_detail' scenario.pk %}">{{ scenario.name }}</a><div class="small text-secondary">{{ scenario.annual_rate|floatformat:3 }} % nominal</div></td>
+                <td>{{ scenario.principal|floatformat:2 }} {{ scenario.currency }}</td>
+                <td>{{ scenario.result.regular_payment|floatformat:2 }} {{ scenario.currency }}</td>
+                <td>{{ scenario.result.duration_months }} mois</td>
+                <td>{{ scenario.result.total_cost|floatformat:2 }} {{ scenario.currency }}</td>
+                <td class="text-end"><a class="btn btn-sm" href="{% url 'fundboard:loan_simulation_detail' scenario.pk %}">Détails</a></td>
+              </tr>
+            {% empty %}<tr><td colspan="7" class="text-center text-secondary py-4">Aucun scénario de prêt.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if loan_scenarios %}<div class="card-footer"><button class="btn btn-outline-primary" type="submit">Comparer 2 à 4 scénarios</button></div>{% endif %}
+    </form>
+  </section>
+
+  <section class="card">
+    <div class="card-header"><h2 class="card-title">Intérêts composés</h2></div>
+    <form method="get" action="{% url 'fundboard:compound_simulation_compare' %}">
+      <div class="table-responsive">
+        <table class="table table-vcenter card-table">
+          <thead><tr><th class="w-1">Comparer</th><th>Scénario</th><th>Total versé</th><th>Valeur nominale</th><th>Valeur réelle</th><th>Gains nets</th><th></th></tr></thead>
+          <tbody>
+            {% for scenario in compound_scenarios %}
+              <tr>
+                <td><input class="form-check-input" type="checkbox" name="ids" value="{{ scenario.pk }}" aria-label="Comparer {{ scenario.name }}"></td>
+                <td><a class="fw-semibold" href="{% url 'fundboard:compound_simulation_detail' scenario.pk %}">{{ scenario.name }}</a><div class="small text-secondary">{{ scenario.duration_years }} ans · {{ scenario.annual_return|floatformat:2 }} % nominal</div></td>
+                <td>{{ scenario.result.total_contributed|floatformat:2 }} {{ scenario.currency }}</td>
+                <td>{{ scenario.result.final_nominal_value|floatformat:2 }} {{ scenario.currency }}</td>
+                <td>{{ scenario.result.final_real_value|floatformat:2 }} {{ scenario.currency }}</td>
+                <td>{{ scenario.result.net_gains|floatformat:2 }} {{ scenario.currency }}</td>
+                <td class="text-end"><a class="btn btn-sm" href="{% url 'fundboard:compound_simulation_detail' scenario.pk %}">Détails</a></td>
+              </tr>
+            {% empty %}<tr><td colspan="7" class="text-center text-secondary py-4">Aucun scénario d'intérêts composés.</td></tr>{% endfor %}
+          </tbody>
+        </table>
+      </div>
+      {% if compound_scenarios %}<div class="card-footer"><button class="btn btn-outline-primary" type="submit">Comparer 2 à 4 scénarios</button></div>{% endif %}
+    </form>
+  </section>
+{% endblock %}

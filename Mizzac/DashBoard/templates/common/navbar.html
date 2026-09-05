@@ -51,7 +51,12 @@
                             </a>
                             <ul class="dropdown-menu dropdown-menu-end">
                                 <li><a class="dropdown-item" href="#">Profil</a></li>
-                                <li><a class="dropdown-item" href="{% url 'dashboard:logout' %}">Déconnexion</a></li>
+                                <li>
+                                    <form method="post" action="{% url 'dashboard:logout' %}">
+                                        {% csrf_token %}
+                                        <button class="dropdown-item" type="submit">Déconnexion</button>
+                                    </form>
+                                </li>
                             </ul>
                         </li>
                     {% else %}

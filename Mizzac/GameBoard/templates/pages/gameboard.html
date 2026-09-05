@@ -1,69 +1,94 @@
-{% extends 'common/base.html' %}
-
+{% extends "core/base.html" %}
 {% load static %}
 
+{% block title %}GameBoard — Mizzac{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="{% static 'GameBoard/style.css' %}">
+{% endblock %}
+
+{% block page_header %}
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="page-pretitle">Bibliothèque</div>
+      <h1 class="page-title">GameBoard</h1>
+      <div class="text-secondary mt-1">Jeux, règles et sauvegardes de parties.</div>
+    </div>
+  </div>
+{% endblock %}
+
 {% block content %}
-
-<link rel="stylesheet" type="text/css" href="{% static 'GameBoard\style.css' %}">
-
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="jumbotron">
-                <p class="lead">Bonjour {{ user.username }}.</p>
-                <h1 class="display-4">Bienvenue sur GameBoard</h1>
-                <hr class="my-4">
-            </div>
-        </div>
-    </div>
-    
-    <!-- Search bar and filter -->
-    <div class="row mb-4">
-        <div class="col-md-6">
-            <input type="text" id="search" class="form-control" placeholder="Rechercher un jeu...">
-        </div>
-        <div class="col-md-3">
-            <select id="category-filter" class="form-control">
-                <option value="">Toutes les catégories</option>
-                <!-- Dynamic -->
-                {% for category in categories %}
+  <div class="container-xl">
+    <div class="card mb-4">
+      <div class="card-body">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-7">
+            <label class="form-label" for="gameSearch">Rechercher dans la page</label>
+            <input id="gameSearch" type="search" class="form-control" placeholder="Nom ou description">
+          </div>
+          <div class="col-md-5">
+            <label class="form-label" for="gameCategory">Catégorie</label>
+            <select id="gameCategory" class="form-select">
+              <option value="">Toutes les catégories</option>
+              {% for category in categories %}
                 <option value="{{ category.id }}">{{ category.name }}</option>
-                {% endfor %}
+              {% endfor %}
             </select>
+          </div>
         </div>
-        <div class="col-md-3">
-            <select id="sort-filter" class="form-control">
-                <option value="name">Nom</option>
-                <option value="release_date">Date de sortie</option>
-                <!-- Add filter criterias -->
-            </select>
-        </div>
+      </div>
     </div>
 
-    <!-- Games list -->
-    <div class="row" id="game-list">
-        {% for game in games %}
-        <div class="col-md-4 mb-4">
-            <div class="card">
-                <!-- Assuming each game has a thumbnail field or similar image field -->
-                <img src="{{ game.cover.url }}" alt="{{ game.name }}" 
-                    style="width: 100%; height: 200px; object-fit: cover; object-position: center;">
-                <div class="card-body">
-                    <div>
-                        <h5 class="card-title">{{ game.name }}</h5>
-                        <p class="card-text">{{ game.description.description|truncatewords:20 }}</p>
-                        <a href="{% url 'gameboard:game_detail' game.game_slug %}" class="btn btn-primary">Voir plus</a>
-                    </div>
-                    <div>
-                        <button class="button-play">
-                            <span>Play</span>
-                        </button>                  
-                    </div>
-                </div>
+    <section class="row row-cards" id="gameList" aria-label="Jeux disponibles">
+      {% for game in games %}
+        <div class="col-md-6 col-xl-4 game-item"
+             data-categories="{% for category in game.categories.all %}{{ category.id }} {% endfor %}">
+          <article class="card h-100 gameboard-card">
+            <img class="card-img-top gameboard-cover" src="{{ game.cover.url }}" alt="Couverture de {{ game.name }}">
+            <div class="card-body">
+              <h2 class="card-title h3">{{ game.name }}</h2>
+              <p class="card-text text-secondary">
+                {{ game.description.description|default:"Description à venir."|truncatewords:20 }}
+              </p>
+              <a href="{% url 'gameboard:game_detail' game.game_slug %}" class="btn btn-primary">
+                Consulter le jeu
+              </a>
             </div>
+          </article>
         </div>
-        {% endfor %}
+      {% empty %}
+        <div class="col-12">
+          <div class="card empty-state">Aucun jeu disponible.</div>
+        </div>
+      {% endfor %}
+    </section>
+    <div id="noGameResult" class="card empty-state d-none" role="status">
+      Aucun jeu ne correspond à cette recherche.
     </div>
-</div>
+  </div>
+{% endblock %}
 
+{% block extra_js %}
+  <script>
+  (() => {
+    const search = document.getElementById('gameSearch');
+    const category = document.getElementById('gameCategory');
+    const games = [...document.querySelectorAll('.game-item')];
+    const noResult = document.getElementById('noGameResult');
+
+    function filterGames() {
+      const query = search.value.trim().toLocaleLowerCase('fr');
+      let visible = 0;
+      games.forEach((game) => {
+        const categoryIds = game.dataset.categories.trim().split(/\s+/);
+        const matches = (!query || game.textContent.toLocaleLowerCase('fr').includes(query))
+          && (!category.value || categoryIds.includes(category.value));
+        game.hidden = !matches;
+        if (matches) visible += 1;
+      });
+      noResult.classList.toggle('d-none', visible > 0 || games.length === 0);
+    }
+
+    [search, category].forEach((control) => control.addEventListener('input', filterGames));
+  })();
+  </script>
 {% endblock %}

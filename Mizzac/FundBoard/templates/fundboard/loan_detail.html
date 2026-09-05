@@ -1,0 +1,31 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}{{ loan.name }} — FundBoard{% endblock %}
+{% block fb_page_title %}{{ loan.name }}{% endblock %}
+{% block fb_page_subtitle %}{{ loan.get_loan_type_display }} · {{ loan.currency }}{% endblock %}
+{% block fb_page_actions %}<div class="btn-list"><button class="btn btn-primary" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_loan_balance' loan.pk %}">Actualiser le capital</button><button class="btn" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_loan_modal' loan.pk %}">Modifier</button></div>{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards mb-4">
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Capital restant</div><div class="h2">{{ loan.outstanding_principal|floatformat:2 }} {{ loan.currency }}</div><div class="small text-secondary">au {{ loan.balance_date|date:"d/m/Y" }}</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Capital remboursé</div><div class="h2">{{ metrics.repaid_principal|floatformat:2 }}</div><div class="small text-secondary">{{ metrics.progress_percent|floatformat:2 }} % du capital</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Taux nominal</div><div class="h2">{{ loan.nominal_rate|floatformat:3 }} %</div><div class="small text-secondary">TAEG {% if loan.apr is not None %}{{ loan.apr|floatformat:3 }} %{% else %}non renseigné{% endif %}</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Échéance</div><div class="h2">{% if loan.payment_amount is not None %}{{ loan.payment_amount|floatformat:2 }}{% else %}—{% endif %}</div><div class="small text-secondary">Assurance {{ loan.insurance_amount|floatformat:2 }} / échéance</div></div></section></div>
+  </div>
+  <div class="row row-cards">
+    <div class="col-xl-8"><section class="card h-100"><div class="card-header"><h2 class="card-title">Historique du capital restant</h2></div><div class="card-body">{% if chart_values %}<div id="loanBalanceChart" role="img" aria-label="Historique du capital restant dû"></div>{% else %}<div class="empty-state">Aucun historique.</div>{% endif %}</div></section></div>
+    <div class="col-xl-4"><section class="card h-100"><div class="card-header"><h2 class="card-title">Informations</h2></div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-7 text-secondary fw-normal">Capital initial</dt><dd class="col-5 text-end">{{ loan.original_principal|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Durée</dt><dd class="col-5 text-end">{{ loan.duration_months }} mois</dd>
+      <dt class="col-7 text-secondary fw-normal">Début</dt><dd class="col-5 text-end">{{ loan.start_date|date:"d/m/Y" }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Fin</dt><dd class="col-5 text-end">{{ loan.maturity_date|date:"d/m/Y"|default:"—" }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Paiements annuels</dt><dd class="col-5 text-end">{% if metrics.annual_payment is not None %}{{ metrics.annual_payment|floatformat:2 }}{% else %}—{% endif %}</dd>
+      <dt class="col-7 text-secondary fw-normal">Assurance annuelle</dt><dd class="col-5 text-end">{{ metrics.annual_insurance|floatformat:2 }}</dd>
+    </dl>{% for property in loan.properties.all %}<hr><a href="{% url 'fundboard:real_estate_detail' property.pk %}">Bien lié : {{ property.name }}</a>{% endfor %}</div></section></div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+  {{ chart_labels|json_script:"loan-balance-labels" }}{{ chart_values|json_script:"loan-balance-values" }}
+  <script>(() => { const target = document.getElementById('loanBalanceChart'); if (!target) return; MizzacCharts.mount(target, { chart: { type: 'line', height: 320 }, series: [{ name: 'Capital restant', data: JSON.parse(document.getElementById('loan-balance-values').textContent).map(Number) }], xaxis: { categories: JSON.parse(document.getElementById('loan-balance-labels').textContent), type: 'datetime' }, stroke: { curve: 'smooth', width: 3 } }); })();</script>
+{% endblock %}

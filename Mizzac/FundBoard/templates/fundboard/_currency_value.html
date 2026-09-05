@@ -1,0 +1,19 @@
+<span class="fundboard-amount js-money-convertible"
+      data-currency-value
+      data-original-amount="{{ display.original_amount_data }}"
+      data-original-currency="{{ display.original_currency }}"
+      data-default-currency="{{ display.default_currency }}"
+      data-amount-eur="{{ display.amount_eur_data }}"
+      data-amount-usd="{{ display.amount_usd_data }}"
+      data-decimals="{{ decimals|default:'2' }}"
+      {% if display.rate_date %}
+        data-rate-description="Taux {{ display.rate_source }} du {{ display.rate_date|date:'d/m/Y' }} — {{ display.rate_quality }}"
+      {% endif %}>
+  {% if display.default_currency == "USD" and display.amount_usd is not None %}
+    {{ display.amount_usd|floatformat:2 }} USD
+  {% elif display.amount_eur is not None %}
+    {{ display.amount_eur|floatformat:2 }} EUR
+  {% else %}
+    {{ display.original_amount|floatformat:2 }} {{ display.original_currency }}
+  {% endif %}
+</span>

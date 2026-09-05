@@ -1,0 +1,37 @@
+<form method="post" action="{{ request.path }}">
+  {% csrf_token %}
+  <div class="modal-dialog modal-lg modal-dialog-scrollable">
+    <div class="modal-content border-0">
+      <div class="modal-header">
+        <h2 class="modal-title h3">{{ modal_title }}</h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
+      </div>
+      <div class="modal-body">
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="row g-3">
+          {% for field in form.hidden_fields %}{{ field }}{% endfor %}
+          {% for field in form.visible_fields %}
+            <div class="col-12 {% if field.field.widget.input_type != 'textarea' %}col-md-6{% endif %}">
+              {% if field.field.widget.input_type == 'checkbox' %}
+                <label class="form-check mt-4" for="{{ field.id_for_label }}">
+                  {{ field }} <span class="form-check-label">{{ field.label }}</span>
+                </label>
+              {% else %}
+                <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}</label>
+                {{ field }}
+              {% endif %}
+              {% if field.help_text %}<div class="form-hint">{{ field.help_text }}</div>{% endif %}
+              {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors }}</div>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn" data-bs-dismiss="modal">Annuler</button>
+        <button type="submit" class="btn btn-primary">{{ submit_label }}</button>
+      </div>
+    </div>
+  </div>
+</form>

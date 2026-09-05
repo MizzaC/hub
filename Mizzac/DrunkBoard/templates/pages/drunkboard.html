@@ -1,21 +1,29 @@
-{% extends 'common/base.html' %}
+{% extends "core/base.html" %}
+
+{% block title %}DrunkBoard — Mizzac{% endblock %}
+
+{% block page_header %}
+  <div class="page-header d-print-none">
+    <div class="container-xl">
+      <div class="page-pretitle">Application</div>
+      <h1 class="page-title">DrunkBoard</h1>
+    </div>
+  </div>
+{% endblock %}
 
 {% block content %}
-
-<div class="container mt-4">
-    <div class="row">
-        <div class="col-lg-12">
-            <div class="jumbotron">
-                <h1 class="display-4">Bienvenue sur DrunkBoard</h1>
-                <p class="lead">Bonjour {{ user.username }}.</p>
-                <hr class="my-4">
-                <!-- Ajoutez ici le contenu spécifique de votre HUB -->
-            </div>
-        </div>
-    </div>
-    <!-- Autres sections ou contenu peuvent être ajoutés ici -->
-</div>
-
-
-
+  <div class="container-xl">
+    <section class="card" aria-labelledby="drunkboard-empty-title">
+      <div class="empty-state py-5">
+        <span class="mizzac-stat-icon bg-orange-lt text-orange mb-3" aria-hidden="true">
+          {% include "core/icons/apps.html" %}
+        </span>
+        <h2 id="drunkboard-empty-title" class="h2">Votre espace est prêt</h2>
+        <p class="text-secondary mb-0">
+          DrunkBoard utilise désormais le socle partagé Mizzac. Ses fonctionnalités
+          métier pourront être ajoutées sans recréer le layout.
+        </p>
+      </div>
+    </section>
+  </div>
 {% endblock %}

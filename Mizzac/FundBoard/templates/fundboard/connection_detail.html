@@ -1,0 +1,79 @@
+{% extends "fundboard/base.html" %}
+
+{% block fb_page_title %}{{ connection.display_name }}{% endblock %}
+{% block fb_page_subtitle %}{{ connection.institution.name }} · accès en lecture seule{% endblock %}
+
+{% block fb_page_actions %}
+  <a class="btn" href="{% url 'fundboard:connections' %}">Retour aux connexions</a>
+{% endblock %}
+
+{% block fb_content %}
+  {% if connection.last_error %}<div class="alert alert-danger">{{ connection.last_error }}</div>{% endif %}
+  <div class="row g-4">
+    <div class="col-xl-8">
+      <div class="card mb-4">
+        <div class="card-header"><h2 class="card-title">État</h2></div>
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-4">Statut</dt><dd class="col-sm-8">{{ connection.get_status_display }}</dd>
+            <dt class="col-sm-4">Dernier test</dt><dd class="col-sm-8">{{ connection.last_tested_at|default:"Jamais" }}</dd>
+            <dt class="col-sm-4">Dernière synchronisation</dt><dd class="col-sm-8">{{ connection.last_synced_at|default:"Jamais" }}</dd>
+            {% if connection.consent_expires_at %}<dt class="col-sm-4">Consentement valable jusqu'au</dt><dd class="col-sm-8">{{ connection.consent_expires_at }}</dd>{% endif %}
+          </dl>
+        </div>
+        {% if connection.status != 'REVOKED' %}
+          <div class="card-footer d-flex flex-wrap gap-2">
+            {% if connection.provider == 'enable_banking' %}
+              <form method="post" action="{% url 'fundboard:enable_banking_authorize' connection.pk %}">{% csrf_token %}<button class="btn btn-primary" type="submit">Autoriser ma banque</button></form>
+            {% endif %}
+            {% if connection.provider != 'ledger_live' and connection.provider != 'trade_republic' %}
+              <form method="post" action="{% url 'fundboard:connection_test' connection.pk %}">{% csrf_token %}<button class="btn" type="submit">Tester la lecture</button></form>
+              <form method="post" action="{% url 'fundboard:connection_sync' connection.pk %}">{% csrf_token %}<button class="btn btn-success" type="submit">Synchroniser</button></form>
+            {% endif %}
+            <form method="post" action="{% url 'fundboard:connection_disconnect' connection.pk %}">{% csrf_token %}<button class="btn btn-outline-danger" type="submit">Déconnecter</button></form>
+          </div>
+        {% endif %}
+      </div>
+
+      {% if connection.provider == 'ledger_live' or connection.provider == 'trade_republic' %}
+        <form class="card mb-4" method="post" enctype="multipart/form-data" action="{% url 'fundboard:connection_import' connection.pk %}">
+          {% csrf_token %}
+          <div class="card-header"><h2 class="card-title">Importer un export</h2></div>
+          <div class="card-body">
+            {% if connection.provider == 'ledger_live' %}
+              <div class="alert alert-warning">CSV Ledger Live uniquement. Ne téléversez jamais de seed, de clé privée ou de fichier qui en contient.</div>
+              <div class="form-hint mb-3">Quantités on-chain et contre-valeurs historiques restent distinctes ; aucun prix actuel n'est inventé.</div>
+            {% else %}
+              <div class="alert alert-warning">JSON/CSV issu d'un export local. Les lignes invalides sont comptées puis ignorées intégralement.</div>
+            {% endif %}
+            {{ import_form.file }}
+          </div>
+          <div class="card-footer text-end"><button class="btn btn-primary" type="submit">Importer</button></div>
+        </form>
+      {% endif %}
+
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Comptes synchronisés</h2></div>
+        <div class="table-responsive"><table class="table card-table">
+          <thead><tr><th>Compte</th><th>Type</th><th>Solde</th></tr></thead>
+          <tbody>{% for account in accounts %}<tr><td><a href="{% url 'fundboard:account_detail' account.pk %}">{{ account.name }}</a></td><td>{{ account.get_category_display }}</td><td>{{ account.balance }} {{ account.currency }}</td></tr>{% empty %}<tr><td colspan="3" class="text-secondary">Aucun compte importé.</td></tr>{% endfor %}</tbody>
+        </table></div>
+      </div>
+    </div>
+
+    <div class="col-xl-4">
+      <div class="card">
+        <div class="card-header"><h2 class="card-title">Historique des exécutions</h2></div>
+        <div class="list-group list-group-flush">
+          {% for run in runs %}
+            <div class="list-group-item">
+              <div class="d-flex justify-content-between"><span>{{ run.get_trigger_display }}</span><span class="badge {% if run.status == 'SUCCEEDED' %}bg-success-lt{% elif run.status == 'FAILED' %}bg-danger-lt{% else %}bg-warning-lt{% endif %}">{{ run.get_status_display }}</span></div>
+              <div class="text-secondary small mt-1">{{ run.started_at }} · {{ run.created_count }} créé(s), {{ run.skipped_count }} inchangé(s), {{ run.rejected_count }} rejeté(s)</div>
+              {% if run.public_message %}<div class="small mt-1">{{ run.public_message }}</div>{% endif %}
+            </div>
+          {% empty %}<div class="list-group-item text-secondary">Aucune exécution.</div>{% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+{% endblock %}

@@ -1,35 +1,23 @@
-/* styles.css */
-
-/* Personnalisation de la jumbotron */
-.jumbotron {
-    background-color: #f8f9fa;
-    border-radius: 0.5rem;
+.fundboard-balance-badge {
+  font-variant-numeric: tabular-nums;
 }
 
-/* Personnalisation des cartes */
-.card-header {
-    font-weight: bold;
-    background-color: #343a40;
-    color: white;
+.fundboard-chart {
+  margin-inline: auto;
+  max-width: 30rem;
+  min-height: 18rem;
+  position: relative;
 }
 
-/* Boutons personnalisés */
-.btn-primary {
-    background-color: #007bff;
-    border-color: #007bff;
+.fundboard-amount {
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
 }
 
-.btn-danger {
-    background-color: #dc3545;
-    border-color: #dc3545;
-}
-
-.btn-secondary {
-    background-color: #6c757d;
-    border-color: #6c757d;
-}
-
-.btn-success {
-    background-color: #28a745;
-    border-color: #28a745;
+#fbDynamicModal .errorlist {
+  color: var(--tblr-danger);
+  font-size: 0.8rem;
+  list-style: none;
+  margin: 0.35rem 0 0;
+  padding: 0;
 }

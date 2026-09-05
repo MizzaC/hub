@@ -1,45 +1,38 @@
-{% extends 'common/base.html' %}
+{% extends "fundboard/base.html" %}
 
-{% block content %}
+{% block title %}Revenus — FundBoard{% endblock %}
+{% block fb_page_title %}Revenus récurrents{% endblock %}
+{% block fb_page_subtitle %}Consultation des revenus existants ; la saisie complète arrive avec le CRUD financier.{% endblock %}
 
-<div class="container mt-4">
-    <h2>Revenus</h2>
-    <hr>
-    
-    <!-- Bouton pour ajouter une source de revenu -->
-    <a href="#" class="btn btn-primary mb-3">Ajouter un Revenu</a>
-    
-    <!-- Tableau des revenus -->
-    {% if revenues %}
-        <table class="table table-hover">
-            <thead>
-                <tr>
-                    <th>Nom</th>
-                    <th>Montant</th>
-                    <th>Fréquence</th>
-                    <th>Prochain Paiement</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for revenu in revenues %}
-                    <tr>
-                        <td>{{ revenu.nom }}</td>
-                        <td>{{ revenu.montant }}</td>
-                        <td>{{ revenu.get_frequence_display }}</td>
-                        <td>{{ revenu.date_prochain_paiement|date:"d/m/Y" }}</td>
-                        <td>
-                            <!-- Actions possibles (éditer, supprimer) -->
-                            <a href="#" class="btn btn-sm btn-secondary">Éditer</a>
-                            <a href="#" class="btn btn-sm btn-danger">Supprimer</a>
-                        </td>
-                    </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-    {% else %}
-        <p>Aucun revenu enregistré.</p>
-    {% endif %}
-</div>
-
+{% block fb_content %}
+  <section class="card" aria-labelledby="revenues-table-title">
+    <div class="card-header">
+      <h2 id="revenues-table-title" class="card-title">Revenus enregistrés</h2>
+      <div class="card-actions"><span class="badge bg-azure-lt">Lecture seule</span></div>
+    </div>
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table table-hover">
+        <thead>
+          <tr><th>Nom</th><th class="text-end">Montant</th><th>Fréquence</th><th>Prochain paiement</th></tr>
+        </thead>
+        <tbody>
+          {% for revenue in revenues %}
+            <tr>
+              <td class="fw-semibold">{{ revenue.name }}</td>
+              <td class="text-end fundboard-amount">{{ revenue.amount|floatformat:2 }} EUR</td>
+              <td>
+                {{ revenue.get_freq_display }}
+                {% if revenue.freq == "PERSONALIZED" %}
+                  <span class="text-secondary">({{ revenue.freq_custom }} jours)</span>
+                {% endif %}
+              </td>
+              <td class="text-secondary">{{ revenue.next_payday|date:"d/m/Y" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td colspan="4" class="empty-state">Aucun revenu enregistré.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
 {% endblock %}

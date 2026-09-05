@@ -1,0 +1,12 @@
+{% extends "fundboard/base.html" %}
+{% block title %}Comparaison d'intérêts composés — FundBoard{% endblock %}
+{% block fb_page_title %}Comparaison d'intérêts composés{% endblock %}
+{% block fb_page_subtitle %}Deux à quatre scénarios dans une même devise.{% endblock %}
+{% block fb_page_actions %}<a class="btn" href="{% url 'fundboard:simulations' %}">Retour aux simulations</a>{% endblock %}
+{% block fb_content %}
+  {% if comparison_error %}<div class="alert alert-warning">{{ comparison_error }}</div>{% else %}
+    <div class="row row-cards mb-4">{% for item in comparisons %}<div class="col-md-6 col-xl-3"><section class="card h-100"><div class="card-body"><h2 class="h3"><a href="{% url 'fundboard:compound_simulation_detail' item.scenario.pk %}">{{ item.scenario.name }}</a></h2><dl class="row mb-0"><dt class="col-7 text-secondary fw-normal">Total versé</dt><dd class="col-5 text-end">{{ item.result.total_contributed|floatformat:2 }}</dd><dt class="col-7 text-secondary fw-normal">Valeur nominale</dt><dd class="col-5 text-end">{{ item.result.final_nominal_value|floatformat:2 }}</dd><dt class="col-7 text-secondary fw-normal">Valeur réelle</dt><dd class="col-5 text-end">{{ item.result.final_real_value|floatformat:2 }}</dd><dt class="col-7">Gains nets</dt><dd class="col-5 text-end fw-bold">{{ item.result.net_gains|floatformat:2 }} {{ currency }}</dd></dl></div></section></div>{% endfor %}</div>
+    <section class="card"><div class="card-header"><h2 class="card-title">Valeur nominale par mois</h2></div><div class="card-body"><div id="compoundComparisonChart" role="img" aria-label="Comparaison des valeurs projetées"></div></div></section>
+  {% endif %}
+{% endblock %}
+{% block extra_js %}{{ block.super }}{% if not comparison_error %}{{ chart_series|json_script:"compound-comparison-series" }}<script>(() => { const target = document.getElementById('compoundComparisonChart'); if (!target) return; const series = JSON.parse(document.getElementById('compound-comparison-series').textContent).map(item => ({ ...item, data: item.data.map(Number) })); MizzacCharts.mount(target, { chart: { type: 'line', height: 380 }, series, xaxis: { title: { text: 'Mois' } }, yaxis: { labels: { formatter: value => MizzacCharts.formatNumber(value, { maximumFractionDigits: 0 }) } }, stroke: { curve: 'smooth', width: 2 } }); })();</script>{% endif %}{% endblock %}

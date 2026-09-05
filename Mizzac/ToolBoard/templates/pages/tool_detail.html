@@ -16,7 +16,7 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ related_tool.name }}</h5>
                         <p class="card-text">{{ related_tool.description|truncatewords:20 }}</p>
-                        <a href="{% url 'toolboard:tool_detail' related_tool.pk %}" class="btn btn-primary">Voir l'outil</a>
+                        <a href="{% url 'toolboard:tool_detail' related_tool.slug %}" class="btn btn-primary">Voir l'outil</a>
                     </div>
                 </div>
             </div>

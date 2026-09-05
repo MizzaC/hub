@@ -12,21 +12,37 @@
     <div class="modal-content border-0">
 
       <div class="modal-header">
-        <h5 class="modal-title">
+        <h2 class="modal-title h3">
           {% if object %}Modifier le compte{% else %}Ajouter un compte{% endif %}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
 
       <div class="modal-body">
-        <div class="mb-3">{{ form.name.label_tag }}{{ form.name }}</div>
-        <div class="mb-3">{{ form.category.label_tag }}{{ form.category }}</div>
-        <div class="mb-3">{{ form.balance.label_tag }}{{ form.balance }}</div>
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}{{ form.name.errors }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.category.id_for_label }}">{{ form.category.label }}</label>
+          {{ form.category }}{{ form.category.errors }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.balance.id_for_label }}">{{ form.balance.label }}</label>
+          {{ form.balance }}{{ form.balance.errors }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.currency.id_for_label }}">{{ form.currency.label }}</label>
+          {{ form.currency }}{{ form.currency.errors }}
+        </div>
       </div>
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="submit" class="btn btn-success">
+        <button type="submit" class="btn btn-primary">
           {% if object %}Enregistrer{% else %}Ajouter{% endif %}
         </button>
       </div>

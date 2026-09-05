@@ -1,0 +1,39 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Instruments — FundBoard{% endblock %}
+{% block fb_page_title %}Instruments{% endblock %}
+{% block fb_page_subtitle %}Référentiel privé et instruments partagés détenus dans vos comptes.{% endblock %}
+{% block fb_page_actions %}
+  <button class="btn btn-primary" type="button" data-bs-toggle="dynamic-modal"
+          data-href="{% url 'fundboard:add_instrument_modal' %}">Ajouter un instrument</button>
+{% endblock %}
+
+{% block fb_content %}
+  <section class="card" aria-labelledby="instrument-list-title">
+    <div class="card-header"><h2 id="instrument-list-title" class="card-title">Référentiel</h2></div>
+    <div class="table-responsive">
+      <table class="table table-vcenter card-table">
+        <thead><tr><th>Nom</th><th>Type</th><th>Ticker / ISIN</th><th>Devise</th><th>Statut</th><th></th></tr></thead>
+        <tbody>
+          {% for instrument in instruments %}
+            <tr>
+              <td><a href="{% url 'fundboard:instrument_detail' instrument.pk %}">{{ instrument.name }}</a></td>
+              <td>{{ instrument.get_instrument_type_display }}</td>
+              <td>{{ instrument.ticker|default:"—" }}{% if instrument.isin %}<div class="text-secondary small">{{ instrument.isin }}</div>{% endif %}</td>
+              <td>{{ instrument.currency }}</td>
+              <td><span class="badge bg-{% if instrument.status == 'ACTIVE' %}green{% else %}secondary{% endif %}-lt">{{ instrument.get_status_display }}</span></td>
+              <td class="text-end">
+                {% if instrument.owner_id == request.user.id %}
+                  <button class="btn btn-sm" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_instrument_modal' instrument.pk %}">Modifier</button>
+                  {% if instrument.status == 'ACTIVE' %}<button class="btn btn-sm btn-outline-warning" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:archive_instrument_modal' instrument.pk %}">Archiver</button>{% endif %}
+                {% else %}
+                  <span class="text-secondary small">Référentiel partagé</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% empty %}<tr><td colspan="6" class="empty-state">Aucun instrument.</td></tr>{% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% endblock %}

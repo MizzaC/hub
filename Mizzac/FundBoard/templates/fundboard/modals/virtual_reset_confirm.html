@@ -1,0 +1,10 @@
+<form method="post" action="{{ request.path }}">
+  {% csrf_token %}
+  <div class="modal-dialog">
+    <div class="modal-content border-0">
+      <div class="modal-header"><h2 class="modal-title h3">Remettre à zéro le portefeuille virtuel</h2><button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button></div>
+      <div class="modal-body"><div class="alert alert-danger"><strong>Action irréversible.</strong> Les positions, ordres, événements, mouvements et snapshots virtuels de « {{ portfolio.name }} » seront supprimés. La watchlist et les paramètres seront conservés, et le cash reviendra au capital initial.</div><p class="mb-0">Aucune donnée patrimoniale réelle ne sera modifiée.</p></div>
+      <div class="modal-footer"><button type="button" class="btn" data-bs-dismiss="modal">Annuler</button><button type="submit" class="btn btn-danger">Confirmer la remise à zéro</button></div>
+    </div>
+  </div>
+</form>

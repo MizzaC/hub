@@ -1,7 +1,9 @@
 # ToolBoard/admin.py
 
 from django.contrib import admin
-from .models import Tool, Category
+
+from .models import Category, Tool
+
 
 @admin.register(Category)
 class CategoryAdmin(admin.ModelAdmin):

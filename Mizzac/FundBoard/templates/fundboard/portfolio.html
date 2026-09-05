@@ -1,0 +1,75 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Portefeuille — FundBoard{% endblock %}
+{% block fb_page_title %}Portefeuille{% endblock %}
+{% block fb_page_subtitle %}Comptes contenants et instruments détenus restent distincts.{% endblock %}
+{% block fb_page_actions %}
+  <div class="btn-list">
+    {% include "fundboard/_currency_controls.html" %}
+    <button class="btn" type="button" data-bs-toggle="dynamic-modal"
+            data-href="{% url 'fundboard:add_instrument_modal' %}">Ajouter un instrument</button>
+    <button class="btn btn-primary" type="button" data-bs-toggle="dynamic-modal"
+            data-href="{% url 'fundboard:add_position_modal' %}">Ajouter une position</button>
+  </div>
+{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards">
+    {% for account in investment_accounts %}
+      <div class="col-md-6 col-xl-4">
+        <article class="card h-100">
+          <div class="card-body">
+            <span class="mizzac-stat-icon bg-purple-lt text-purple mb-3" aria-hidden="true">
+              {% include "core/icons/chart-pie.html" %}
+            </span>
+            <h2 class="card-title h3 mb-1">{{ account.name }}</h2>
+            <p class="text-secondary">{{ account.get_category_display }}</p>
+            <div class="h2 fundboard-amount mb-0">
+              {{ account.balance|floatformat:2 }} {{ account.currency }}
+            </div>
+            <div class="text-secondary small mt-1">Trésorerie du compte</div>
+            <hr>
+            <h3 class="h4">Positions</h3>
+            <div class="list-group list-group-flush">
+              {% for position in account.positions.all %}
+                <div class="list-group-item px-0 {% if position.status == 'ARCHIVED' %}opacity-75{% endif %}">
+                  <div class="d-flex justify-content-between gap-3">
+                    <span><a href="{% url 'fundboard:instrument_detail' position.instrument.pk %}">{{ position.instrument }}</a>{% if position.status == 'ARCHIVED' %}<span class="badge bg-secondary-lt ms-1">Archivée</span>{% endif %}</span>
+                    <span class="fundboard-amount">{{ position.quantity }}</span>
+                  </div>
+                  {% if position.market_display %}
+                    <div class="text-secondary small text-end">
+                      {% include "fundboard/_currency_value.html" with display=position.market_display %}
+                      {% if position.valued_at %}
+                        <div>{{ position.get_source_display }} · {{ position.valued_at|date:"d/m/Y H:i" }}</div>
+                      {% endif %}
+                    </div>
+                  {% endif %}
+                  <div class="text-end mt-2">
+                    <button class="btn btn-sm" type="button" data-bs-toggle="dynamic-modal"
+                            data-href="{% url 'fundboard:edit_position_modal' position.pk %}">Modifier</button>
+                    {% if position.status != 'ARCHIVED' %}
+                      <button class="btn btn-sm btn-outline-warning" type="button"
+                              data-bs-toggle="dynamic-modal"
+                              data-href="{% url 'fundboard:archive_position_modal' position.pk %}">Archiver</button>
+                    {% endif %}
+                  </div>
+                </div>
+              {% empty %}
+                <div class="text-secondary small">Aucune position valorisée.</div>
+              {% endfor %}
+            </div>
+          </div>
+        </article>
+      </div>
+    {% empty %}
+      <div class="col-12">
+        <div class="card empty-state">
+          <h2 class="h3">Aucun compte d’investissement</h2>
+          <p>Les comptes CTO, PEA et crypto apparaîtront ici.</p>
+          <a class="btn btn-primary" href="{% url 'fundboard:accounts' %}">Ajouter un compte d’investissement</a>
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+{% endblock %}

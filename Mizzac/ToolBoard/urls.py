@@ -1,12 +1,13 @@
 from django.urls import path
+
 from .views import (
+    Base64ConverterView,
+    CurrencyConverterView,
+    IPCalculatorView,
+    PasswordGeneratorView,
     ToolBoardView,
     ToolDetailView,
-    IPCalculatorView,
-    CurrencyConverterView,
     VATCalculatorView,
-    PasswordGeneratorView,
-    Base64ConverterView,
 )
 
 app_name = 'toolboard'

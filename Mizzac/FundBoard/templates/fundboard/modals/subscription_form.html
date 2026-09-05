@@ -13,31 +13,45 @@
     <div class="modal-content border-0">
 
       <div class="modal-header">
-        <h5 class="modal-title">
+        <h2 class="modal-title h3">
           {% if object %}Modifier la dépense{% else %}Ajouter une dépense{% endif %}
-        </h5>
-        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </h2>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Fermer"></button>
       </div>
 
       <div class="modal-body">
-        <div class="mb-3">{{ form.name.label_tag }}{{ form.name }}</div>
-        <div class="mb-3">{{ form.amount.label_tag }}{{ form.amount }}</div>
+        {% if form.non_field_errors %}
+          <div class="alert alert-danger" role="alert">{{ form.non_field_errors }}</div>
+        {% endif %}
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.name.id_for_label }}">{{ form.name.label }}</label>
+          {{ form.name }}{{ form.name.errors }}
+        </div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.amount.id_for_label }}">{{ form.amount.label }}</label>
+          {{ form.amount }}{{ form.amount.errors }}
+        </div>
 
         <div class="row gx-2">
           <div class="col-6 mb-3">
-            {{ form.freq.label_tag }}{{ form.freq }}
+            <label class="form-label" for="{{ form.freq.id_for_label }}">{{ form.freq.label }}</label>
+            {{ form.freq }}{{ form.freq.errors }}
           </div>
           <div class="col-6 mb-3">
-            {{ form.freq_custom.label_tag }}{{ form.freq_custom }}
+            <label class="form-label" for="{{ form.freq_custom.id_for_label }}">{{ form.freq_custom.label }}</label>
+            {{ form.freq_custom }}{{ form.freq_custom.errors }}
           </div>
         </div>
 
-        <div class="mb-3">{{ form.next_due.label_tag }}{{ form.next_due }}</div>
+        <div class="mb-3">
+          <label class="form-label" for="{{ form.next_due.id_for_label }}">{{ form.next_due.label }}</label>
+          {{ form.next_due }}{{ form.next_due.errors }}
+        </div>
       </div>
 
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
-        <button type="submit" class="btn btn-success">
+        <button type="submit" class="btn btn-primary">
           {% if object %}Enregistrer{% else %}Ajouter{% endif %}
         </button>
       </div>

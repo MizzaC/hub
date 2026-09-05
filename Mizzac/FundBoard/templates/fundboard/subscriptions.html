@@ -1,125 +1,153 @@
 {% extends "fundboard/base.html" %}
-{% load static %}
-{% block fb_content %}
-<div class="container-fluid py-4">
-
-  {# ───── En-tête & bouton “Ajouter” ───── #}
-  <div class="d-flex justify-content-between align-items-center mb-4">
-    <h2 class="mb-0">Dépenses récurrentes</h2>
-
-    <button class="btn btn-primary d-flex align-items-center gap-1"
-        data-bs-toggle="dynamic-modal"
-        data-href="{% url 'fundboard:add_subscription_modal' %}">
-    <i class="bi bi-plus-lg"></i> Ajouter
-    </button>
-  </div>
-
-  {# ───── Statistiques rapides ───── #}
-  <div class="row gy-3 mb-4">
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-info h-100 text-center">
-        <div class="card-body">
-          <small class="text-uppercase text-muted">Total mensuel</small>
-          <h3 class="fw-bold mb-0">{{ monthly_total|floatformat:2 }} €</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-warning h-100 text-center">
-        <div class="card-body">
-          <small class="text-uppercase text-muted">Total annuel</small>
-          <h3 class="fw-bold mb-0">{{ yearly_total|floatformat:2 }} €</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-success h-100 text-center">
-        <div class="card-body">
-          <small class="text-uppercase text-muted">Abonnements</small>
-          <h3 class="fw-bold mb-0">{{ subscriptions|length }}</h3>
-        </div>
-      </div>
-    </div>
-    <div class="col-sm-6 col-lg-3">
-      <div class="card shadow-sm border-primary h-100 text-center">
-        <div class="card-body">
-          <small class="text-uppercase text-muted">Prochaine échéance</small>
-          <h6 class="fw-bold mb-0">{{ next_due|date:"d M Y" }}</h6>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  {# ───── Tableau des abonnements ───── #}
-  <div class="card shadow-sm rounded-4 mb-4">
-    <div class="table-responsive">
-      <table class="table table-hover mb-0 align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Nom</th>
-            <th class="text-end">Montant</th>
-            <th class="text-nowrap">Fréquence</th>
-            <th class="text-nowrap">Prochaine échéance</th>
-            <th class="text-nowrap">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for sub in subscriptions %}
-          <tr>
-            <td>{{ sub.name }}</td>
-            <td class="text-end">{{ sub.amount|floatformat:2 }} €</td>
-            <td>{{ sub.get_freq_display }}
-                {% if sub.freq == 'PERSONALIZED' %}({{ sub.freq_custom }} j){% endif %}
-            </td>
-            <td>{{ sub.next_due|date:"d/m/Y" }}</td>
-            <td class="text-nowrap">
-                <button class="btn btn-sm btn-outline-secondary"
-                        data-bs-toggle="dynamic-modal"
-                        data-href="{% url 'fundboard:edit_subscription_modal' sub.pk %}">
-                    Éditer
-                </button>
-                <button class="btn btn-sm btn-outline-danger"
-                    data-bs-toggle="dynamic-modal"
-                    data-href="{% url 'fundboard:delete_subscription_modal' sub.pk %}">
-                Supprimer
-                </button>
-            </td>
-          </tr>
-          {% empty %}
-          <tr><td colspan="5" class="text-center py-4 text-muted">Aucun abonnement.</td></tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
-  {# ───── Camembert répartition — facultatif ───── #}
-  <div class="card shadow-sm rounded-4">
-    <div class="card-header bg-white border-0"><h5 class="mb-0">Répartition par fréquence</h5></div>
-    <div class="card-body d-flex justify-content-center">
-      <canvas id="freqChart" height="180"></canvas>
-    </div>
-  </div>
-
-</div>
-{% endblock fb_content %}
-
-{% block extra_js %}
-{{ block.super }}
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-
-<script>
-const labels = JSON.parse('{{ labels|safe|escapejs }}');
-const data   = JSON.parse('{{ data|safe|escapejs }}');
-
-if (labels.length){
-  new Chart(
-      document.getElementById('freqChart'),
-      { type:'doughnut',
-        data:{ labels:labels, datasets:[{ data:data }] },
-        options:{ responsive:true, plugins:{ legend:{ position:'bottom' } } }
-      });
-}
-</script>
+{% block title %}Dépenses — FundBoard{% endblock %}
+{% block fb_page_title %}Dépenses récurrentes{% endblock %}
+{% block fb_page_subtitle %}Abonnements et échéances normalisés en équivalents mensuel et annuel.{% endblock %}
+{% block fb_page_actions %}
+  <button class="btn btn-primary" type="button" data-bs-toggle="dynamic-modal"
+          data-href="{% url 'fundboard:add_subscription_modal' %}">
+    Ajouter une dépense
+  </button>
 {% endblock %}
 
+{% block fb_content %}
+  <section class="row row-cards mb-4" aria-label="Indicateurs de dépenses">
+    <div class="col-sm-6 col-xl-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-secondary">Équivalent mensuel</div>
+        <div class="h2 fundboard-amount mb-0 mt-1">{{ monthly_total|floatformat:2 }} EUR</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-secondary">Équivalent annuel</div>
+        <div class="h2 fundboard-amount mb-0 mt-1">{{ yearly_total|floatformat:2 }} EUR</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-secondary">Dépenses suivies</div>
+        <div class="h2 mb-0 mt-1">{{ subscriptions|length }}</div>
+      </div></div>
+    </div>
+    <div class="col-sm-6 col-xl-3">
+      <div class="card h-100"><div class="card-body">
+        <div class="text-secondary">Prochaine échéance</div>
+        <div class="h3 mb-0 mt-1">
+          {% if next_due %}{{ next_due|date:"d/m/Y" }}{% else %}Aucune{% endif %}
+        </div>
+      </div></div>
+    </div>
+  </section>
+
+  <div class="row row-cards">
+    <div class="col-xl-8">
+      <section class="card h-100" aria-labelledby="subscriptions-table-title">
+        <div class="card-header">
+          <h2 id="subscriptions-table-title" class="card-title">Échéancier</h2>
+        </div>
+        <div class="table-responsive">
+          <table class="table table-vcenter card-table table-hover">
+            <thead>
+              <tr>
+                <th>Nom</th><th class="text-end">Montant</th><th>Fréquence</th>
+                <th>Prochaine échéance</th><th class="w-1"><span class="visually-hidden">Actions</span></th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for subscription in subscriptions %}
+                <tr>
+                  <td class="fw-semibold">{{ subscription.name }}</td>
+                  <td class="text-end fundboard-amount">{{ subscription.amount|floatformat:2 }} EUR</td>
+                  <td>
+                    {{ subscription.get_freq_display }}
+                    {% if subscription.freq == "PERSONALIZED" %}
+                      <span class="text-secondary">({{ subscription.freq_custom }} jours)</span>
+                    {% endif %}
+                  </td>
+                  <td class="text-secondary">{{ subscription.next_due|date:"d/m/Y" }}</td>
+                  <td>
+                    <div class="btn-list flex-nowrap">
+                      <button class="btn btn-sm" type="button" data-bs-toggle="dynamic-modal"
+                              data-href="{% url 'fundboard:edit_subscription_modal' subscription.pk %}">
+                        Modifier
+                      </button>
+                      <button class="btn btn-sm btn-outline-danger" type="button"
+                              data-bs-toggle="dynamic-modal"
+                              data-href="{% url 'fundboard:delete_subscription_modal' subscription.pk %}">
+                        Supprimer
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              {% empty %}
+                <tr><td colspan="5" class="empty-state">Aucune dépense récurrente.</td></tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    </div>
+
+    <div class="col-xl-4">
+      <section class="card h-100" aria-labelledby="frequency-chart-title">
+        <div class="card-header">
+          <h2 id="frequency-chart-title" class="card-title">Répartition par fréquence</h2>
+        </div>
+        <div class="card-body">
+          {% if chart_labels %}
+            <div class="fundboard-chart">
+              <div id="freqChart" role="img"
+                   aria-label="Répartition du montant des dépenses par fréquence et devise"></div>
+            </div>
+          {% else %}
+            <div class="empty-state">Le graphique apparaîtra après la première dépense.</div>
+          {% endif %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  {{ chart_labels|json_script:"subscription-chart-labels" }}
+  {{ chart_currencies|json_script:"subscription-chart-currencies" }}
+  {{ chart_values|json_script:"subscription-chart-values" }}
+  <script>
+  (() => {
+    const container = document.getElementById('freqChart');
+    if (!container) return;
+    const labels = JSON.parse(document.getElementById('subscription-chart-labels').textContent);
+    const currencies = JSON.parse(
+      document.getElementById('subscription-chart-currencies').textContent,
+    );
+    const values = JSON.parse(
+      document.getElementById('subscription-chart-values').textContent,
+    ).map(Number);
+    MizzacCharts.mount(container, {
+      chart: {
+        height: 300,
+        type: 'donut',
+      },
+      labels,
+      plotOptions: {
+        pie: {
+          donut: { size: '62%' },
+        },
+      },
+      series: values,
+      stroke: { width: 0 },
+      tooltip: {
+        y: {
+          formatter(value, options) {
+            return MizzacCharts.formatNumber(value, {
+              style: 'currency',
+              currency: currencies[options.seriesIndex],
+            });
+          },
+        },
+      },
+    });
+  })();
+  </script>
+{% endblock %}

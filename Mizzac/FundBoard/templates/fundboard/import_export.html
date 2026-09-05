@@ -1,0 +1,96 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Imports et exports — FundBoard{% endblock %}
+{% block fb_page_title %}Imports et exports{% endblock %}
+{% block fb_page_subtitle %}Format 1.0, prévisualisation sans écriture et rapport ligne par ligne.{% endblock %}
+
+{% block fb_content %}
+  <div class="row row-cards">
+    <div class="col-xl-7">
+      <section class="card" aria-labelledby="import-title">
+        <div class="card-header"><h2 id="import-title" class="card-title">Importer</h2></div>
+        <form method="post" enctype="multipart/form-data">
+          {% csrf_token %}
+          <div class="card-body">
+            <p class="text-secondary">Les lignes invalides sont ignorées ; toutes les autres sont importées. Taille maximale : 5 Mio.</p>
+            <label class="form-label" for="{{ form.file.id_for_label }}">{{ form.file.label }}</label>
+            {{ form.file }}
+            {% if form.file.errors %}<div class="invalid-feedback d-block">{{ form.file.errors }}</div>{% endif %}
+          </div>
+          <div class="card-footer d-flex flex-wrap gap-2">
+            <button class="btn" type="submit" name="action" value="preview">Prévisualiser sans écrire</button>
+            <button class="btn btn-primary" type="submit" name="action" value="import">Importer les lignes valides</button>
+            <a class="btn btn-ghost-secondary ms-auto" href="{% url 'fundboard:import_template_json' %}">Modèle JSON</a>
+            <a class="btn btn-ghost-secondary" href="{% url 'fundboard:import_template_xlsx' %}">Modèle Excel</a>
+          </div>
+        </form>
+      </section>
+
+      {% if report %}
+        <section class="card mt-4" aria-labelledby="preview-title">
+          <div class="card-header"><h2 id="preview-title" class="card-title">Résultat de la prévisualisation</h2><span class="badge bg-azure-lt ms-auto">Aucune écriture</span></div>
+          <div class="card-body">
+            <div class="row g-3 text-center">
+              <div class="col"><div class="h2">{{ report.created_rows }}</div><div class="text-secondary">créations</div></div>
+              <div class="col"><div class="h2">{{ report.updated_rows }}</div><div class="text-secondary">mises à jour</div></div>
+              <div class="col"><div class="h2">{{ report.skipped_rows }}</div><div class="text-secondary">doublons</div></div>
+              <div class="col"><div class="h2 text-danger">{{ report.invalid_rows }}</div><div class="text-secondary">invalides</div></div>
+            </div>
+            {% if report.issues %}
+              <hr><div class="table-responsive"><table class="table table-sm"><thead><tr><th>Feuille</th><th>Ligne</th><th>Colonne</th><th>Erreur</th></tr></thead><tbody>
+              {% for issue in report.issues %}<tr><td>{{ issue.sheet }}</td><td>{{ issue.row_number }}</td><td>{{ issue.column|default:"—" }}</td><td>{{ issue.message }}</td></tr>{% endfor %}
+              </tbody></table></div>
+            {% endif %}
+          </div>
+        </section>
+      {% endif %}
+    </div>
+
+    <div class="col-xl-5">
+      <section class="card" aria-labelledby="export-title">
+        <div class="card-header"><h2 id="export-title" class="card-title">Exporter</h2></div>
+        <div class="card-body">
+          <label class="form-label" for="exportResource">Données</label>
+          <select id="exportResource" class="form-select mb-3">
+            <option value="all">Export complet</option><option value="accounts">Comptes</option><option value="instruments">Instruments</option><option value="positions">Positions</option><option value="transactions">Transactions</option><option value="real_estate">Immobilier</option><option value="loans">Prêts</option>
+          </select>
+          <div class="d-grid gap-2">
+            <a class="btn btn-outline-primary export-link" data-format="json" href="{% url 'fundboard:export' 'json' %}">Télécharger en JSON</a>
+            <a class="btn btn-outline-primary export-link" data-format="xlsx" href="{% url 'fundboard:export' 'xlsx' %}">Télécharger en Excel</a>
+            <a class="btn btn-outline-primary export-link" data-format="csv" href="{% url 'fundboard:export' 'csv' %}">Télécharger en CSV</a>
+          </div>
+          <p id="csvHint" class="form-hint mt-2">Le CSV nécessite une catégorie précise.</p>
+        </div>
+      </section>
+
+      <section class="card mt-4" aria-labelledby="history-title">
+        <div class="card-header"><h2 id="history-title" class="card-title">Derniers imports</h2></div>
+        <div class="list-group list-group-flush">
+          {% for batch in batches %}
+            <a class="list-group-item list-group-item-action" href="{% url 'fundboard:import_batch' batch.pk %}"><div class="d-flex justify-content-between"><span>{{ batch.file_name }}</span><span class="badge bg-secondary-lt">{{ batch.get_status_display }}</span></div><div class="text-secondary small mt-1">{{ batch.started_at|date:"d/m/Y H:i" }} · {{ batch.created_rows }} créée(s), {{ batch.invalid_rows }} ignorée(s)</div></a>
+          {% empty %}<div class="empty-state">Aucun import enregistré.</div>{% endfor %}
+        </div>
+      </section>
+    </div>
+  </div>
+{% endblock %}
+
+{% block extra_js %}
+  {{ block.super }}
+  <script>
+  (() => {
+    const resource = document.getElementById('exportResource');
+    const links = document.querySelectorAll('.export-link');
+    function updateLinks() {
+      links.forEach((link) => {
+        const isInvalidCsv = link.dataset.format === 'csv' && resource.value === 'all';
+        link.classList.toggle('disabled', isInvalidCsv);
+        link.setAttribute('aria-disabled', String(isInvalidCsv));
+        link.href = `${link.href.split('?')[0]}?resource=${encodeURIComponent(resource.value)}`;
+      });
+    }
+    resource.addEventListener('change', updateLinks);
+    updateLinks();
+  })();
+  </script>
+{% endblock %}

@@ -1,0 +1,48 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}{{ scenario.name }} — Simulation de prêt{% endblock %}
+{% block fb_page_title %}{{ scenario.name }}{% endblock %}
+{% block fb_page_subtitle %}Simulation de prêt à taux fixe · aucun effet sur les données réelles{% endblock %}
+{% block fb_page_actions %}
+  <div class="btn-list">
+    <a class="btn" href="{% url 'fundboard:loan_simulation_export' scenario.pk 'json' %}">JSON</a>
+    <a class="btn" href="{% url 'fundboard:loan_simulation_export' scenario.pk 'xlsx' %}">Excel</a>
+    <button class="btn" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_loan_simulation' scenario.pk %}">Modifier</button>
+    <button class="btn btn-outline-warning" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:archive_loan_simulation' scenario.pk %}">Archiver</button>
+  </div>
+{% endblock %}
+
+{% block fb_content %}
+  <div class="alert alert-info">Hypothèses uniquement · arrondi commercial au centime après chaque opération mensuelle.</div>
+  <div class="row row-cards mb-4">
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Mensualité hors assurance</div><div class="h2">{{ result.regular_payment|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">{{ scenario.get_calculation_mode_display }}</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Durée simulée</div><div class="h2">{{ result.duration_months }} mois</div><div class="small text-secondary">Fin {{ result.payoff_date|date:"d/m/Y" }}</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Intérêts</div><div class="h2">{{ result.total_interest|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">Taux nominal {{ scenario.annual_rate|floatformat:3 }} %</div></div></section></div>
+    <div class="col-md-3"><section class="card h-100"><div class="card-body"><div class="text-secondary">Coût total</div><div class="h2">{{ result.total_cost|floatformat:2 }} {{ scenario.currency }}</div><div class="small text-secondary">Intérêts + assurance + frais</div></div></section></div>
+  </div>
+  <div class="row row-cards mb-4">
+    <div class="col-xl-8"><section class="card h-100"><div class="card-header"><h2 class="card-title">Capital restant dû</h2></div><div class="card-body"><div id="loanSimulationChart" role="img" aria-label="Projection du capital restant dû"></div></div></section></div>
+    <div class="col-xl-4"><section class="card h-100"><div class="card-header"><h2 class="card-title">Hypothèses et résultats</h2></div><div class="card-body"><dl class="row mb-0">
+      <dt class="col-7 text-secondary fw-normal">Capital</dt><dd class="col-5 text-end">{{ scenario.principal|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Assurance totale</dt><dd class="col-5 text-end">{{ result.total_insurance|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Frais initiaux</dt><dd class="col-5 text-end">{{ result.initial_fees|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Total versé</dt><dd class="col-5 text-end">{{ result.total_paid|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Différé</dt><dd class="col-5 text-end">{{ scenario.deferment_months }} mois</dd>
+      <dt class="col-7 text-secondary fw-normal">Type</dt><dd class="col-5 text-end">{{ scenario.get_deferment_type_display }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Remb. ponctuel</dt><dd class="col-5 text-end">{{ scenario.one_off_prepayment|floatformat:2 }}</dd>
+      <dt class="col-7 text-secondary fw-normal">Remb. mensuel</dt><dd class="col-5 text-end">{{ scenario.recurring_prepayment|floatformat:2 }}</dd>
+    </dl></div></section></div>
+  </div>
+  <section class="card">
+    <div class="card-header"><h2 class="card-title">Tableau d'amortissement</h2></div>
+    <div class="table-responsive"><table class="table table-sm table-vcenter card-table"><thead><tr><th>Mois</th><th>Date</th><th class="text-end">Capital initial</th><th class="text-end">Échéance</th><th class="text-end">Principal</th><th class="text-end">Intérêts</th><th class="text-end">Assurance</th><th class="text-end">Anticipé</th><th class="text-end">Total</th><th class="text-end">Capital final</th></tr></thead><tbody>
+      {% for row in result.schedule %}<tr><td>{{ row.month }}</td><td>{{ row.payment_date|date:"d/m/Y" }}</td><td class="text-end">{{ row.opening_balance|floatformat:2 }}</td><td class="text-end">{{ row.scheduled_payment|floatformat:2 }}</td><td class="text-end">{{ row.principal_paid|floatformat:2 }}</td><td class="text-end">{{ row.interest|floatformat:2 }}</td><td class="text-end">{{ row.insurance|floatformat:2 }}</td><td class="text-end">{{ row.prepayment|floatformat:2 }}</td><td class="text-end fw-semibold">{{ row.total_payment|floatformat:2 }}</td><td class="text-end">{{ row.closing_balance|floatformat:2 }}</td></tr>{% endfor %}
+    </tbody></table></div>
+  </section>
+{% endblock %}
+
+{% block extra_js %}{{ block.super }}
+  {{ chart_labels|json_script:"loan-simulation-labels" }}
+  {{ chart_balances|json_script:"loan-simulation-balances" }}
+  <script>(() => { const target = document.getElementById('loanSimulationChart'); if (!target) return; MizzacCharts.mount(target, { chart: { type: 'area', height: 340 }, series: [{ name: 'Capital restant', data: JSON.parse(document.getElementById('loan-simulation-balances').textContent).map(Number) }], xaxis: { categories: JSON.parse(document.getElementById('loan-simulation-labels').textContent), type: 'datetime' }, yaxis: { labels: { formatter: value => MizzacCharts.formatNumber(value, { maximumFractionDigits: 0 }) } }, stroke: { curve: 'smooth', width: 2 } }); })();</script>
+{% endblock %}

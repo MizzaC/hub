@@ -1,9 +1,8 @@
 # Mizzac/Dashboard/urls.py
 
 from django.urls import path
-from .views import DrunkBoardView
-from django.contrib.auth import views as auth_views
 
+from .views import DrunkBoardView
 
 app_name = 'drunkboard'
 

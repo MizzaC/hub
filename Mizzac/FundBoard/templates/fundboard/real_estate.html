@@ -1,0 +1,57 @@
+{% extends "fundboard/base.html" %}
+
+{% block title %}Immobilier — FundBoard{% endblock %}
+{% block fb_page_title %}Immobilier{% endblock %}
+{% block fb_page_subtitle %}Valeur brute, quote-part, dette liée et valeur nette de vos biens.{% endblock %}
+{% block fb_page_actions %}
+  <button class="btn btn-primary" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:add_real_estate_modal' %}">Ajouter un bien</button>
+{% endblock %}
+
+{% block fb_content %}
+  {% if totals %}
+    <div class="row row-cards mb-4">
+      {% for currency, total in totals %}
+        <div class="col-md-6 col-xl-3"><section class="card h-100"><div class="card-body">
+          <div class="text-secondary">Immobilier {{ currency }}</div>
+          <div class="h2 mt-1">{{ total.net_value|floatformat:2 }} {{ currency }}</div>
+          <div class="small text-secondary">Brut {{ total.gross_value|floatformat:2 }} · dette {{ total.remaining_debt|floatformat:2 }}</div>
+          <div class="small {% if total.annual_net_income < 0 %}text-danger{% else %}text-success{% endif %}">Revenu net annuel {{ total.annual_net_income|floatformat:2 }}</div>
+        </div></section></div>
+      {% endfor %}
+    </div>
+  {% endif %}
+  {% if has_incomplete_net_total %}
+    <div class="alert alert-warning" role="alert">
+      Au moins un prêt lié utilise une autre devise : sa dette et la valeur nette
+      correspondante sont exclues des totaux tant qu'un taux daté n'est pas appliqué.
+    </div>
+  {% endif %}
+  <div class="row row-cards">
+    {% for property in properties %}
+      <div class="col-md-6">
+        <article class="card h-100 {% if property.archived %}opacity-75{% endif %}">
+          <div class="card-body">
+            <div class="d-flex justify-content-between gap-3">
+              <div><div class="text-secondary">{{ property.get_property_type_display }}</div><h2 class="h3 mt-1"><a href="{% url 'fundboard:real_estate_detail' property.pk %}">{{ property.name }}</a></h2></div>
+              {% if property.archived %}<span class="badge bg-secondary-lt align-self-start">Archivé</span>{% endif %}
+            </div>
+            <dl class="row mb-0">
+              <dt class="col-7 text-secondary fw-normal">Valeur brute</dt><dd class="col-5 text-end fundboard-amount">{{ property.estimated_value|floatformat:2 }} {{ property.currency }}</dd>
+              <dt class="col-7 text-secondary fw-normal">Quote-part</dt><dd class="col-5 text-end">{{ property.ownership_share|floatformat:2 }} %</dd>
+              <dt class="col-7 text-secondary fw-normal">Capital restant</dt><dd class="col-5 text-end fundboard-amount">{% if property.linked_loan %}{{ property.linked_loan.outstanding_principal|floatformat:2 }} {{ property.linked_loan.currency }}{% else %}—{% endif %}</dd>
+              <dt class="col-7">Valeur nette</dt><dd class="col-5 text-end fw-bold fundboard-amount">{% if property.metrics.net_value is not None %}{{ property.metrics.net_value|floatformat:2 }} {{ property.currency }}{% else %}<span class="text-secondary small">Conversion requise</span>{% endif %}</dd>
+              <dt class="col-7 text-secondary fw-normal">Rendement brut</dt><dd class="col-5 text-end">{% if property.metrics.gross_yield_percent is not None %}{{ property.metrics.gross_yield_percent|floatformat:2 }} %{% else %}—{% endif %}</dd>
+              <dt class="col-7 text-secondary fw-normal">Rendement net</dt><dd class="col-5 text-end">{% if property.metrics.net_yield_percent is not None %}{{ property.metrics.net_yield_percent|floatformat:2 }} %{% else %}—{% endif %}</dd>
+            </dl>
+            <div class="text-secondary small mt-3">Valorisé le {{ property.valuation_date|date:"d/m/Y" }} · {{ property.valuation_source }}</div>
+          </div>
+          <div class="card-footer d-flex gap-2">
+            <a class="btn btn-sm btn-primary" href="{% url 'fundboard:real_estate_detail' property.pk %}">Détails</a>
+            <button class="btn btn-sm" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:edit_real_estate_modal' property.pk %}">Modifier</button>
+            {% if not property.archived %}<button class="btn btn-sm btn-outline-warning ms-auto" data-bs-toggle="dynamic-modal" data-href="{% url 'fundboard:archive_real_estate_modal' property.pk %}">Archiver</button>{% endif %}
+          </div>
+        </article>
+      </div>
+    {% empty %}<div class="col-12"><div class="card empty-state"><h2 class="h3">Aucun bien immobilier</h2><p class="mb-0">Ajoutez une valorisation manuelle datée.</p></div></div>{% endfor %}
+  </div>
+{% endblock %}

@@ -1,27 +1,63 @@
-{% extends 'base.html' %}
+{% extends "core/base.html" %}
+
+{% block title %}Connexion — Mizzac{% endblock %}
+{% block body_class %}d-flex flex-column{% endblock %}
 
 {% block content %}
+  <div class="container-xl py-5">
+    <div class="mizzac-auth-card">
+      <div class="text-center mb-4">
+        <span class="mizzac-brand-mark mb-3" aria-hidden="true">M</span>
+        <h1 class="h2 mb-1">Connexion</h1>
+        <p class="text-secondary">Retrouvez vos tableaux de bord personnels.</p>
+      </div>
 
-<div class="container mt-5">
-    <div class="row">
-        <div class="col-md-6 offset-md-3">
-            <div class="card">
-                <div class="card-header">
-                    <h4 class="card-title">Connexion</h4>
-                </div>
-                <div class="card-body">
-                    <form method="post">
-                        {% csrf_token %}
-                        {{ form.as_p }}
-                        <button type="submit" class="btn btn-primary">Connexion</button>
-                    </form>
-                </div>
-                <div class="card-footer text-center">
-                    <a href="{% url 'dashboard:signup' %}" class="btn btn-link">Inscription</a>
-                </div>
+      <div class="card card-md shadow-sm">
+        <div class="card-body">
+          {% if form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">
+              Identifiants incorrects. Vérifiez votre nom d’utilisateur et votre mot de passe.
             </div>
-        </div>
-    </div>
-</div>
+          {% endif %}
 
+          <form method="post" novalidate>
+            {% csrf_token %}
+            {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+
+            <div class="mb-3">
+              <label class="form-label" for="{{ form.username.id_for_label }}">
+                Nom d’utilisateur
+              </label>
+              {{ form.username }}
+              {% for error in form.username.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="{{ form.password.id_for_label }}">
+                Mot de passe
+              </label>
+              {{ form.password }}
+              {% for error in form.password.errors %}
+                <div class="invalid-feedback d-block">{{ error }}</div>
+              {% endfor %}
+            </div>
+
+            <button type="submit" class="btn btn-primary w-100">
+              <span aria-hidden="true" class="mizzac-nav-icon me-2">
+                {% include "core/icons/login.html" %}
+              </span>
+              Se connecter
+            </button>
+          </form>
+        </div>
+      </div>
+
+      <div class="text-center text-secondary mt-3">
+        Pas encore de compte ?
+        <a href="{% url 'dashboard:signup' %}">Créer un compte</a>
+      </div>
+    </div>
+  </div>
 {% endblock %}

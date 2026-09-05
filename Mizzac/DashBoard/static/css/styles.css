@@ -1,0 +1,15 @@
+:focus-visible {
+  outline: 3px solid rgba(13, 110, 253, 0.45);
+  outline-offset: 2px;
+}
+
+.errorlist {
+  margin: 0.35rem 0 0;
+  padding-left: 1.25rem;
+  color: #b02a37;
+}
+
+.dropdown-menu form {
+  margin: 0;
+}
+
